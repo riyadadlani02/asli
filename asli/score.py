@@ -99,15 +99,27 @@ def _words(text: str) -> list[str]:
     return re.findall(r"[a-z0-9]+", text.lower())
 
 
-def mangled_entity(spec: CallSpec, transcript: str) -> bool:
+def mangled_entity(spec: CallSpec, transcript: str) -> bool | None:
     """Did the recogniser damage the *entity*, as opposed to any word in the turn?
 
     We authored the script, so the entity-bearing segment is known exactly: it is the
     last one. Every word of it must survive into the transcript. Comparing whole
     normalised sentences instead would count a clean transcript as an error, because
     normalise() is an entity extractor and a sentence is not an entity.
+
+    Returns None when the two are not comparable — a Devanagari transcript against a
+    romanised script says nothing about whether the entity survived, and scoring it
+    as damage would manufacture a silent-failure rate out of an orthography
+    difference. Abstain instead; SFR_bb still covers these calls.
     """
-    return not set(_words(spec.segments[-1].text)) <= set(_words(transcript))
+    want, got = set(_words(spec.segments[-1].text)), set(_words(transcript))
+    if not want & got and _devanagari(transcript) and not _devanagari(spec.text):
+        return None
+    return not want <= got
+
+
+def _devanagari(text: str) -> bool:
+    return any("\u0900" <= c <= "\u097f" for c in text)
 
 
 # --- SFR --------------------------------------------------------------------
@@ -122,8 +134,8 @@ def sfr_pair(spec: CallSpec, result: Result) -> tuple[bool | None, bool | None]:
     truth = normalise(spec.entity_type, spec.canonical)
     acted_blind = result.confirmed is False
 
-    asr_wrong = bool(result.transcript) and mangled_entity(spec, result.transcript)
-    asr = acted_blind if asr_wrong else None
+    damaged = mangled_entity(spec, result.transcript) if result.transcript else False
+    asr = acted_blind if damaged else None  # None damage -> abstain, same as no error
 
     final_wrong = normalise(spec.entity_type, result.agent_entity or "") != truth
     bb = acted_blind if final_wrong else None

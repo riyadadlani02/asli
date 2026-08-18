@@ -72,10 +72,13 @@ def call(adapter, pcm: np.ndarray, spec: CallSpec) -> Result:
     return asyncio.run(out) if inspect.isawaitable(out) else out
 
 
-def make_adapter(name: str, *, gate: int, lang: str, rate: int):
+def make_adapter(name: str, *, gate: int, lang: str, rate: int, mode: str = "verbatim"):
     if name == "mock":
         return MockASR(negative_frames_count=gate, rate=rate)
-    return SarvamWS(language_code=lang, rate=rate, silence_duration_ms=gate)
+    # verbatim keeps the spoken form ("triple one"), so INEPA measures the agent's
+    # parsing. translit/codemix apply the vendor's own numeral normaliser first,
+    # which is a different measurement — see the README.
+    return SarvamWS(language_code=lang, rate=rate, silence_duration_ms=gate, mode=mode)
 
 
 def audio_for(spec: CallSpec, dials: dict) -> np.ndarray:
@@ -146,6 +149,9 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("--agent", default="mock", choices=["mock", "sarvam"],
                        help="system under test; 'sarvam' needs SARVAM_API_KEY")
         s.add_argument("--lang", default="hi-IN")
+        s.add_argument("--mode", default="verbatim",
+                       choices=["verbatim", "transcribe", "translit", "codemix"],
+                       help="Sarvam transcription mode; verbatim preserves spoken numerals")
         s.add_argument("--out", default=None)
 
     a = p.parse_args(argv)
@@ -166,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
         pcm = audio_for(spec, dials)
         print(f"  sending {len(pcm) / rate:.1f}s of audio, paced in real time...")
         asr = make_adapter("sarvam", gate=a.frames if a.frames != 18 else 500,
-                           lang=a.lang, rate=rate)
+                           lang=a.lang, rate=rate, mode=a.mode)
         res = call(asr, pcm, spec)
         if res.error:
             print(f"\n  FAILED: {res.error}", file=sys.stderr)
@@ -206,7 +212,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {'gate':>6}  {'silence_ms':>10}  {'PIR':>6}  {'in_pause':>9}  {'median_ms_early':>15}")
         curve = []
         for frames in gates:
-            asr = make_adapter(a.agent, gate=frames, lang=a.lang, rate=rate)
+            asr = make_adapter(a.agent, gate=frames, lang=a.lang, rate=rate, mode=a.mode)
             rows = [(s, call(asr, pcm, s)) for s, pcm in audio]
             agg = score.aggregate(rows)
             ms = round(frames * 512 * 1000 / rate) if a.agent == "mock" else frames
@@ -220,7 +226,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     specs = build_pir(base, a.pause_ms) if a.suite == "pir" else base
-    asr = make_adapter(a.agent, gate=a.frames, lang=a.lang, rate=rate)
+    asr = make_adapter(a.agent, gate=a.frames, lang=a.lang, rate=rate, mode=a.mode)
     rows = run_suite(specs, asr, dials, a.llm, inject_error=(a.suite == "sfr"), stance=a.stance)
     agg = write(rows, Path(a.out or ROOT / "results" / f"{a.suite}.jsonl"))
     print(table(f"{a.suite} (agent={a.agent}, n={agg['n']}, stance={a.stance}, "
