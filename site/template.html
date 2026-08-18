@@ -1,0 +1,494 @@
+<title>She Said The Number</title>
+<style>
+:root{
+  --bg:#0B0D12; --bg2:#11151E; --raise:#161B26; --line:#232A38; --line2:#36405420;
+  --bone:#EDEAE3; --bone2:#A7AEBC; --bone3:#6E7787;
+  --amber:#C8831F; --amber-lift:#E0A03B; --clay:#B03A2C; --pine:#2E9B72;
+  --amber-w:rgba(200,131,31,.13); --clay-w:rgba(176,58,44,.14); --pine-w:rgba(46,155,114,.13);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --deva:"Kohinoor Devanagari","Noto Sans Devanagari","Nirmala UI",Mangal,var(--sans);
+}
+:root[data-theme="light"]{
+  --bg:#F5F2EC; --bg2:#EFEBE3; --raise:#FFFDF8; --line:#DFD9CD; --line2:#00000012;
+  --bone:#14161C; --bone2:#4A515D; --bone3:#7C8492;
+  --amber:#C8781E; --amber-lift:#A8641A; --clay:#B23A2E; --pine:#2F8F6B;
+  --amber-w:rgba(200,120,30,.13); --clay-w:rgba(178,58,46,.11); --pine-w:rgba(47,143,107,.12);
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#F5F2EC; --bg2:#EFEBE3; --raise:#FFFDF8; --line:#DFD9CD; --line2:#00000012;
+  --bone:#14161C; --bone2:#4A515D; --bone3:#7C8492;
+  --amber:#C8781E; --amber-lift:#A8641A; --clay:#B23A2E; --pine:#2F8F6B;
+  --amber-w:rgba(200,120,30,.13); --clay-w:rgba(178,58,46,.11); --pine-w:rgba(47,143,107,.12);
+}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--bone);font-family:var(--sans);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.5;mix-blend-mode:overlay;
+  background-image:radial-gradient(circle at 1px 1px,var(--line2) 1px,transparent 0);background-size:3px 3px}
+.wrap{max-width:78rem;margin:0 auto;padding:0 clamp(1.2rem,5vw,4rem);position:relative;z-index:2}
+h1,h2,h3{margin:0;font-weight:600;text-wrap:balance}
+p{margin:0}
+.mono{font-family:var(--mono)}
+.deva{font-family:var(--deva)}
+section{padding-block:clamp(4rem,10vw,8rem);border-top:1px solid var(--line)}
+section:first-of-type{border-top:none}
+.eyebrow{display:flex;align-items:center;gap:.8rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--bone3);margin-bottom:1.6rem}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+.eyebrow b{color:var(--amber);font-weight:500}
+h2{font-size:clamp(1.7rem,4.2vw,3rem);letter-spacing:-.03em;line-height:1.06;margin-bottom:1.1rem;max-width:20ch}
+.lede{max-width:60ch;color:var(--bone2);font-size:clamp(1rem,1.6vw,1.12rem)}
+.lede b{color:var(--bone);font-weight:600}
+.sub{font-size:.92rem;color:var(--bone3);max-width:62ch}
+code{font-family:var(--mono);font-size:.9em;color:var(--amber)}
+
+/* nav */
+.topbar{position:sticky;top:0;z-index:8;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:.85rem}
+.brand{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone2)}
+.brand b{color:var(--amber)}
+.themebtn{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--line);color:var(--bone2);padding:.34rem .7rem;border-radius:2px;cursor:pointer}
+.themebtn:hover{border-color:var(--amber);color:var(--bone)}
+.themebtn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* hero */
+.hero{padding-block:clamp(3rem,8vw,6rem) clamp(3rem,7vw,5rem)}
+.kicker{font-family:var(--mono);font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);margin-bottom:1.4rem}
+h1{font-size:clamp(2.4rem,7.5vw,5.2rem);line-height:.98;letter-spacing:-.045em;max-width:16ch;margin-bottom:1.5rem}
+h1 .q{color:var(--clay)}
+.hero .lede{font-size:clamp(1.05rem,2vw,1.3rem);max-width:52ch}
+
+/* stage */
+.stage{margin-top:clamp(2.5rem,6vw,4rem);background:var(--raise);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.stage-head{display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;justify-content:space-between;padding:.8rem 1.2rem;border-bottom:1px solid var(--line);background:var(--bg2);font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--bone3)}
+.stage-body{padding:clamp(1.4rem,4vw,2.6rem) clamp(1.2rem,4vw,2.6rem)}
+.lane{margin-bottom:2.2rem}
+.lane-lbl{font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone3);margin-bottom:.9rem}
+.said{font-size:clamp(1.15rem,3.1vw,2.05rem);line-height:1.45;letter-spacing:-.02em;display:flex;flex-wrap:wrap;align-items:baseline;gap:.36em}
+.said .w{color:var(--bone3);transition:color .25s,opacity .25s}
+.said .w.on{color:var(--bone)}
+.said .w.fill{font-style:italic}
+.said .w.fill.on{color:var(--amber)}
+.gap{display:inline-flex;align-items:center;gap:.4em;padding:0 .5em;border-bottom:2px dotted var(--amber);color:var(--amber);font-family:var(--mono);font-size:.44em;letter-spacing:.06em;opacity:.75;white-space:nowrap}
+.heard{min-height:3.4em;font-family:var(--deva);font-size:clamp(1.2rem,3.2vw,2.1rem);line-height:1.5;color:var(--bone);display:flex;flex-wrap:wrap;gap:.3em;align-items:baseline}
+.heard .cursor{display:inline-block;width:.5ch;height:1em;background:var(--amber);animation:blink 1s steps(2) infinite;vertical-align:-.12em}
+@keyframes blink{50%{opacity:0}}
+.heard.dead .cursor{display:none}
+.stamp{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--clay);border:1px solid var(--clay);padding:.2rem .55rem;border-radius:2px;opacity:0;transform:translateY(-4px);transition:opacity .3s,transform .3s}
+.stamp.show{opacity:1;transform:none}
+
+canvas.wave{display:block;width:100%;height:110px;margin:1.6rem 0 1.2rem}
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:1rem 1.4rem;padding-top:1.4rem;border-top:1px solid var(--line)}
+.play{display:inline-flex;align-items:center;gap:.7rem;background:var(--amber);color:#0B0D12;border:none;border-radius:2px;padding:.7rem 1.2rem;font-family:var(--mono);font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:filter .2s}
+.play:hover{filter:brightness(1.12)}
+.play:focus-visible{outline:2px solid var(--bone);outline-offset:3px}
+.play .ico{width:0;height:0;border-left:9px solid currentColor;border-top:6px solid transparent;border-bottom:6px solid transparent}
+.play.playing .ico{border:none;width:9px;height:11px;border-left:3px solid currentColor;border-right:3px solid currentColor}
+.gatectl{display:flex;align-items:center;gap:.8rem;flex:1 1 20rem;min-width:15rem}
+.gatectl label{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bone3);white-space:nowrap}
+input[type=range]{flex:1;min-width:8rem;-webkit-appearance:none;appearance:none;background:transparent;height:1.5rem;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line);border-radius:2px}
+input[type=range]::-moz-range-track{height:2px;background:var(--line);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;margin-top:-6.5px;border-radius:50%;background:var(--amber);border:2px solid var(--raise)}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--amber);border:2px solid var(--raise)}
+input[type=range]:focus-visible{outline:2px solid var(--amber);outline-offset:4px}
+.gateval{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:1rem;min-width:6.5ch;color:var(--bone)}
+.verdict{margin-top:1.2rem;font-family:var(--mono);font-size:.84rem;padding:.75rem .95rem;border-left:3px solid var(--clay);background:var(--clay-w);border-radius:2px}
+.verdict[data-ok="1"]{border-left-color:var(--pine);background:var(--pine-w)}
+
+/* audio grid */
+.agrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:2.2rem}
+.acard{background:var(--raise);padding:1.15rem;display:flex;flex-direction:column;gap:.75rem}
+.acard h3{font-family:var(--mono);font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone2);font-weight:500}
+.acard canvas{display:block;width:100%;height:52px}
+.acard button{align-self:flex-start;background:none;border:1px solid var(--line);color:var(--bone2);font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:.35rem .7rem;border-radius:2px;cursor:pointer}
+.acard button:hover{border-color:var(--amber);color:var(--bone)}
+.acard button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.acard.on{background:var(--bg2)}
+.acard .note{font-size:.82rem;color:var(--bone3)}
+
+/* modes */
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:2rem 0 1.5rem}
+.chip{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;padding:.45rem .85rem;border-radius:2px;border:1px solid var(--line);background:none;color:var(--bone2);cursor:pointer}
+.chip[aria-selected=true]{border-color:var(--amber);color:var(--bone);background:var(--amber-w)}
+.chip:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.modeout{background:var(--raise);border:1px solid var(--line);border-radius:4px;padding:clamp(1.2rem,3vw,2rem);display:flex;flex-direction:column;gap:1.1rem;min-height:12rem}
+.modeout .t{font-family:var(--deva);font-size:clamp(1.05rem,2.6vw,1.6rem);line-height:1.5;overflow-wrap:anywhere}
+.modeout .t.rom{font-family:var(--mono);font-size:clamp(.95rem,2.2vw,1.35rem)}
+.readout{display:flex;flex-wrap:wrap;gap:1.6rem;padding-top:1rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.85rem}
+.readout div span{display:block;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--bone3);margin-bottom:.25rem}
+.readout .bad{color:var(--clay)}
+.readout .good{color:var(--pine)}
+.dig{font-variant-numeric:tabular-nums;font-size:1.15rem;letter-spacing:.08em}
+.dig .miss{color:var(--clay);text-decoration:line-through;opacity:.6}
+
+/* chart */
+figure{margin:2.2rem 0 0;background:var(--raise);border:1px solid var(--line);border-radius:4px;padding:1.3rem 1.2rem 1rem}
+figcaption{margin-top:1rem;padding-top:.85rem;border-top:1px solid var(--line);font-size:.84rem;color:var(--bone3)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.gl{stroke:var(--line);stroke-width:1}
+.ax{font-family:var(--mono);font-size:11px;fill:var(--bone3);font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+
+/* trace */
+.trace{font-family:var(--mono);font-size:.82rem}
+.trace .r{display:grid;grid-template-columns:5rem 1fr;gap:1rem;padding:.45rem .6rem;border-bottom:1px solid var(--line)}
+.trace .r:last-child{border-bottom:none}
+.trace .t{color:var(--bone3);text-align:right;font-variant-numeric:tabular-nums}
+.trace .e{color:var(--bone2);overflow-wrap:anywhere}
+.trace .r.hit{background:var(--pine-w)}.trace .r.hit .e{color:var(--bone)}
+.trace .r.drop{background:var(--clay-w)}.trace .r.drop .e{color:var(--bone)}
+.tag{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;margin-left:.6rem}
+.r.hit .tag{color:var(--pine)}.r.drop .tag{color:var(--clay)}
+
+/* caveats */
+.cav{display:grid;grid-template-columns:repeat(auto-fit,minmax(19rem,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:2rem}
+.cav > div{background:var(--raise);padding:1.3rem}
+.cav h3{font-family:var(--mono);font-size:.8rem;letter-spacing:.06em;color:var(--bone);margin-bottom:.5rem}
+.cav p{font-size:.89rem;color:var(--bone2)}
+pre{font-family:var(--mono);font-size:.82rem;background:var(--bg2);border:1px solid var(--line);border-radius:4px;padding:1.1rem;overflow-x:auto;color:var(--bone2);line-height:1.8;margin:2rem 0 0}
+pre b{color:var(--amber);font-weight:400}
+footer{border-top:1px solid var(--line);padding-block:2.5rem 4rem;font-size:.86rem;color:var(--bone3)}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+
+<div class="grain" aria-hidden="true"></div>
+
+<div class="topbar"><div class="wrap">
+  <div class="brand"><b>asli</b> &middot; indic voice-agent harness</div>
+  <button class="themebtn" id="theme" type="button">theme</button>
+</div></div>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">measured on saaras:v3-realtime &middot; august 2026</div>
+  <h1>She said the number. <span class="q">It never arrived.</span></h1>
+  <p class="lede">Indian callers hesitate mid-sentence. Turn detection reads the gap as the end of the turn &mdash; and at the documented default, the digits after the pause are simply gone. Press play and watch the transcript stop.</p>
+
+  <div class="stage">
+    <div class="stage-head">
+      <span>dig-01 &middot; hindi &middot; 16 kHz</span>
+      <span>mode <b style="color:var(--bone2)">translit</b> &middot; truth 9877111</span>
+    </div>
+    <div class="stage-body">
+      <div class="lane">
+        <div class="lane-lbl">what the caller said</div>
+        <div class="said" id="said"></div>
+      </div>
+      <div class="lane">
+        <div class="lane-lbl">what came back <span id="stampwrap"></span></div>
+        <div class="heard" id="heard"><span class="cursor"></span></div>
+      </div>
+      <canvas class="wave" id="wave" role="img" aria-label="Waveform of the utterance showing the hesitation and where the turn was ended."></canvas>
+      <div class="transport">
+        <button class="play" id="play" type="button"><span class="ico"></span><span id="playlbl">play</span></button>
+        <div class="gatectl">
+          <label for="gate">silence_duration_ms</label>
+          <input id="gate" type="range" min="100" max="1200" step="50" value="500">
+          <output class="gateval" id="gateval">500</output>
+        </div>
+      </div>
+      <div class="verdict" id="verdict" data-ok="0"></div>
+    </div>
+  </div>
+</header>
+
+<section id="cliff">
+  <div class="eyebrow"><b>01</b><span>the measurement</span></div>
+  <h2>The cliff sits just above the default.</h2>
+  <p class="lede">Twelve utterances, streamed in real time at each gate setting. Flat at 1.00 through every value up to and including the 500&nbsp;ms default, then straight to zero. <b>Moving the gate to 700&nbsp;ms removes the effect entirely</b> at this hesitation length.</p>
+  <figure>
+    <div class="scroll"><svg id="sweep" viewBox="0 0 780 320" role="img" aria-label="Premature interruption rate against silence duration, flat at 1.0 to 500ms then dropping to 0 at 700ms."></svg></div>
+    <figcaption>PIR = share of calls where the turn-end decision landed before the caller finished. n&nbsp;=&nbsp;12 per point. Event times are taken as audio-sent-so-far, so latency pushes results <em>away</em> from &ldquo;premature&rdquo; &mdash; this curve is conservative.</figcaption>
+  </figure>
+</section>
+
+<section id="line">
+  <div class="eyebrow"><b>02</b><span>the line</span></div>
+  <h2>This is what the recogniser is actually given.</h2>
+  <p class="lede">The same utterance down a real telephony path: 8&nbsp;kHz G.711, call-centre babble, dropped packets. Everything above 3.4&nbsp;kHz &mdash; the detail that separates one digit word from another &mdash; is gone before any model sees it.</p>
+  <div class="agrid" id="agrid"></div>
+  <p class="sub" style="margin-top:1.2rem">Degradation is applied to the waveform, not simulated in software the model can detect. Noise is mixed at a measured SNR; the codec round trip goes through ffmpeg, not an approximation.</p>
+</section>
+
+<section id="modes">
+  <div class="eyebrow"><b>03</b><span>where it happens</span></div>
+  <h2>Four output modes. One keeps the number.</h2>
+  <p class="lede">Same audio, same hesitation, same gate. The recogniser hears all seven digits every time &mdash; but only <code>verbatim</code> returns them. <b>The romanising modes drop one, and on shorter utterances they drop the number entirely.</b></p>
+  <div class="chips" role="tablist" id="chips"></div>
+  <div class="modeout" id="modeout"></div>
+</section>
+
+<section id="trace">
+  <div class="eyebrow"><b>04</b><span>the smoking gun</span></div>
+  <h2>The partial is complete. The final is not.</h2>
+  <p class="lede">Every message on the socket, no early exit. The streaming partials carry the whole utterance. The final that lands 105&nbsp;ms later has the digits removed &mdash; while reporting <code>end_s 3.607</code>, claiming to cover the entire turn.</p>
+  <figure><div class="trace" id="tr"></div></figure>
+</section>
+
+<section id="honest">
+  <div class="eyebrow"><b>05</b><span>read before citing</span></div>
+  <h2>What this is not.</h2>
+  <p class="lede">A benchmark that hides its limits is marketing. These are the ones that would change how you read the numbers above.</p>
+  <div class="cav" id="cav"></div>
+</section>
+
+<section id="run">
+  <div class="eyebrow"><b>06</b><span>the tool</span></div>
+  <h2>Point it at your own agent.</h2>
+  <p class="lede">The harness is the durable artefact; the numbers are just what it found on one afternoon. An adapter is a single method.</p>
+  <pre><b>uv</b> venv --python 3.12 &amp;&amp; <b>uv</b> pip install -e ".[agent]"
+python tests/test_asli.py                 <span style="color:var(--bone3)"># 9 checks. no keys, no network</span>
+
+echo "SARVAM_API_KEY=..." &gt;&gt; .env
+<b>uv</b> run asli check                         <span style="color:var(--bone3)"># one call, raw event stream</span>
+<b>uv</b> run asli sweep --suite pir --agent sarvam --pause-ms 700</pre>
+  <p class="sub" style="margin-top:1.4rem">Implement <code>run(pcm, spec) -&gt; Result</code>, emit timestamped <code>speech_start</code> / <code>speech_end</code> / <code>transcript</code> events, and every metric on this page follows.</p>
+</section>
+
+<footer>
+  <p><b>asli</b> &mdash; measuring what an Indic voice agent does when things go wrong mid-conversation. Not a leaderboard: no vendor is ranked, and the endpointing gate is a documented setting behaving exactly as configured. MIT.</p>
+</footer>
+
+</div>
+
+<script>
+const D = __DATA__;
+const $ = s => document.querySelector(s);
+const V = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const HERO = D.hero, PAUSE = HERO.pause, PLEN = PAUSE[1]-PAUSE[0], END = HERO.true_end_ms, DUR = HERO.dur_ms;
+let gate = 500;
+
+/* ---------- theme ---------- */
+const themeBtn = $("#theme");
+themeBtn.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const sysDark = !matchMedia("(prefers-color-scheme: light)").matches;
+  const next = cur ? (cur === "dark" ? "light" : "dark") : (sysDark ? "light" : "dark");
+  document.documentElement.setAttribute("data-theme", next);
+  redraw();
+});
+
+/* ---------- said line ---------- */
+const saidEl = $("#said");
+D.said.forEach((seg, i) => {
+  const words = seg.roman.split(" ");
+  words.forEach((w, j) => {
+    const s = document.createElement("span");
+    s.className = "w" + (seg.fill ? " fill" : "");
+    s.textContent = w + " ";
+    const span = (seg.t1 - seg.t0) / words.length;
+    s.dataset.t = seg.t0 + span * (j + 1);
+    saidEl.appendChild(s);
+  });
+  if (seg.fill) {
+    const g = document.createElement("span");
+    g.className = "gap";
+    g.innerHTML = "&hellip; " + PLEN + "ms";
+    saidEl.appendChild(g);
+  }
+});
+const saidWords = [...saidEl.querySelectorAll(".w")];
+
+/* ---------- heard line ---------- */
+const heardEl = $("#heard");
+const HEARD_UNITS = [];
+D.said.forEach(seg => {
+  const ws = seg.deva.split(" ");
+  ws.forEach((w, j) => HEARD_UNITS.push({
+    w, ent: !!seg.ent,
+    t: seg.t0 + (seg.t1 - seg.t0) / ws.length * (j + 1)
+  }));
+});
+function renderHeard(atMs, cutMs){
+  const stop = cutMs !== null ? cutMs : Infinity;
+  heardEl.innerHTML = "";
+  let dropped = false;
+  HEARD_UNITS.forEach(u => {
+    if (u.t <= Math.min(atMs, stop)) {
+      const s = document.createElement("span"); s.textContent = u.w + " "; heardEl.appendChild(s);
+    } else if (u.t > stop) dropped = true;
+  });
+  const c = document.createElement("span");
+  c.className = "cursor"; heardEl.appendChild(c);
+  heardEl.classList.toggle("dead", atMs >= END);
+  $("#stampwrap").innerHTML = (dropped && atMs >= stop)
+    ? '<span class="stamp show">digits dropped</span>' : "";
+}
+
+/* ---------- waveform ---------- */
+const cv = $("#wave"), cx = cv.getContext("2d");
+let playAt = null;
+function drawWave(){
+  const dpr = Math.min(devicePixelRatio||1, 2), w = cv.clientWidth, h = 110;
+  cv.width = w*dpr; cv.height = h*dpr; cx.setTransform(dpr,0,0,dpr,0,0);
+  cx.clearRect(0,0,w,h);
+  const env = D.audio[0].env, n = env.length, mid = h*0.52, amp = h*0.42;
+  const x = ms => (ms/DUR)*w;
+  const fires = gate < PLEN, cutAt = PAUSE[0]+gate;
+  cx.fillStyle = V("--amber-w");
+  cx.fillRect(x(PAUSE[0]), 0, x(PAUSE[1])-x(PAUSE[0]), h);
+  for (let i=0;i<n;i++){
+    const t=(i/n)*DUR, dead = fires && t>cutAt;
+    cx.fillStyle = dead ? V("--line") : V("--amber");
+    cx.globalAlpha = playAt!==null && t>playAt ? .38 : 1;
+    const bh = Math.max(1, env[i]*amp);
+    cx.fillRect(x(t), mid-bh, Math.max(1.3, w/n-1), bh*2);
+  }
+  cx.globalAlpha = 1;
+  if (fires){
+    cx.strokeStyle = V("--clay"); cx.lineWidth = 2;
+    cx.beginPath(); cx.moveTo(x(cutAt),0); cx.lineTo(x(cutAt),h); cx.stroke();
+  }
+  if (playAt!==null){
+    cx.strokeStyle = V("--amber-lift"); cx.lineWidth = 1.5;
+    cx.beginPath(); cx.moveTo(x(playAt),0); cx.lineTo(x(playAt),h); cx.stroke();
+  }
+}
+
+/* ---------- audio ---------- */
+const players = {};
+D.audio.forEach(a => { const el = new Audio("data:audio/mpeg;base64,"+a.mp3); el.preload="metadata"; players[a.key]=el; });
+const main = players.clean;
+let raf;
+function tick(){
+  const t = main.currentTime*1000;
+  playAt = t;
+  saidWords.forEach(s => s.classList.toggle("on", +s.dataset.t <= t + 120));
+  renderHeard(t, gate < PLEN ? PAUSE[0]+gate : null);
+  drawWave();
+  if (!main.paused) raf = requestAnimationFrame(tick);
+}
+$("#play").addEventListener("click", () => {
+  Object.values(players).forEach(p => { if(p!==main){p.pause();p.currentTime=0;} });
+  if (main.paused){ main.currentTime=0; main.play(); $("#play").classList.add("playing"); $("#playlbl").textContent="stop"; tick(); }
+  else { main.pause(); stopMain(); }
+});
+main.addEventListener("ended", stopMain);
+function stopMain(){
+  cancelAnimationFrame(raf); $("#play").classList.remove("playing"); $("#playlbl").textContent="play";
+  playAt = null; saidWords.forEach(s=>s.classList.add("on"));
+  renderHeard(END, gate < PLEN ? PAUSE[0]+gate : null); drawWave();
+}
+
+/* ---------- gate ---------- */
+function nearest(g){ return D.sweep.reduce((a,b)=>Math.abs(b.silence_ms-g)<Math.abs(a.silence_ms-g)?b:a); }
+function updateGate(){
+  gate = +$("#gate").value; $("#gateval").textContent = gate;
+  const fires = gate < PLEN, cutAt = PAUSE[0]+gate, m = nearest(gate), v = $("#verdict");
+  v.dataset.ok = fires ? "0" : "1";
+  v.textContent = fires
+    ? "Turn ended at " + cutAt + "ms — " + (END-cutAt) + "ms before she stopped speaking. Measured PIR at " + m.silence_ms + "ms: " + m.pir.toFixed(2) + "."
+    : "The gate outlasts the hesitation. She finishes; the number survives. Measured PIR at " + m.silence_ms + "ms: " + m.pir.toFixed(2) + ".";
+  if (main.paused) renderHeard(END, fires ? cutAt : null);
+  drawWave();
+}
+$("#gate").addEventListener("input", updateGate);
+
+/* ---------- degradation cards ---------- */
+$("#agrid").innerHTML = D.audio.map(a => `
+  <div class="acard" data-k="${a.key}">
+    <h3>${a.label}</h3>
+    <canvas data-env="${a.key}" height="52"></canvas>
+    <button type="button" data-play="${a.key}">listen</button>
+  </div>`).join("");
+function drawMini(){
+  D.audio.forEach(a => {
+    const c = document.querySelector(`canvas[data-env="${a.key}"]`); if(!c) return;
+    const dpr=Math.min(devicePixelRatio||1,2), w=c.clientWidth, h=52;
+    c.width=w*dpr; c.height=h*dpr; const g=c.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
+    g.clearRect(0,0,w,h);
+    const n=a.env.length, mid=h/2, amp=h*0.44;
+    g.fillStyle = a.key==="clean" ? V("--amber") : a.key==="worst" ? V("--clay") : V("--bone3");
+    for(let i=0;i<n;i++){ const bh=Math.max(.8,a.env[i]*amp); g.fillRect((i/n)*w, mid-bh, Math.max(1,w/n-.8), bh*2); }
+  });
+}
+document.querySelectorAll("[data-play]").forEach(b => b.addEventListener("click", () => {
+  const k=b.dataset.play; Object.entries(players).forEach(([kk,p])=>{p.pause();p.currentTime=0;
+    document.querySelector(`.acard[data-k="${kk}"]`)?.classList.remove("on");});
+  if(!main.paused) stopMain();
+  players[k].play(); b.closest(".acard").classList.add("on");
+  players[k].onended = () => b.closest(".acard").classList.remove("on");
+}));
+
+/* ---------- modes ---------- */
+const MORDER = ["verbatim","transcribe","codemix","translit"];
+const MNOTE = {
+  verbatim:"Native script, spoken form preserved. All seven digits present.",
+  transcribe:"Native script with numerals converted. One digit lost in the conversion.",
+  codemix:"Mixed script. Same loss as transcribe.",
+  translit:"Romanised. Same loss here, and on shorter utterances the number disappears completely."
+};
+$("#chips").innerHTML = MORDER.map((m,i)=>
+  `<button class="chip" role="tab" aria-selected="${i===0}" data-m="${m}">${m}</button>`).join("");
+function showMode(m){
+  const d = D.modes[m], truth = "9877111", got = d.got || "";
+  const digits = truth.split("").map((c,i)=> i < got.length ? `<span>${c}</span>` : `<span class="miss">${c}</span>`).join("");
+  $("#modeout").innerHTML = `
+    <div class="t ${m==='translit'?'rom':''}">${d.text}</div>
+    <div class="readout">
+      <div><span>truth</span><span class="dig">9877111</span></div>
+      <div><span>extracted</span><span class="dig">${got||"—"}</span></div>
+      <div><span>digits kept</span><span class="dig">${digits}</span></div>
+      <div><span>verdict</span><b class="${d.ok?"good":"bad"}">${d.ok?"number survives":"digit lost"}</b></div>
+    </div>
+    <p class="sub">${MNOTE[m]}</p>`;
+  document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-selected", c.dataset.m===m));
+}
+$("#chips").addEventListener("click", e => { const b=e.target.closest(".chip"); if(b) showMode(b.dataset.m); });
+
+/* ---------- sweep ---------- */
+function sweep(){
+  const W=780,H=320,m={t:26,r:30,b:56,l:66}, pts=D.sweep, xs=pts.map(p=>p.silence_ms);
+  const x=v=>m.l+(v-Math.min(...xs))/(Math.max(...xs)-Math.min(...xs))*(W-m.l-m.r);
+  const y=v=>m.t+(1-v)*(H-m.t-m.b);
+  let s="";
+  [0,.25,.5,.75,1].forEach(g=>{ s+=`<line class="gl" x1="${m.l}" x2="${W-m.r}" y1="${y(g)}" y2="${y(g)}"/>`
+    +`<text class="ax" x="${m.l-12}" y="${y(g)+4}" text-anchor="end">${g.toFixed(2)}</text>`;});
+  s+=`<line x1="${x(500)}" x2="${x(500)}" y1="${m.t-10}" y2="${H-m.b}" stroke="${V("--amber")}" stroke-width="1.5" stroke-dasharray="3 3"/>`
+   +`<text class="ax" x="${x(500)}" y="${m.t-15}" text-anchor="middle" fill="${V("--amber")}">documented default</text>`;
+  const line=pts.map((p,i)=>`${i?"L":"M"}${x(p.silence_ms)},${y(p.pir)}`).join("");
+  s+=`<path d="${line}L${x(xs[xs.length-1])},${y(0)}L${x(xs[0])},${y(0)}Z" fill="${V("--clay-w")}"/>`
+   +`<path d="${line}" fill="none" stroke="${V("--clay")}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  pts.forEach(p=>{ s+=`<circle cx="${x(p.silence_ms)}" cy="${y(p.pir)}" r="4.5" fill="${V("--clay")}" stroke="${V("--raise")}" stroke-width="2"/>`
+    +`<text class="ax" x="${x(p.silence_ms)}" y="${H-m.b+20}" text-anchor="middle">${p.silence_ms}</text>`;});
+  s+=`<text class="ax" x="${W/2}" y="${H-10}" text-anchor="middle">silence_duration_ms</text>`
+   +`<text class="ax" x="${m.l-46}" y="${m.t+2}" transform="rotate(-90 ${m.l-46} ${m.t+2})" text-anchor="end">PIR</text>`
+   +`<text class="ax" x="${x(260)}" y="${y(1)+22}" text-anchor="middle" fill="${V("--clay")}">every caller cut off</text>`
+   +`<text class="ax" x="${x(950)}" y="${y(0)-16}" text-anchor="middle" fill="${V("--pine")}">none cut off</text>`;
+  $("#sweep").innerHTML = s;
+}
+
+/* ---------- trace + caveats ---------- */
+$("#tr").innerHTML = [
+  [248,"vad.speech_start","",""],
+  [1962,"transcript.partial","द रेफ़रेंस इज़ मतलब",""],
+  [3775,"audio ends — client sends end","",""],
+  [3817,"vad.speech_end","",""],
+  [3917,"transcript.partial","द रेफ़रेंस इज़ मतलब एट डबल ज़ीरो नाइन","hit","complete"],
+  [4022,"transcript.final","The reference is Matlab","drop","digits dropped"],
+  [4027,"session.end","end_s 3.607 — reported as covering the full turn",""]
+].map(([t,ev,tx,cls,tag])=>`<div class="r ${cls||""}"><span class="t">${t}ms</span><span class="e">${ev}${tx?' &nbsp;<span class="deva">'+tx+'</span>':""}${tag?'<span class="tag">'+tag+'</span>':""}</span></div>`).join("");
+
+$("#cav").innerHTML = [
+  ["The recogniser is good.","Recognition was accurate throughout &mdash; the Hinglish, the fillers, <code>1.25 lakh</code>, <code>ek karod pachas lakh</code>, <code>04032026</code> all came through. Most of what first looked like vendor failures were bugs in our own extractor. Those are fixed; these numbers are post-fix."],
+  ["The gate is a setting.","<code>silence_duration_ms</code> is documented and per-session, and the endpointer does exactly what it is told. The finding is that the default sits just below a common hesitation length &mdash; not that anything is broken."],
+  ["n = 12.","A proving run, not a rate. Don't quote a percentage off it."],
+  ["The pauses are nominal.","A fixed 700&nbsp;ms, not a distribution fitted to real speech. Until that lands, PIR reads as <em>&ldquo;at 700&nbsp;ms&rdquo;</em> and never as a field rate. The fitting pipeline is built and verified; the corpus is gated."],
+  ["The caller is synthetic.","Utterances are TTS, so this measures a model of Hindi hesitation rather than a Hindi speaker. That is exactly what the corpus-fitting step exists to correct."],
+  ["No vendor is ranked.","One system was characterised, generously and in public. The bundled mock VAD is an instrument for calibrating the scorers offline, never a comparison."]
+].map(([h,b])=>`<div><h3>${h}</h3><p>${b}</p></div>`).join("");
+
+/* ---------- boot ---------- */
+function redraw(){ drawWave(); drawMini(); sweep(); }
+addEventListener("resize", redraw);
+document.querySelectorAll("section, .stage").forEach(el=>{ el.classList.add("reveal"); });
+new IntersectionObserver((es,o)=>es.forEach(e=>{ if(e.isIntersecting){e.target.classList.add("in");o.unobserve(e.target);} }),
+  {threshold:.08}).observe && document.querySelectorAll(".reveal").forEach(el=>{
+    new IntersectionObserver((es,o)=>es.forEach(e=>{ if(e.isIntersecting){e.target.classList.add("in");o.unobserve(e.target);} }),{threshold:.06}).observe(el);
+  });
+showMode("verbatim"); updateGate(); renderHeard(END, PAUSE[0]+500); redraw();
+</script>
