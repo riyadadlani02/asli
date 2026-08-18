@@ -178,3 +178,16 @@ Timestamps are relative to audio t=0 and are what PIR reads. Everything else fol
 ## Licence
 
 MIT.
+
+## The site
+
+`site/index.html` is a standalone, single-file interactive site — the utterance audio,
+waveforms and every number are embedded, so it has no build step and no external
+requests. Open it directly, or drop it on any static host:
+
+```bash
+python3 -m http.server --directory site 8000     # local
+# GitHub Pages: push site/ and set Pages source to that folder
+```
+
+Rebuild it after a new run with `python3 build_site.py`.
