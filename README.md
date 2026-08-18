@@ -36,20 +36,35 @@ Real numbers from this repo, reproducible with the commands shown. Read the cave
 
 The cliff sits exactly where the arithmetic says it should, and it *moves with the hesitation length* — 384→512 ms for a 400 ms pause, 576→768 ms for a 700 ms one. That correspondence is the method validating itself: the harness is measuring the gap it built, not an artefact.
 
-**Why the gate length is the interesting axis.** Sarvam's streaming STT exposes endpointing directly — `negative_frames_count` (default 18), `negative_speech_threshold`, `high_vad_sensitivity` — and documents one frame as 512 samples: 32 ms at 16 kHz, **64 ms at 8 kHz**. So the default gate is ~576 ms on a wideband stream and **~1152 ms on a telephony leg**, and `high_vad_sensitivity=true` drops it to ~64 ms. Against a 700 ms hesitation those three settings land on completely different sides of the cliff above. Pointing this harness at the real endpoint turns that into a measured recommendation instead of an inference.
+**Why the gate length is the interesting axis.** Sarvam exposes endpointing as a documented parameter, on both of its streaming endpoints:
+
+- `saaras:v3-realtime` (the voice-agent WebSocket) takes **`silence_duration_ms` directly, default 500**, alongside `threshold`, `prefix_padding_ms` and `min_speech_duration_ms`.
+- the older `saaras:v3` streaming API takes a frame count, `negative_frames_count` (default 18), where one frame is 512 samples — 32 ms at 16 kHz but **64 ms at 8 kHz**, so the same setting is ~576 ms wideband and **~1152 ms on a telephony leg**.
+
+A 500 ms default sits just below the cliff for a 700 ms hesitation and just above it for a 400 ms one. That is a measurable, actionable difference rather than an opinion — and `asli sweep --agent sarvam` sweeps that exact parameter.
 
 ### INEPA: parsing, on a *clean* transcript
 
 `asli run --suite inepa --llm` — 12 entities, perfect transcript, `gpt-4.1-mini` reference agent:
 
-**10/12 correct (0.833).** Both failures are Indian conventions, not recognition problems:
+**9/12 correct — 0.75, identical across 5 repeat runs.** All three failures are Indian conventions, not recognition problems:
 
 | said | truth | agent returned |
 |---|---|---|
-| "char zero double five six" | `40556` | `000556` — did not read Hindi *char* as 4 |
-| "EMI saade sat hazaar hai" | `7500` | `75000` — *saade sat* (7.5) off by 10× |
+| "char zero double five six" | `40556` | `000556` — does not read Hindi *char* as 4 |
+| "do lakh pachas hazaar rupaye" | `250000` | `350000` |
+| "EMI saade sat hazaar hai" | `7500` | `17500` / `37500` / `75000`, varying per run |
 
-Under injected transcription errors this falls to **0.50**, including `"ek crore pachas lack"` → `150000000` against a truth of `15000000`. A 10× error on a rupee amount is the failure mode that has a compliance consequence, and it is invisible to WER.
+Under injected transcription errors this falls to **0.50**, including `"ek crore pachas lack"` → `150000000` against a truth of `15000000`. A 10× error on a rupee amount is the failure mode with a compliance consequence, and it is invisible to WER.
+
+**One finding worth more than the score.** The reference prompt carries a one-line stance instruction about *when to confirm* (`--stance careful|eager`). Removing that line — changing nothing about the parsing instructions — makes `do lakh pachas hazaar` parse **correctly**:
+
+| item | with stance line | without |
+|---|---|---|
+| `do lakh pachas hazaar` → 250000 | `350000` ✗ | `250000` ✓ |
+| `saade sat hazaar` → 7500 | `17500` ✗ | `37500` ✗ |
+
+An instruction about confirmation behaviour changed numeric parsing. Anyone tuning a voice agent's prompt is moving both at once, and a single accuracy number hides it. `saade sat` is wrong under every prompt and every run — that one is a genuine gap.
 
 ### SFR: does the agent notice?
 
@@ -70,10 +85,10 @@ The 8 kHz G.711 μ-law round trip alone changes PIR **not at all**. Background b
 
 ## Read this before citing any number above
 
-- **The ASR here is a mock, not a vendor.** The bundled `MockASR` is an energy-gated VAD used to calibrate the scorers and run CI for free. It is an *instrument*, not a system under test. Its noise collapse above is a property of fixed-threshold energy gating; a probability-based VAD should not behave that way. `SarvamWS` in `drive.py` is written and unrun — no API key. **Nothing here is a measurement of any vendor's product.**
+- **The ASR here is a mock, not a vendor.** The bundled `MockASR` is an energy-gated VAD used to calibrate the scorers and run CI for free. It is an *instrument*, not a system under test. Its noise collapse above is a property of fixed-threshold energy gating; a probability-based VAD should not behave that way. `SarvamWS` is implemented against the published protocol but **has never been run** — no API key. **No number on this page measures any vendor's product.**
 - **INEPA is a measurement of the reference agent**, which is ours (`agent.py`, one fixed prompt). It says how a standard LLM agent handles Indian numeral conventions. It is not a verdict on anyone's parser. Swap yours in — it's one function.
 - **n = 12.** A proving run, not a rate. Don't quote a percentage off it.
-- **The LLM is not deterministic** even at `temperature=0`: `saade sat hazaar` returned `75000` on one run and `37500` on another. Both wrong, differently.
+- **The LLM is not deterministic** even at `temperature=0`: `saade sat hazaar` returned `17500`, `37500` and `75000` across runs. All wrong, differently. The 0.75 aggregate was stable over 5 runs; individual values were not.
 - **The disfluency timings are nominal.** Fixed 400/700 ms pauses, not a fitted distribution. Until they are fitted to real telephone speech, PIR reads as *"at this pause length"* — never as a field rate. See the roadmap.
 
 ## Quickstart
@@ -83,6 +98,19 @@ uv venv --python 3.12 && uv pip install -e ".[agent]"
 python tests/test_asli.py          # 7 calibration checks, no keys, no network
 uv run asli sweep --suite pir      # the endpointing curve (needs ELEVEN_API_KEY)
 ```
+
+### Running the real lane
+
+```bash
+echo "SARVAM_API_KEY=..." >> .env
+uv run asli check                        # one call: connects, streams, prints events
+uv run asli sweep --suite pir --agent sarvam --pause-ms 700
+uv run asli run --suite inepa --agent sarvam --llm
+```
+
+`check` runs a single utterance and prints the raw event stream and the PIR verdict — do that before a sweep, which paces audio in real time and takes roughly a minute per gate setting.
+
+On this lane the sweep axis becomes `silence_duration_ms` (100–1200 ms) instead of the mock's frame count. Event timestamps are taken as *audio sent so far* on arrival, so network and server latency inflate the apparent endpoint time — which makes PIR **conservative**: it under-reports premature cuts rather than inventing them.
 
 `.env` next to the repo:
 

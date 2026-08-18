@@ -7,10 +7,12 @@ An adapter is anything with `run(pcm, spec) -> Result`. Two ship here:
              It is not a stand-in for a vendor; it is the instrument we calibrate
              the scorers against, and it runs free and offline in CI.
 
-  SarvamWS — the real lane. Streams into saaras:v3 with `vad_signals=true` and
-             reads `speech_start`/`speech_end` straight off the socket, which is
+  SarvamWS — the real lane. Streams into saaras:v3-realtime and reads
+             `vad.speech_start` / `vad.speech_end` straight off the socket, which is
              why premature interruption is a timestamp comparison here and not an
-             audio-onset estimation problem.
+             audio-onset estimation problem. Its endpointing gate is settable in
+             milliseconds (`silence_duration_ms`, default 500), so that parameter is
+             the sweep axis on this lane.
 """
 
 from __future__ import annotations
@@ -70,72 +72,90 @@ class MockASR:
 
 
 class SarvamWS:
-    """Real lane. Requires SARVAM_API_KEY.
+    """The real lane: saaras:v3-realtime over WebSocket.
 
-    Endpointing knobs are passed straight through so PIR can be swept over them —
-    that sweep is the point of the harness, not a side feature.
+    Endpointing is a wall-clock behaviour, so the audio is paced in real time — firing
+    it in as fast as the socket accepts would tell us nothing about turn detection.
+
+    Timestamps are taken as *audio sent so far* when an event arrives, not wall clock.
+    Both include network and server latency, which inflates the apparent endpoint time
+    and therefore makes PIR conservative: we under-report premature cuts rather than
+    inventing them. Worth stating whenever the number is quoted.
     """
 
     name = "sarvam"
-    URL = "wss://api.sarvam.ai/speech-to-text/ws"
+    URL = "wss://api.sarvam.ai/speech-to-text-realtime/ws"
+    CHUNK_MS = 100
 
-    def __init__(self, *, language_code: str = "hi-IN", model: str = "saaras:v3",
-                 rate: int = SAMPLE_RATE, **vad):
-        self.language_code, self.model, self.rate, self.vad = language_code, model, rate, vad
+    def __init__(self, *, language_code: str = "hi-IN", model: str = "saaras:v3-realtime",
+                 rate: int = SAMPLE_RATE, silence_duration_ms: int | None = None, **params):
+        self.rate = rate
+        self.params = {
+            "language_code": language_code, "model": model, "sample_rate": str(rate),
+            "encoding": "linear16", "endpointing": "vad", "return_timestamps": "true",
+            **({"silence_duration_ms": str(silence_duration_ms)} if silence_duration_ms else {}),
+            **{k: str(v) for k, v in params.items()},
+        }
 
     async def run(self, pcm: np.ndarray, spec: CallSpec) -> Result:
-        import time
+        import asyncio
+        import base64
 
         import websockets
 
-        params = {
-            "language-code": self.language_code, "model": self.model,
-            "sample-rate": str(self.rate), "vad_signals": "true",
-            **{k.replace("_", "-"): str(v) for k, v in self.vad.items()},
-        }
-        qs = "&".join(f"{k}={v}" for k, v in params.items())
+        qs = "&".join(f"{k}={v}" for k, v in self.params.items())
         events: list[Event] = []
-        transcript: list[str] = []
-        t0 = time.monotonic()
+        finals: list[str] = []
+        sent_ms = 0  # audio position, the clock we timestamp against
 
-        async with websockets.connect(
-            f"{self.URL}?{qs}", additional_headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]}
-        ) as ws:
-            async def send() -> None:
-                # real time pacing: endpointing is a wall-clock behaviour, so we
-                # must not fire the audio in as fast as the socket will take it.
-                import asyncio
+        try:
+            async with websockets.connect(
+                f"{self.URL}?{qs}",
+                additional_headers={"API-Subscription-Key": os.environ["SARVAM_API_KEY"]},
+                max_size=None,
+            ) as ws:
 
-                step = FRAME_SAMPLES * 2
-                for i in range(0, len(pcm), step):
-                    await ws.send(json.dumps({
-                        "audio": {"data": pcm[i : i + step].astype("<i2").tobytes().hex(),
-                                  "encoding": "audio/wav", "sample_rate": self.rate}}))
-                    await asyncio.sleep(step / self.rate)
+                async def pump() -> None:
+                    nonlocal sent_ms
+                    step = int(self.rate * self.CHUNK_MS / 1000)
+                    for i in range(0, len(pcm), step):
+                        chunk = pcm[i : i + step].astype("<i2").tobytes()
+                        await ws.send(json.dumps({
+                            "event": "audio_input",
+                            "audio": base64.b64encode(chunk).decode(),
+                        }))
+                        sent_ms += int(len(chunk) / 2 * 1000 / self.rate)
+                        await asyncio.sleep(self.CHUNK_MS / 1000)
+                    await ws.send(json.dumps({"event": "end"}))
 
-            import asyncio
-
-            pump = asyncio.create_task(send())
-            try:
-                async for raw in ws:
-                    msg = json.loads(raw)
-                    t_ms = int((time.monotonic() - t0) * 1000)
-                    kind = msg.get("type")
-                    if kind == "events":
-                        sig = str(msg.get("data", {}).get("signal", "")).lower()
-                        if "start" in sig:
-                            events.append(Event("speech_start", t_ms))
-                        elif "end" in sig:
-                            events.append(Event("speech_end", t_ms))
-                    elif kind == "data":
-                        text = msg.get("data", {}).get("transcript", "")
-                        if text:
-                            transcript.append(text)
-                            events.append(Event("transcript", t_ms, text))
-                    if pump.done() and transcript:
-                        break
-            finally:
-                pump.cancel()
+                sender = asyncio.create_task(pump())
+                try:
+                    async for raw in ws:
+                        msg = json.loads(raw)
+                        ev = msg.get("event", "")
+                        if ev == "vad.speech_start":
+                            events.append(Event("speech_start", sent_ms))
+                        elif ev == "vad.speech_end":
+                            events.append(Event("speech_end", sent_ms))
+                        elif ev == "transcript.final":
+                            text = msg.get("text", "")
+                            finals.append(text)
+                            # start_s/end_s are audio-relative and immune to network
+                            # jitter, so prefer them when the server sends them.
+                            end_s = msg.get("end_s")
+                            at = int(float(end_s) * 1000) if end_s else sent_ms
+                            events.append(Event("transcript", at, text))
+                        elif ev == "error":
+                            return Result(spec_id=spec.id, adapter=self.name, events=events,
+                                          transcript=" ".join(finals),
+                                          error=f"{msg.get('code')}: {msg.get('message')}")
+                        elif ev == "session.end":
+                            break
+                finally:
+                    sender.cancel()
+        except Exception as exc:  # surfaced per-call, never aborts a run
+            return Result(spec_id=spec.id, adapter=self.name, events=events,
+                          transcript=" ".join(finals), error=f"{type(exc).__name__}: {exc}")
 
         return Result(spec_id=spec.id, adapter=self.name, events=events,
-                      transcript=" ".join(transcript))
+                      transcript=" ".join(finals).strip())

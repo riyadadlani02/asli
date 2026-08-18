@@ -9,7 +9,9 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import copy
+import inspect
 import json
 import sys
 from pathlib import Path
@@ -18,7 +20,7 @@ import numpy as np
 import yaml
 
 from . import degrade, score, synth
-from .drive import MockASR
+from .drive import MockASR, SarvamWS
 from .spec import CallSpec, Result, Segment, to_jsonl
 
 ROOT = Path(__file__).parent.parent
@@ -64,6 +66,18 @@ def corrupt(text: str, seed: int) -> str:
     return " ".join(toks)
 
 
+def call(adapter, pcm: np.ndarray, spec: CallSpec) -> Result:
+    """One adapter turn. SarvamWS is async (a live socket), MockASR is not."""
+    out = adapter.run(pcm, spec)
+    return asyncio.run(out) if inspect.isawaitable(out) else out
+
+
+def make_adapter(name: str, *, gate: int, lang: str, rate: int):
+    if name == "mock":
+        return MockASR(negative_frames_count=gate, rate=rate)
+    return SarvamWS(language_code=lang, rate=rate, silence_duration_ms=gate)
+
+
 def audio_for(spec: CallSpec, dials: dict) -> np.ndarray:
     pcm = synth.render(spec)
     return degrade.apply(pcm, dials, speech_for_babble=pcm) if dials else pcm
@@ -76,8 +90,11 @@ def run_suite(specs: list[CallSpec], asr: MockASR, dials: dict, use_llm: bool,
         pcm = audio_for(spec, dials)
         if inject_error:
             asr.transcript_of = corrupt(spec.text, seed=i)
-        result = asr.run(pcm, spec)
-        asr.transcript_of = ""
+        result = call(asr, pcm, spec)
+        if hasattr(asr, "transcript_of"):
+            asr.transcript_of = ""
+        if result.error:
+            print(f"  ! {spec.id}: {result.error}", file=sys.stderr)
         if use_llm:
             from .agent import respond
 
@@ -115,7 +132,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="asli")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    for name in ("run", "sweep", "demo"):
+    for name in ("run", "sweep", "demo", "check"):
         s = sub.add_parser(name)
         s.add_argument("--suite", default="inepa", choices=["inepa", "pir", "sfr"])
         s.add_argument("--llm", action="store_true", help="run the reference agent (needs Azure keys)")
@@ -126,6 +143,9 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("--frames", type=int, default=18, help="negative_frames_count")
         s.add_argument("--stance", default="careful", choices=["careful", "eager"],
                        help="reference-agent stance; SFR should separate the two")
+        s.add_argument("--agent", default="mock", choices=["mock", "sarvam"],
+                       help="system under test; 'sarvam' needs SARVAM_API_KEY")
+        s.add_argument("--lang", default="hi-IN")
         s.add_argument("--out", default=None)
 
     a = p.parse_args(argv)
@@ -134,6 +154,28 @@ def main(argv: list[str] | None = None) -> int:
         dials["noise"] = a.noise
     base = load_entities()
     rate = 16000
+
+    if a.cmd == "check":
+        import os
+
+        if "SARVAM_API_KEY" not in os.environ:
+            print("SARVAM_API_KEY is not set. Add it to .env:\n"
+                  "  echo 'SARVAM_API_KEY=...' >> .env", file=sys.stderr)
+            return 2
+        spec = build_pir(base, a.pause_ms)[0]
+        pcm = audio_for(spec, dials)
+        print(f"  sending {len(pcm) / rate:.1f}s of audio, paced in real time...")
+        asr = make_adapter("sarvam", gate=a.frames if a.frames != 18 else 500,
+                           lang=a.lang, rate=rate)
+        res = call(asr, pcm, spec)
+        if res.error:
+            print(f"\n  FAILED: {res.error}", file=sys.stderr)
+            return 1
+        print(f"\n  transcript: {res.transcript!r}")
+        print(f"  events:     {[(e.kind, e.t_ms) for e in res.events]}")
+        print(f"  true_end:   {spec.true_end_ms}ms   injected pause: {spec.internal_pauses}")
+        print(f"\n  PIR verdict: {score.pir(spec, res)}")
+        return 0
 
     if a.cmd == "demo":
         out = ROOT / "demo"
@@ -155,15 +197,19 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "sweep":
         specs = build_pir(base, a.pause_ms)
         audio = [(s, audio_for(s, dials)) for s in specs]
-        print(f"\nPIR vs negative_frames_count  (pause={a.pause_ms}ms, "
+        # the mock's gate is a frame count; the real endpoint takes milliseconds
+        gates = ((4, 8, 12, 16, 18, 24, 32, 48) if a.agent == "mock"
+                 else (100, 200, 300, 400, 500, 700, 900, 1200))
+        axis = "negative_frames_count" if a.agent == "mock" else "silence_duration_ms"
+        print(f"\nPIR vs {axis}  (agent={a.agent}, pause={a.pause_ms}ms, "
               f"{'8k telephony' if a.telephony else '16k clean'}, n={len(specs)})\n")
-        print(f"  {'frames':>6}  {'silence_ms':>10}  {'PIR':>6}  {'in_pause':>9}  {'median_ms_early':>15}")
+        print(f"  {'gate':>6}  {'silence_ms':>10}  {'PIR':>6}  {'in_pause':>9}  {'median_ms_early':>15}")
         curve = []
-        for frames in (4, 8, 12, 16, 18, 24, 32, 48):
-            asr = MockASR(negative_frames_count=frames, rate=rate)
-            rows = [(s, asr.run(pcm, s)) for s, pcm in audio]
+        for frames in gates:
+            asr = make_adapter(a.agent, gate=frames, lang=a.lang, rate=rate)
+            rows = [(s, call(asr, pcm, s)) for s, pcm in audio]
             agg = score.aggregate(rows)
-            ms = round(frames * 512 * 1000 / rate)
+            ms = round(frames * 512 * 1000 / rate) if a.agent == "mock" else frames
             print(f"  {frames:>6}  {ms:>10}  {agg['pir']:>6}  {agg['pir_injected']:>9}  "
                   f"{agg['median_ms_early'] if agg['median_ms_early'] is not None else '-':>15}")
             curve.append({"frames": frames, "silence_ms": ms, **agg})
@@ -174,10 +220,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     specs = build_pir(base, a.pause_ms) if a.suite == "pir" else base
-    asr = MockASR(negative_frames_count=a.frames, rate=rate)
+    asr = make_adapter(a.agent, gate=a.frames, lang=a.lang, rate=rate)
     rows = run_suite(specs, asr, dials, a.llm, inject_error=(a.suite == "sfr"), stance=a.stance)
     agg = write(rows, Path(a.out or ROOT / "results" / f"{a.suite}.jsonl"))
-    print(table(f"{a.suite} (n={agg['n']}, stance={a.stance}, dials={dials or 'clean'})", agg))
+    print(table(f"{a.suite} (agent={a.agent}, n={agg['n']}, stance={a.stance}, "
+                f"dials={dials or 'clean'})", agg))
     return 0
 
 
