@@ -1,0 +1,642 @@
+[
+  {
+    "mode": "transcribe",
+    "id": "dig-01",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "9877111",
+    "extracted": "9877111",
+    "survived": true,
+    "transcript": "मतलब मेरा मोबाइल नंबर है नाइन एट डबल सेवन ट्रिपल वन।"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-01",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "9877111",
+    "extracted": "9877111",
+    "survived": true,
+    "transcript": "मतलब मेरा मोबाइल नंबर है नाइन एट डबल सेवन ट्रिपल वन।"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-01",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "9877111",
+    "extracted": "987711",
+    "survived": false,
+    "transcript": "मेरा मोबाइल नंबर है मतलब ९८७७११।"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-01",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "9877111",
+    "extracted": "987711",
+    "survived": false,
+    "transcript": "मेरा मोबाइल नंबर है मतलब ९८७७११।"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-02",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "40556",
+    "extracted": "50556",
+    "survived": false,
+    "transcript": "मतलब अकाउंट के लास्ट फाइव डिजिट्स छर ज़ीरो डबल फाइव सिक्स।"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-02",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "40556",
+    "extracted": "50556",
+    "survived": false,
+    "transcript": "मतलब अकाउंट के लास्ट फाइव डिजिट्स छर ज़ीरो डबल फाइव सिक्स।"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-02",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "40556",
+    "extracted": "540556",
+    "survived": true,
+    "transcript": "अकाउंट का लास्ट फाइव डिजिट्स मतलब चार ज़ीरो डबल फाइव सिक्स"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-02",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "40556",
+    "extracted": "540556",
+    "survived": true,
+    "transcript": "अकाउंट का लास्ट फाइव डिजिट्स मतलब चार ज़ीरो डबल फाइव सिक्स"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-03",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "मतलब द रेफरेंस इज एट डबल ज़ीरो नाइन"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-03",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "मतलब द रेफरेंस इज एट डबल ज़ीरो नाइन"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-03",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "द रेफरेंस इज मतलब ८००९"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-03",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "द रेफरेंस इज मतलब ८००९"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-04",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "मतलब नंबर लिखिए ट्रिपल सेवन वन टू थ्री फोर फाइव"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-04",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "मतलब नंबर लिखिए ट्रिपल सेवन वन टू थ्री फोर फाइव"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-04",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "नंबर लिखिए मतलब ट्रिपल सेवन वन टू थ्री फोर फाइव"
+  },
+  {
+    "mode": "transcribe",
+    "id": "dig-04",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "नंबर लिखिए मतलब ट्रिपल सेवन वन टू थ्री फोर फाइव"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-01",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "9877111",
+    "extracted": "9877111",
+    "survived": true,
+    "transcript": "मतलब, मेरा मोबाइल नंबर है नाइन एट डबल सेवन ट्रिपल वन।"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-01",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "9877111",
+    "extracted": "9877111",
+    "survived": true,
+    "transcript": "मतलब, मेरा मोबाइल नंबर है नाइन एट डबल सेवन ट्रिपल वन।"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-01",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "9877111",
+    "extracted": "9877111",
+    "survived": true,
+    "transcript": "मेरा मोबाइल नंबर है मतलब नाइन एट डबल सेवन ट्रिपल वन"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-01",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "9877111",
+    "extracted": "9877111",
+    "survived": true,
+    "transcript": "मेरा मोबाइल नंबर है मतलब नाइन एट डबल सेवन ट्रिपल वन"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-02",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "40556",
+    "extracted": "50556",
+    "survived": false,
+    "transcript": "मतलब, अकाउंट के लास्ट फाइव डिजिट्स छ ज़ीरो डबल फाइव सिक्स।"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-02",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "40556",
+    "extracted": "50556",
+    "survived": false,
+    "transcript": "मतलब, अकाउंट के लास्ट फाइव डिजिट्स छ ज़ीरो डबल फाइव सिक्स।"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-02",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "40556",
+    "extracted": "540556",
+    "survived": true,
+    "transcript": "अकाउंट का लास्ट फाइव डिजिट्स मतलब चार ज़ीरो डबल फाइव सिक्स"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-02",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "40556",
+    "extracted": "540556",
+    "survived": true,
+    "transcript": "अकाउंट का लास्ट फाइव डिजिट्स मतलब चार ज़ीरो डबल फाइव सिक्स"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-03",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "मतलब द रेफरेंस इज एट डबल ज़ीरो नाइन"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-03",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "मतलब द रेफरेंस इज एट डबल ज़ीरो नाइन"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-03",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "द रेफरेंस इज़ मतलब एट डबल ज़ीरो नाइन"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-03",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "द रेफरेंस इज़ मतलब एट डबल ज़ीरो नाइन"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-04",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "मतलब नंबर लिक्किये ट्रिपल सेवन वन टू थ्री फोर फाइव"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-04",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "मतलब नंबर लिक्किये ट्रिपल सेवन वन टू थ्री फोर फाइव"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-04",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "नंबर लिखिए मतलब ट्रिपल सेवन वन टू थ्री फोर फाइव।"
+  },
+  {
+    "mode": "verbatim",
+    "id": "dig-04",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "नंबर लिखिए मतलब ट्रिपल सेवन वन टू थ्री फोर फाइव।"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-01",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "9877111",
+    "extracted": "987711",
+    "survived": false,
+    "transcript": "Matlab mera mobile number hai 987711"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-01",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "9877111",
+    "extracted": "987711",
+    "survived": false,
+    "transcript": "Matlab mera mobile number hai 987711"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-01",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "9877111",
+    "extracted": "987711",
+    "survived": false,
+    "transcript": "Mera mobile number hai matlab 987711"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-01",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "9877111",
+    "extracted": "987711",
+    "survived": false,
+    "transcript": "Mera mobile number hai matlab 987711"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-02",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "40556",
+    "extracted": "0556",
+    "survived": false,
+    "transcript": "Matlab account ke last five digits chahe 0556."
+  },
+  {
+    "mode": "translit",
+    "id": "dig-02",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "40556",
+    "extracted": "0556",
+    "survived": false,
+    "transcript": "Matlab account ke last five digits chahe 0556."
+  },
+  {
+    "mode": "translit",
+    "id": "dig-02",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "40556",
+    "extracted": "5",
+    "survived": false,
+    "transcript": "Account ka last five digits matlab"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-02",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "40556",
+    "extracted": "5",
+    "survived": false,
+    "transcript": "Account ka last five digits matlab"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-03",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "Matlab. The reference is 8009"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-03",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "Matlab. The reference is 8009"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-03",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "8009",
+    "extracted": "",
+    "survived": false,
+    "transcript": "The reference is Matlab"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-03",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "8009",
+    "extracted": "",
+    "survived": false,
+    "transcript": "The reference is Matlab"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-04",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "Matlab. Number likhiye, 77712345."
+  },
+  {
+    "mode": "translit",
+    "id": "dig-04",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "Matlab. Number likhiye, 77712345."
+  },
+  {
+    "mode": "translit",
+    "id": "dig-04",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "77712345",
+    "extracted": "",
+    "survived": false,
+    "transcript": "Number likhiye matlab"
+  },
+  {
+    "mode": "translit",
+    "id": "dig-04",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "77712345",
+    "extracted": "",
+    "survived": false,
+    "transcript": "Number likhiye matlab"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-01",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "9877111",
+    "extracted": "9877111",
+    "survived": true,
+    "transcript": "मतलब मेरा mobile number है 9877111"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-01",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "9877111",
+    "extracted": "9877111",
+    "survived": true,
+    "transcript": "मतलब मेरा mobile number है 9877111"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-01",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "9877111",
+    "extracted": "987711",
+    "survived": false,
+    "transcript": "मेरा मोबाइल नंबर है मतलब 987711"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-01",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "9877111",
+    "extracted": "987711",
+    "survived": false,
+    "transcript": "मेरा मोबाइल नंबर है मतलब 987711"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-02",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "40556",
+    "extracted": "0556",
+    "survived": false,
+    "transcript": "मतलब account के last five digits छर 0556"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-02",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "40556",
+    "extracted": "0556",
+    "survived": false,
+    "transcript": "मतलब account के last five digits छर 0556"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-02",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "40556",
+    "extracted": "5",
+    "survived": false,
+    "transcript": "अकाउंट का last 5 digits मतलब"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-02",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "40556",
+    "extracted": "5",
+    "survived": false,
+    "transcript": "अकाउंट का last 5 digits मतलब"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-03",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "मतलब the reference is 8009"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-03",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "8009",
+    "extracted": "8009",
+    "survived": true,
+    "transcript": "मतलब the reference is 8009"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-03",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "8009",
+    "extracted": "",
+    "survived": false,
+    "transcript": "The reference is मतलब"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-03",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "8009",
+    "extracted": "",
+    "survived": false,
+    "transcript": "The reference is मतलब"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-04",
+    "placement": "control (filler leading)",
+    "run": 0,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "मतलब number लिखे 77712345"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-04",
+    "placement": "control (filler leading)",
+    "run": 1,
+    "truth": "77712345",
+    "extracted": "77712345",
+    "survived": true,
+    "transcript": "मतलब number लिखे 77712345"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-04",
+    "placement": "hesitation (pre-entity)",
+    "run": 0,
+    "truth": "77712345",
+    "extracted": "",
+    "survived": false,
+    "transcript": "नंबर लिखिए मतलब"
+  },
+  {
+    "mode": "codemix",
+    "id": "dig-04",
+    "placement": "hesitation (pre-entity)",
+    "run": 1,
+    "truth": "77712345",
+    "extracted": "",
+    "survived": false,
+    "transcript": "नंबर लिखिए मतलब"
+  }
+]

@@ -1,0 +1,489 @@
+<title>The 500ms Cliff</title>
+<style>
+:root{
+  --paper:#F7F6F2; --raised:#FFFEFB; --sunk:#EEEDE7;
+  --ink:#12151B; --ink-2:#3D444F; --ink-3:#6B7280;
+  --rule:#DEDCD3; --rule-2:#C9C6BA;
+  --signal:#C8781E; --cut:#B23A2E; --hold:#2F8F6B;
+  --signal-wash:rgba(200,120,30,.14); --cut-wash:rgba(178,58,46,.11); --hold-wash:rgba(47,143,107,.12);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --deva:"Kohinoor Devanagari","Noto Sans Devanagari","Nirmala UI",Mangal,var(--sans);
+  --maxw:74rem;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0D1117; --raised:#141A22; --sunk:#0A0E13;
+  --ink:#E8E6DF; --ink-2:#AEB4BE; --ink-3:#7C8492;
+  --rule:#222B36; --rule-2:#33404F;
+  --signal:#C8831F; --cut:#B03A2C; --hold:#2E9B72;
+  --signal-wash:rgba(200,131,31,.18); --cut-wash:rgba(176,58,44,.16); --hold-wash:rgba(46,155,114,.16);
+}}
+:root[data-theme="dark"]{
+  --paper:#0D1117; --raised:#141A22; --sunk:#0A0E13;
+  --ink:#E8E6DF; --ink-2:#AEB4BE; --ink-3:#7C8492;
+  --rule:#222B36; --rule-2:#33404F;
+  --signal:#C8831F; --cut:#B03A2C; --hold:#2E9B72;
+  --signal-wash:rgba(200,131,31,.18); --cut-wash:rgba(176,58,44,.16); --hold-wash:rgba(46,155,114,.16);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 clamp(1.1rem,4vw,3rem)}
+.rail{display:flex; flex-direction:column; gap:clamp(3.5rem,7vw,6rem); padding-block:clamp(2.5rem,6vw,4.5rem) 6rem}
+h1,h2,h3{margin:0; text-wrap:balance; font-weight:600}
+p{margin:0}
+a{color:inherit}
+code,.mono{font-family:var(--mono)}
+.deva{font-family:var(--deva)}
+
+/* ---- masthead ---- */
+.mast{display:flex; flex-direction:column; gap:1.6rem}
+.mast-top{display:flex; flex-wrap:wrap; gap:1rem; align-items:baseline; justify-content:space-between}
+.wordmark{font-family:var(--mono); font-size:.82rem; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-3)}
+.wordmark b{color:var(--signal); font-weight:600}
+h1{
+  font-family:var(--mono); font-weight:600;
+  font-size:clamp(2.1rem,6.4vw,4.1rem); line-height:1.02; letter-spacing:-.035em;
+}
+h1 em{font-style:normal; color:var(--signal)}
+.dek{max-width:56ch; font-size:clamp(1.02rem,1.9vw,1.2rem); color:var(--ink-2)}
+.dek strong{color:var(--ink); font-weight:600}
+.runmeta{
+  display:flex; flex-wrap:wrap; gap:.4rem 1.5rem; padding-top:1.1rem; border-top:1px solid var(--rule);
+  font-family:var(--mono); font-size:.76rem; color:var(--ink-3); letter-spacing:.02em;
+}
+.runmeta span b{color:var(--ink-2); font-weight:500}
+
+/* ---- sections ---- */
+section{display:flex; flex-direction:column; gap:1.5rem}
+.eyebrow{
+  display:flex; align-items:center; gap:.7rem;
+  font-family:var(--mono); font-size:.74rem; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-3);
+}
+.eyebrow::after{content:""; flex:1; height:1px; background:var(--rule)}
+.eyebrow .tag{color:var(--signal)}
+h2{font-family:var(--mono); font-size:clamp(1.3rem,3vw,1.75rem); letter-spacing:-.02em; line-height:1.18}
+.lede{max-width:66ch; color:var(--ink-2)}
+.lede strong{color:var(--ink); font-weight:600}
+
+/* ---- instrument ---- */
+.instrument{
+  background:var(--raised); border:1px solid var(--rule); border-radius:3px;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.inst-head{
+  display:flex; flex-wrap:wrap; gap:.6rem 1.4rem; justify-content:space-between; align-items:baseline;
+  padding:.85rem 1.1rem; border-bottom:1px solid var(--rule); background:var(--sunk);
+  font-family:var(--mono); font-size:.75rem; color:var(--ink-3);
+}
+.utt{font-size:.95rem; line-height:1.5}
+.utt .said{color:var(--ink)}
+.utt .fill{color:var(--signal); font-weight:600}
+canvas{display:block; width:100%; height:auto; touch-action:pan-y}
+.inst-foot{padding:1.1rem; display:flex; flex-direction:column; gap:1rem; border-top:1px solid var(--rule)}
+.ctl{display:flex; flex-wrap:wrap; align-items:center; gap:.8rem 1.2rem}
+.ctl label{font-family:var(--mono); font-size:.76rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); white-space:nowrap}
+input[type=range]{
+  flex:1 1 16rem; min-width:12rem; height:1.6rem; -webkit-appearance:none; appearance:none;
+  background:transparent; cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:3px; background:var(--rule-2); border-radius:2px}
+input[type=range]::-moz-range-track{height:3px; background:var(--rule-2); border-radius:2px}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none; width:16px; height:16px; margin-top:-6.5px;
+  border-radius:50%; background:var(--signal); border:2px solid var(--raised);
+  box-shadow:0 0 0 1px var(--rule-2);
+}
+input[type=range]::-moz-range-thumb{
+  width:14px; height:14px; border-radius:50%; background:var(--signal);
+  border:2px solid var(--raised); box-shadow:0 0 0 1px var(--rule-2);
+}
+input[type=range]:focus-visible{outline:2px solid var(--signal); outline-offset:4px}
+.gateval{font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:1.05rem; color:var(--ink); min-width:5.5ch}
+.verdict{
+  display:flex; flex-wrap:wrap; align-items:center; gap:.65rem;
+  font-family:var(--mono); font-size:.86rem; padding:.7rem .9rem; border-radius:2px;
+  border-left:3px solid var(--hold); background:var(--hold-wash); color:var(--ink);
+}
+.verdict[data-state="cut"]{border-left-color:var(--cut); background:var(--cut-wash)}
+.verdict .badge{font-weight:600; letter-spacing:.06em; text-transform:uppercase; font-size:.74rem}
+.verdict[data-state="cut"] .badge{color:var(--cut)}
+.verdict[data-state="ok"] .badge{color:var(--hold)}
+.presets{display:flex; flex-wrap:wrap; gap:.45rem}
+.presets button{
+  font-family:var(--mono); font-size:.74rem; padding:.34rem .6rem; cursor:pointer;
+  background:var(--paper); color:var(--ink-2); border:1px solid var(--rule-2); border-radius:2px;
+}
+.presets button:hover{border-color:var(--signal); color:var(--ink)}
+.presets button:focus-visible{outline:2px solid var(--signal); outline-offset:2px}
+
+/* ---- charts ---- */
+.figure{background:var(--raised); border:1px solid var(--rule); border-radius:3px; padding:1.2rem 1.1rem 1rem}
+.figure figcaption{margin-top:.9rem; padding-top:.8rem; border-top:1px solid var(--rule); font-size:.85rem; color:var(--ink-3)}
+.scroll{overflow-x:auto}
+svg{display:block; width:100%; height:auto; overflow:visible}
+.grid-line{stroke:var(--rule); stroke-width:1}
+.axis-txt{font-family:var(--mono); font-size:11px; fill:var(--ink-3); font-variant-numeric:tabular-nums}
+.dot-hit{cursor:pointer}
+.legend{display:flex; flex-wrap:wrap; gap:.4rem 1.2rem; font-family:var(--mono); font-size:.76rem; color:var(--ink-2); margin-bottom:.7rem}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:.42rem; vertical-align:-1px}
+
+/* ---- matrix ---- */
+table{border-collapse:collapse; width:100%; font-size:.88rem; min-width:34rem}
+th,td{text-align:left; padding:.62rem .7rem; border-bottom:1px solid var(--rule)}
+th{font-family:var(--mono); font-size:.72rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:500}
+td.num{font-family:var(--mono); font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:none}
+.pill{
+  display:inline-flex; align-items:center; gap:.4rem; font-family:var(--mono); font-size:.76rem;
+  padding:.16rem .5rem; border-radius:2px; white-space:nowrap;
+}
+.pill.lost{background:var(--cut-wash); color:var(--cut)}
+.pill.kept{background:var(--hold-wash); color:var(--hold)}
+.pill::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+
+/* ---- trace ---- */
+.trace{font-family:var(--mono); font-size:.82rem; display:flex; flex-direction:column; gap:0}
+.trace .row{display:grid; grid-template-columns:5.5rem 1fr; gap:.9rem; padding:.4rem 0; border-bottom:1px solid var(--rule)}
+.trace .row:last-child{border-bottom:none}
+.trace .t{color:var(--ink-3); font-variant-numeric:tabular-nums; text-align:right}
+.trace .ev{color:var(--ink-2); overflow-wrap:anywhere}
+.trace .row.key .ev{color:var(--ink)}
+.trace .row.good{background:var(--hold-wash)}
+.trace .row.bad{background:var(--cut-wash)}
+.trace .lbl{font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; margin-left:.5rem}
+.trace .row.good .lbl{color:var(--hold)}
+.trace .row.bad .lbl{color:var(--cut)}
+
+/* ---- tiles ---- */
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(13rem,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.tile{background:var(--raised); padding:1.1rem; display:flex; flex-direction:column; gap:.3rem}
+.tile .k{font-family:var(--mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3)}
+.tile .v{font-family:var(--mono); font-size:1.85rem; letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.1}
+.tile .n{font-size:.8rem; color:var(--ink-3)}
+.tile.warn .v{color:var(--cut)}
+.tile.good .v{color:var(--hold)}
+
+/* ---- caveats ---- */
+.caveats{display:flex; flex-direction:column; gap:0; border:1px solid var(--rule-2); border-radius:3px; overflow:hidden}
+.caveat{display:grid; grid-template-columns:auto 1fr; gap:1rem; padding:1rem 1.1rem; border-bottom:1px solid var(--rule); background:var(--raised)}
+.caveat:last-child{border-bottom:none}
+.caveat .no{font-family:var(--mono); font-size:.75rem; color:var(--ink-3); padding-top:.2rem}
+.caveat p{font-size:.92rem; color:var(--ink-2)}
+.caveat b{color:var(--ink); font-weight:600}
+
+pre{
+  font-family:var(--mono); font-size:.82rem; background:var(--sunk); color:var(--ink-2);
+  padding:1rem 1.1rem; border-radius:3px; border:1px solid var(--rule); overflow-x:auto; margin:0; line-height:1.75;
+}
+pre b{color:var(--signal); font-weight:400}
+footer{border-top:1px solid var(--rule); padding-top:1.4rem; font-size:.85rem; color:var(--ink-3)}
+
+.tooltip{
+  position:fixed; pointer-events:none; opacity:0; transition:opacity .12s;
+  background:var(--ink); color:var(--paper); font-family:var(--mono); font-size:.75rem;
+  padding:.4rem .55rem; border-radius:2px; z-index:20; white-space:nowrap;
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+@media (max-width:640px){
+  .trace .row{grid-template-columns:4.2rem 1fr; gap:.6rem}
+  .runmeta{gap:.3rem 1rem}
+}
+</style>
+
+<div class="wrap"><div class="rail">
+
+<header class="mast">
+  <div class="mast-top">
+    <div class="wordmark"><b>asli</b> &nbsp;/&nbsp; indic voice-agent harness</div>
+    <div class="wordmark">saaras:v3-realtime</div>
+  </div>
+  <h1>A 700ms pause<br>costs you the <em>whole number</em>.</h1>
+  <p class="dek">Indian callers hesitate mid-sentence &#x2014; <span class="deva">&#x092E;&#x0924;&#x0932;&#x092C;&#x2026;</span>, <span class="deva">&#x0939;&#x093E;&#x0901; &#x0924;&#x094B;&#x2026;</span> &#x2014; and turn detection reads the gap as the end of the turn. At the documented default gate, <strong>every caller in this run was cut off</strong>, a median 2.3 seconds before they finished speaking. Drag the gate below and watch the cliff.</p>
+  <div class="runmeta">
+    <span>run <b>2026-08-19</b></span>
+    <span>endpoint <b>saaras:v3-realtime</b></span>
+    <span>n <b>12 utterances &#x00D7; 8 gates</b></span>
+    <span>audio <b>16 kHz, real-time paced</b></span>
+    <span>hesitation <b>700 ms, nominal</b></span>
+  </div>
+</header>
+
+<section>
+  <div class="eyebrow"><span class="tag">PIR</span><span>premature interruption</span></div>
+  <h2>The instrument</h2>
+  <p class="lede">This is a real utterance from the run &#x2014; synthesised segment by segment, with the pause spliced in as exact silence. That construction is what makes the timing trustworthy: <strong>the true end of the turn is known, not estimated.</strong></p>
+
+  <div class="instrument">
+    <div class="inst-head">
+      <div class="utt"><span class="deva said">&#x092E;&#x0947;&#x0930;&#x093E; &#x092E;&#x094B;&#x092C;&#x093E;&#x0907;&#x0932; &#x0928;&#x0902;&#x092C;&#x0930; &#x0939;&#x0948;,</span> <span class="deva fill">&#x092E;&#x0924;&#x0932;&#x092C;&#x2026;</span> <span class="deva said">&#x0928;&#x093E;&#x0907;&#x0928; &#x090F;&#x091F; &#x0921;&#x092C;&#x0932; &#x0938;&#x0947;&#x0935;&#x0928; &#x091F;&#x094D;&#x0930;&#x093F;&#x092A;&#x0932; &#x0935;&#x0928;</span></div>
+      <div>dig-01 &nbsp;&#x00B7;&nbsp; truth 9877111</div>
+    </div>
+    <canvas id="wave" width="1200" height="300" role="img"
+      aria-label="Waveform of the utterance with a 700 millisecond hesitation before the digits, showing where the turn-end decision fires."></canvas>
+    <div class="inst-foot">
+      <div class="ctl">
+        <label for="gate">silence_duration_ms</label>
+        <input id="gate" type="range" min="100" max="1200" step="50" value="500"
+               aria-describedby="verdict">
+        <output class="gateval" id="gateval">500</output>
+        <div class="presets">
+          <button type="button" data-g="500">default 500</button>
+          <button type="button" data-g="700">700</button>
+          <button type="button" data-g="1200">1200</button>
+        </div>
+      </div>
+      <div class="verdict" id="verdict" data-state="cut" role="status"><span class="badge" id="vbadge">cut off</span><span id="vtext"></span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow"><span class="tag">measured</span><span>live endpoint</span></div>
+  <h2>The cliff is real, and it sits just above the default</h2>
+  <p class="lede">Twelve utterances streamed in real time at each gate setting. The curve is flat at 1.00 across every value up to and including the 500 ms default, then falls to zero. <strong>Raising the gate to 700 ms removes the effect entirely</strong> at this hesitation length.</p>
+  <figure class="figure">
+    <div class="legend">
+      <span><i style="background:var(--cut)"></i>callers cut off (live, saaras:v3-realtime)</span>
+      <span><i style="background:var(--signal)"></i>documented default</span>
+    </div>
+    <div class="scroll"><svg id="sweep" viewBox="0 0 760 300" role="img" aria-label="Premature interruption rate against silence duration, falling from 1.0 to 0.0 between 500 and 700 milliseconds."></svg></div>
+    <figcaption>PIR = share of calls where the turn-end decision landed before the caller finished. n = 12 per point. Timestamps are taken as audio-sent-so-far, so network latency pushes measurements <em>away</em> from &ldquo;premature&rdquo; &#x2014; this curve is conservative.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="eyebrow"><span class="tag">trace</span><span>partial vs final</span></div>
+  <h2>The recogniser hears it. The final transcript drops it.</h2>
+  <p class="lede">Reading every message on the socket with no early exit: the streaming partials contain the complete, correct utterance. The final that arrives 105 ms later has the digits removed &#x2014; while reporting <code>end_s 3.607</code>, claiming to cover the whole turn.</p>
+  <div class="figure">
+    <div class="trace" id="trace"></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow"><span class="tag">bounded</span><span>where it happens</span></div>
+  <h2>Only the romanising modes</h2>
+  <p class="lede">Same audio, same gate, four output modes, with a control: the identical filler placed at the <em>head</em> of the utterance, where it precedes nothing. Native-script output is unaffected. <strong>The romanising modes lose the entity completely.</strong></p>
+  <div class="figure scroll">
+    <table>
+      <thead><tr><th>mode</th><th>control &mdash; filler leading</th><th>hesitation before entity</th><th>verdict</th></tr></thead>
+      <tbody id="modes"></tbody>
+    </table>
+  </div>
+  <p class="lede" style="font-size:.9rem">The control rate is below 8/8 for an unrelated reason: <code>char</code> is sometimes recognised as <span class="deva">&#x091B;</span> (six) rather than <span class="deva">&#x091A;&#x093E;&#x0930;</span> (four). What matters is the <em>change</em> between the two columns.</p>
+</section>
+
+<section>
+  <div class="eyebrow"><span class="tag">also</span><span>reference agent</span></div>
+  <h2>What else the harness reports</h2>
+  <p class="lede">These come from a fixed reference agent we wrote, not from any vendor &#x2014; they describe how a <em>standard LLM agent</em> handles Indian numeral conventions, and how much of an upstream error survives into its behaviour.</p>
+  <div class="tiles">
+    <div class="tile warn"><span class="k">INEPA</span><span class="v">0.75</span><span class="n">9 of 12 entities parsed correctly from a clean transcript. Stable across 5 runs.</span></div>
+    <div class="tile good"><span class="k">SFR &#x00B7; careful</span><span class="v">0.00</span><span class="n">Confirms 100% of the time, so it cannot silently fail. n = 7.</span></div>
+    <div class="tile warn"><span class="k">SFR &#x00B7; eager</span><span class="v">0.14</span><span class="n">Same task, one instruction changed. Acts on mangled entities half the time. n = 7.</span></div>
+    <div class="tile"><span class="k">calibration</span><span class="v">9/9</span><span class="n">Scorer checks passing offline, no keys, no network.</span></div>
+  </div>
+  <p class="lede" style="font-size:.9rem">One finding worth more than the score: the stance instruction that moves SFR <em>also</em> moves parsing. Removing that single line makes <code>do lakh pachas hazaar</code> parse correctly. Anyone tuning an agent prompt is moving both at once.</p>
+</section>
+
+<section>
+  <div class="eyebrow"><span class="tag">honesty</span><span>read before citing</span></div>
+  <h2>What this is not</h2>
+  <div class="caveats" id="caveats"></div>
+</section>
+
+<section>
+  <div class="eyebrow"><span class="tag">run it</span><span>ten minutes</span></div>
+  <h2>Point it at your own agent</h2>
+  <pre><b>uv</b> venv --python 3.12 &amp;&amp; <b>uv</b> pip install -e ".[agent]"
+python tests/test_asli.py            <i style="color:var(--ink-3)"># 9 checks, no keys, no network</i>
+
+echo "SARVAM_API_KEY=..." &gt;&gt; .env
+<b>uv</b> run asli check                    <i style="color:var(--ink-3)"># one call, prints the raw event stream</i>
+<b>uv</b> run asli sweep --suite pir --agent sarvam --pause-ms 700</pre>
+  <p class="lede">An adapter is one method: <code>run(pcm, spec) -&gt; Result</code>, emitting timestamped <code>speech_start</code> / <code>speech_end</code> / <code>transcript</code> events. Everything above follows from that.</p>
+</section>
+
+<footer>
+  <p><b>asli</b> &#x2014; a harness for measuring what an Indic voice agent does when things go wrong mid-conversation. Not a leaderboard; no vendor is ranked. MIT.</p>
+</footer>
+
+</div></div>
+<div class="tooltip" id="tip"></div>
+
+<script>
+const D = {"hero":{"env":[0.1047,0.1368,0.1487,0.1785,0.1904,0.2052,0.365,0.6224,0.7095,0.7502,0.7679,0.8008,0.8265,0.8502,0.8523,0.8039,0.3005,0.8982,0.9132,0.8955,0.9079,0.8846,0.7406,0.6308,0.2861,0.3035,0.2971,0.3043,0.3074,0.4304,0.6789,0.6943,0.6392,0.6663,0.6992,0.717,0.6918,0.2625,0.1865,0.1382,0.127,0.0576,0.2036,0.846,0.937,1.0,0.8104,0.8663,0.825,0.7097,0.6472,0.6725,0.6985,0.4507,0.5,0.4976,0.4922,0.4596,0.4804,0.4385,0.3901,0.3459,0.2927,0.2951,0.2979,0.2953,0.4107,0.4869,0.4353,0.4169,0.3494,0.2208,0.2405,0.24,0.2363,0.2237,0.2219,0.2154,0.1896,0.1501,0.0996,0.3168,0.3668,0.3175,0.3088,0.2946,0.2698,0.2702,0.2652,0.0949,0.1196,0.1279,0.1189,0.1025,0.0781,0.0687,0.0913,0.0911,0.1369,0.1432,0.1337,0.1304,0.1379,0.1386,0.1307,0.1249,0.1187,0.1087,0.1039,0.0929,0.09,0.0864,0.0812,0.065,0.0502,0.0379,0.116,0.2086,0.2567,0.329,0.3092,0.312,0.3791,0.3897,0.4407,0.4457,0.332,0.1176,0.02,0.0065,0.0073,0.0041,0.0041,0.003,0.0026,0.0032,0.0036,0.0027,0.2159,0.0592,0.0445,0.0281,0.0068,0.1208,0.2247,0.2629,0.4015,0.3719,0.4448,0.4321,0.4384,0.4458,0.462,0.4594,0.4976,0.5111,0.4919,0.3299,0.0625,0.044,0.0172,0.0136,0.0133,0.0118,0.0085,0.0077,0.0075,0.0058,0.0047,0.0029,0.0022,0.0012,0.0009,0.0005,0.0002,0.0002,0.0002,0.0005,0.0126,0.1543,0.156,0.0109,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.1468,0.2992,0.3528,0.6025,0.5746,0.7677,0.7323,0.7281,0.6845,0.6807,0.6862,0.6952,0.7208,0.7578,0.756,0.7279,0.7122,0.7386,0.7143,0.6758,0.6515,0.452,0.4513,0.3863,0.3743,0.2461,0.1317,0.7166,0.0471,0.0258,0.3295,0.3111,0.5571,0.5036,0.3096,0.3186,0.3028,0.2784,0.2532,0.2114,0.2039,0.2046,0.2051,0.1824,0.1103,0.1276,0.0607,0.0101,0.0089,0.0047,0.0021,0.0025,0.0022,0.0022,0.0014,0.001,0.0008,0.0005,0.0003,0.003,0.0862,0.0473,0.0233,0.0162,0.0127,0.011,0.007,0.0038,0.0016,0.0005,0.0003,0.0003,0.0002,0.0002,0.0002,0.0002,0.0001,0.0001,0.1581,0.1544,0.5187,0.4856,0.5578,0.7395,0.7755,0.7041,0.3493,0.1164,0.0715,0.0384,0.022,0.1104,0.4905,0.6129,0.6142,0.5665,0.4852,0.3067,0.1978,0.1168,0.0826,0.0359,0.0207,0.014,0.0149,0.0205,0.0314,0.0318,0.0218,0.4615,0.4064,0.439,0.4779,0.4931,0.4651,0.4335,0.3616,0.1474,0.0567,0.0421,0.0458,0.0469,0.1181,0.2159,0.2996,0.3334,0.3332,0.3233,0.1969,0.2018,0.21,0.2053,0.2043,0.207,0.2117,0.2093,0.1975,0.1836,0.1505,0.0848,0.0334,0.0157,0.0079,0.0046,0.004,0.0028,0.002,0.0024,0.0014,0.001,0.0006,0.0004,0.2017,0.2796,0.2091,0.0714,0.0423,0.0174,0.4344,0.6262,0.5315,0.3805,0.2805,0.0742,0.0386,0.0302,0.0246,0.0132,0.0588,0.0394,0.2795,0.4857,0.4112,0.4219,0.4122,0.398,0.3704,0.3317,0.2543,0.1571,0.1389,0.1809,0.2444,0.2781,0.321,0.2591,0.2926,0.3526,0.2194,0.219,0.2309,0.2048,0.1491,0.0962,0.1286,0.1176,0.1176,0.1197,0.1142,0.1127,0.1115,0.105,0.0988,0.0717],"dur_ms":4355,"bounds":[[0,1089],[1089,1716],[2416,4354]],"true_end_ms":4354,"pause":[1716,2416],"segments":["Mera mobile number hai","matlab","nine eight double seven, triple one"],"text_hi":"\u092e\u0947\u0930\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930 \u0939\u0948, \u092e\u0924\u0932\u092c\u2026 \u0928\u093e\u0907\u0928 \u090f\u091f \u0921\u092c\u0932 \u0938\u0947\u0935\u0928 \u091f\u094d\u0930\u093f\u092a\u0932 \u0935\u0928"},"sweep_live":[{"frames":100,"silence_ms":100,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":1.0,"pir_n":12,"median_ms_early":2434,"sfr_asr":0.0,"sfr_asr_n":12,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":200,"silence_ms":200,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":1.0,"pir_n":12,"median_ms_early":2620,"sfr_asr":0.0,"sfr_asr_n":12,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":300,"silence_ms":300,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":1.0,"pir_n":12,"median_ms_early":2520,"sfr_asr":0.0,"sfr_asr_n":12,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":400,"silence_ms":400,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":1.0,"pir_n":12,"median_ms_early":2420,"sfr_asr":0.0,"sfr_asr_n":12,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":500,"silence_ms":500,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":0.8333,"pir_n":12,"median_ms_early":2320,"sfr_asr":0.0,"sfr_asr_n":12,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":700,"silence_ms":700,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":0.0,"pir_injected":0.0,"pir_n":12,"median_ms_early":null,"sfr_asr":0.0,"sfr_asr_n":12,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":900,"silence_ms":900,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":0.0,"pir_injected":0.0,"pir_n":12,"median_ms_early":null,"sfr_asr":0.0,"sfr_asr_n":12,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":1200,"silence_ms":1200,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":0.0,"pir_injected":0.0,"pir_n":12,"median_ms_early":null,"sfr_asr":0.0,"sfr_asr_n":12,"sfr_bb":0.0,"sfr_bb_n":12}],"sweep_mock":[{"frames":4,"silence_ms":128,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":0.6667,"pir_n":12,"median_ms_early":3010,"sfr_asr":null,"sfr_asr_n":0,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":8,"silence_ms":256,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":1.0,"pir_n":12,"median_ms_early":2696,"sfr_asr":null,"sfr_asr_n":0,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":12,"silence_ms":384,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":1.0,"pir_n":12,"median_ms_early":2568,"sfr_asr":null,"sfr_asr_n":0,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":16,"silence_ms":512,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":1.0,"pir_n":12,"median_ms_early":2440,"sfr_asr":null,"sfr_asr_n":0,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":18,"silence_ms":576,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":1.0,"pir_injected":1.0,"pir_n":12,"median_ms_early":2376,"sfr_asr":null,"sfr_asr_n":0,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":24,"silence_ms":768,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":0.0,"pir_injected":0.0,"pir_n":12,"median_ms_early":null,"sfr_asr":null,"sfr_asr_n":0,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":32,"silence_ms":1024,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":0.0,"pir_injected":0.0,"pir_n":12,"median_ms_early":null,"sfr_asr":null,"sfr_asr_n":0,"sfr_bb":0.0,"sfr_bb_n":12},{"frames":48,"silence_ms":1536,"n":12,"confirm_rate":null,"inepa_accuracy":null,"inepa_n":0,"pir":0.0,"pir_injected":0.0,"pir_n":12,"median_ms_early":null,"sfr_asr":null,"sfr_asr_n":0,"sfr_bb":0.0,"sfr_bb_n":12}],"modes":{"transcribe":{"control":[6,8],"hesitation":[6,8]},"verbatim":{"control":[6,8],"hesitation":[8,8]},"translit":{"control":[4,8],"hesitation":[0,8]},"codemix":{"control":[6,8],"hesitation":[0,8]}},"losses":[{"mode":"transcribe","id":"dig-01","placement":"hesitation (pre-entity)","run":0,"truth":"9877111","extracted":"987711","survived":false,"transcript":"\u092e\u0947\u0930\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930 \u0939\u0948 \u092e\u0924\u0932\u092c \u096f\u096e\u096d\u096d\u0967\u0967\u0964"},{"mode":"transcribe","id":"dig-02","placement":"hesitation (pre-entity)","run":0,"truth":"40556","extracted":"540556","survived":true,"transcript":"\u0905\u0915\u093e\u0909\u0902\u091f \u0915\u093e \u0932\u093e\u0938\u094d\u091f \u092b\u093e\u0907\u0935 \u0921\u093f\u091c\u093f\u091f\u094d\u0938 \u092e\u0924\u0932\u092c \u091a\u093e\u0930 \u095b\u0940\u0930\u094b \u0921\u092c\u0932 \u092b\u093e\u0907\u0935 \u0938\u093f\u0915\u094d\u0938"},{"mode":"transcribe","id":"dig-03","placement":"hesitation (pre-entity)","run":0,"truth":"8009","extracted":"8009","survived":true,"transcript":"\u0926 \u0930\u0947\u092b\u0930\u0947\u0902\u0938 \u0907\u091c \u092e\u0924\u0932\u092c \u096e\u0966\u0966\u096f"},{"mode":"transcribe","id":"dig-04","placement":"hesitation (pre-entity)","run":0,"truth":"77712345","extracted":"77712345","survived":true,"transcript":"\u0928\u0902\u092c\u0930 \u0932\u093f\u0916\u093f\u090f \u092e\u0924\u0932\u092c \u091f\u094d\u0930\u093f\u092a\u0932 \u0938\u0947\u0935\u0928 \u0935\u0928 \u091f\u0942 \u0925\u094d\u0930\u0940 \u092b\u094b\u0930 \u092b\u093e\u0907\u0935"},{"mode":"verbatim","id":"dig-01","placement":"hesitation (pre-entity)","run":0,"truth":"9877111","extracted":"9877111","survived":true,"transcript":"\u092e\u0947\u0930\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930 \u0939\u0948 \u092e\u0924\u0932\u092c \u0928\u093e\u0907\u0928 \u090f\u091f \u0921\u092c\u0932 \u0938\u0947\u0935\u0928 \u091f\u094d\u0930\u093f\u092a\u0932 \u0935\u0928"},{"mode":"verbatim","id":"dig-02","placement":"hesitation (pre-entity)","run":0,"truth":"40556","extracted":"540556","survived":true,"transcript":"\u0905\u0915\u093e\u0909\u0902\u091f \u0915\u093e \u0932\u093e\u0938\u094d\u091f \u092b\u093e\u0907\u0935 \u0921\u093f\u091c\u093f\u091f\u094d\u0938 \u092e\u0924\u0932\u092c \u091a\u093e\u0930 \u095b\u0940\u0930\u094b \u0921\u092c\u0932 \u092b\u093e\u0907\u0935 \u0938\u093f\u0915\u094d\u0938"},{"mode":"verbatim","id":"dig-03","placement":"hesitation (pre-entity)","run":0,"truth":"8009","extracted":"8009","survived":true,"transcript":"\u0926 \u0930\u0947\u092b\u0930\u0947\u0902\u0938 \u0907\u091c\u093c \u092e\u0924\u0932\u092c \u090f\u091f \u0921\u092c\u0932 \u091c\u093c\u0940\u0930\u094b \u0928\u093e\u0907\u0928"},{"mode":"verbatim","id":"dig-04","placement":"hesitation (pre-entity)","run":0,"truth":"77712345","extracted":"77712345","survived":true,"transcript":"\u0928\u0902\u092c\u0930 \u0932\u093f\u0916\u093f\u090f \u092e\u0924\u0932\u092c \u091f\u094d\u0930\u093f\u092a\u0932 \u0938\u0947\u0935\u0928 \u0935\u0928 \u091f\u0942 \u0925\u094d\u0930\u0940 \u092b\u094b\u0930 \u092b\u093e\u0907\u0935\u0964"},{"mode":"translit","id":"dig-01","placement":"hesitation (pre-entity)","run":0,"truth":"9877111","extracted":"987711","survived":false,"transcript":"Mera mobile number hai matlab 987711"},{"mode":"translit","id":"dig-02","placement":"hesitation (pre-entity)","run":0,"truth":"40556","extracted":"5","survived":false,"transcript":"Account ka last five digits matlab"},{"mode":"translit","id":"dig-03","placement":"hesitation (pre-entity)","run":0,"truth":"8009","extracted":"","survived":false,"transcript":"The reference is Matlab"},{"mode":"translit","id":"dig-04","placement":"hesitation (pre-entity)","run":0,"truth":"77712345","extracted":"","survived":false,"transcript":"Number likhiye matlab"},{"mode":"codemix","id":"dig-01","placement":"hesitation (pre-entity)","run":0,"truth":"9877111","extracted":"987711","survived":false,"transcript":"\u092e\u0947\u0930\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930 \u0939\u0948 \u092e\u0924\u0932\u092c 987711"},{"mode":"codemix","id":"dig-02","placement":"hesitation (pre-entity)","run":0,"truth":"40556","extracted":"5","survived":false,"transcript":"\u0905\u0915\u093e\u0909\u0902\u091f \u0915\u093e last 5 digits \u092e\u0924\u0932\u092c"},{"mode":"codemix","id":"dig-03","placement":"hesitation (pre-entity)","run":0,"truth":"8009","extracted":"","survived":false,"transcript":"The reference is \u092e\u0924\u0932\u092c"},{"mode":"codemix","id":"dig-04","placement":"hesitation (pre-entity)","run":0,"truth":"77712345","extracted":"","survived":false,"transcript":"\u0928\u0902\u092c\u0930 \u0932\u093f\u0916\u093f\u090f \u092e\u0924\u0932\u092c"}]};
+const $ = s => document.querySelector(s);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------- instrument ---------- */
+const cv = $("#wave"), ctx = cv.getContext("2d");
+const H = D.hero, DUR = H.dur_ms, PAUSE = H.pause, TRUE_END = H.true_end_ms;
+let gate = 500;
+
+function draw(){
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = cv.clientWidth, h = 300;
+  cv.width = w * dpr; cv.height = h * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  const padL = 8, padR = 8, plotW = w - padL - padR;
+  const mid = h * 0.46, amp = h * 0.34;
+  const x = ms => padL + (ms / DUR) * plotW;
+  // the endpointer fires only if the gate ELAPSES inside the pause; if the gate is
+  // as long as the hesitation, speech resumes first and the turn is never ended.
+  // This is what the live sweep measures: PIR 1.00 at 500ms, 0.00 at 700ms.
+  const PAUSE_LEN = PAUSE[1] - PAUSE[0];
+  const fires = gate < PAUSE_LEN;
+  const cutAt = PAUSE[0] + gate;
+
+  /* pause band */
+  ctx.fillStyle = css("--signal-wash");
+  ctx.fillRect(x(PAUSE[0]), 12, x(PAUSE[1]) - x(PAUSE[0]), h - 60);
+  ctx.strokeStyle = css("--rule-2"); ctx.setLineDash([2,3]); ctx.lineWidth = 1;
+  [PAUSE[0], PAUSE[1]].forEach(t => { ctx.beginPath(); ctx.moveTo(x(t),12); ctx.lineTo(x(t),h-48); ctx.stroke(); });
+  ctx.setLineDash([]);
+
+  /* waveform: amber up to the cut, muted after */
+  const n = H.env.length;
+  for (let i=0;i<n;i++){
+    const t = (i/n)*DUR, v = H.env[i];
+    const dead = fires && t > cutAt;
+    ctx.fillStyle = dead ? css("--rule-2") : css("--signal");
+    ctx.globalAlpha = dead ? .55 : 1;
+    const bh = Math.max(1.2, v*amp);
+    ctx.fillRect(x(t), mid-bh, Math.max(1.4, plotW/n - 1.1), bh*2);
+  }
+  ctx.globalAlpha = 1;
+
+  /* true end marker */
+  ctx.strokeStyle = css("--ink-3"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x(TRUE_END), 12); ctx.lineTo(x(TRUE_END), h-48); ctx.stroke();
+  label(x(TRUE_END), h-32, "caller finishes " + TRUE_END + "ms", css("--ink-3"), "end");
+
+  /* the cut */
+  if (fires){
+    ctx.strokeStyle = css("--cut"); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x(cutAt), 6); ctx.lineTo(x(cutAt), h-48); ctx.stroke();
+    ctx.fillStyle = css("--cut");
+    ctx.beginPath(); ctx.moveTo(x(cutAt)-5, 6); ctx.lineTo(x(cutAt)+5, 6); ctx.lineTo(x(cutAt), 15); ctx.fill();
+    label(x(cutAt)+7, 22, "turn ended " + cutAt + "ms", css("--cut"), "start");
+  }
+  /* baseline */
+  ctx.strokeStyle = css("--rule"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, h-48); ctx.lineTo(w-padR, h-48); ctx.stroke();
+  label(x((PAUSE[0]+PAUSE[1])/2), h-32, "hesitation 700ms", css("--signal"), "center");
+}
+function label(px, py, text, colour, align){
+  ctx.font = "500 11px " + css("--mono");
+  ctx.fillStyle = colour; ctx.textAlign = align === "center" ? "center" : (align === "end" ? "end" : "start");
+  ctx.fillText(text, px, py);
+}
+
+function nearestMeasured(g){
+  return D.sweep_live.reduce((a,b) => Math.abs(b.silence_ms-g) < Math.abs(a.silence_ms-g) ? b : a);
+}
+function update(){
+  gate = +$("#gate").value;
+  $("#gateval").textContent = gate;
+  const PAUSE_LEN = PAUSE[1] - PAUSE[0];
+  const fires = gate < PAUSE_LEN, cutAt = PAUSE[0] + gate;
+  const v = $("#verdict"), m = nearestMeasured(gate);
+  v.dataset.state = fires ? "cut" : "ok";
+  $("#vbadge").textContent = fires ? "cut off" : "caller finishes";
+  $("#vtext").textContent = fires
+    ? "turn ended at " + cutAt + "ms \u2014 " + (TRUE_END-cutAt) + "ms before the caller stopped speaking. Measured PIR at " + m.silence_ms + "ms: " + m.pir.toFixed(2)
+    : "the gate outlasts the hesitation; the digits survive. Measured PIR at " + m.silence_ms + "ms: " + m.pir.toFixed(2);
+  draw();
+}
+$("#gate").addEventListener("input", update);
+document.querySelectorAll(".presets button").forEach(b =>
+  b.addEventListener("click", () => { $("#gate").value = b.dataset.g; update(); }));
+addEventListener("resize", draw);
+
+/* ---------- sweep chart ---------- */
+function sweep(){
+  const svg = $("#sweep"), W=760, Hh=300, m={t:18,r:26,b:52,l:68};
+  const pts = D.sweep_live, xs = pts.map(p=>p.silence_ms);
+  const x = v => m.l + (v - Math.min(...xs))/(Math.max(...xs)-Math.min(...xs))*(W-m.l-m.r);
+  const y = v => m.t + (1-v)*(Hh-m.t-m.b);
+  let s = "";
+  [0,.25,.5,.75,1].forEach(g => {
+    s += `<line class="grid-line" x1="${m.l}" x2="${W-m.r}" y1="${y(g)}" y2="${y(g)}"/>`;
+    s += `<text class="axis-txt" x="${m.l-10}" y="${y(g)+4}" text-anchor="end">${g.toFixed(2)}</text>`;
+  });
+  /* default marker */
+  s += `<line x1="${x(500)}" x2="${x(500)}" y1="${m.t-8}" y2="${Hh-m.b}" stroke="${'var(--signal)'}" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+  s += `<text class="axis-txt" x="${x(500)}" y="${m.t-12}" text-anchor="middle" fill="var(--signal)">documented default</text>`;
+  /* area + line */
+  const line = pts.map((p,i)=>`${i?"L":"M"}${x(p.silence_ms)},${y(p.pir)}`).join("");
+  s += `<path d="${line}L${x(xs[xs.length-1])},${y(0)}L${x(xs[0])},${y(0)}Z" fill="var(--cut-wash)"/>`;
+  s += `<path d="${line}" fill="none" stroke="var(--cut)" stroke-width="2" stroke-linejoin="round"/>`;
+  pts.forEach(p => {
+    s += `<circle cx="${x(p.silence_ms)}" cy="${y(p.pir)}" r="4.5" fill="var(--cut)" stroke="var(--raised)" stroke-width="2"/>`;
+    s += `<circle class="dot-hit" cx="${x(p.silence_ms)}" cy="${y(p.pir)}" r="14" fill="transparent" data-t="${p.silence_ms}ms gate \u00b7 PIR ${p.pir.toFixed(2)}${p.median_ms_early?" \u00b7 median "+p.median_ms_early+"ms early":""}"/>`;
+    s += `<text class="axis-txt" x="${x(p.silence_ms)}" y="${Hh-m.b+18}" text-anchor="middle">${p.silence_ms}</text>`;
+  });
+  s += `<text class="axis-txt" x="${(W)/2}" y="${Hh-8}" text-anchor="middle">silence_duration_ms</text>`;
+  s += `<text class="axis-txt" x="${m.l-48}" y="${m.t+4}" transform="rotate(-90 ${m.l-48} ${m.t+4})" text-anchor="end">PIR</text>`;
+  /* direct labels at the two plateaus */
+  s += `<text class="axis-txt" x="${x(250)}" y="${y(1)+20}" text-anchor="middle" fill="var(--cut)">every caller cut off</text>`;
+  s += `<text class="axis-txt" x="${x(950)}" y="${y(0)-14}" text-anchor="middle" fill="var(--hold)">none cut off</text>`;
+  svg.innerHTML = s;
+  const tip = $("#tip");
+  svg.querySelectorAll(".dot-hit").forEach(el => {
+    el.addEventListener("pointerenter", e => { tip.textContent = el.dataset.t; tip.style.opacity = 1; });
+    el.addEventListener("pointermove", e => { tip.style.left = (e.clientX+12)+"px"; tip.style.top = (e.clientY-32)+"px"; });
+    el.addEventListener("pointerleave", () => tip.style.opacity = 0);
+  });
+}
+
+/* ---------- trace ---------- */
+const TRACE = [
+  [248,"vad.speech_start","",""],
+  [1962,"transcript.partial","\u0926 \u0930\u0947\u092b\u093c\u0930\u0947\u0902\u0938 \u0907\u091c\u093c \u092e\u0924\u0932\u092c",""],
+  [2955,"transcript.partial","\u0926 \u0930\u0947\u092b\u093c\u0930\u0947\u0902\u0938 \u0907\u091c\u093c \u092e\u0924\u0932\u092c \u090f\u091f",""],
+  [3775,"\u2014 audio ends, client sends end \u2014","",""],
+  [3817,"vad.speech_end","",""],
+  [3917,"transcript.partial","\u0926 \u0930\u0947\u092b\u093c\u0930\u0947\u0902\u0938 \u0907\u091c\u093c \u092e\u0924\u0932\u092c \u090f\u091f \u0921\u092c\u0932 \u091c\u093c\u0940\u0930\u094b \u0928\u093e\u0907\u0928","good"],
+  [4022,"transcript.final","The reference is Matlab","bad"],
+  [4027,"session.end","end_s 3.607 \u2014 reported as covering the full turn",""]
+];
+$("#trace").innerHTML = TRACE.map(([t,ev,txt,cls]) => {
+  const note = cls==="good" ? '<span class="lbl">complete</span>' : cls==="bad" ? '<span class="lbl">digits dropped</span>' : "";
+  const body = txt ? `${ev} &nbsp;<span class="deva">${txt}</span>${note}` : ev + note;
+  return `<div class="row ${cls||""} ${txt?"key":""}"><span class="t">${t}ms</span><span class="ev">${body}</span></div>`;
+}).join("");
+
+/* ---------- modes ---------- */
+const VERDICT = {transcribe:"unaffected", verbatim:"unaffected", translit:"entity lost", codemix:"entity lost"};
+$("#modes").innerHTML = Object.entries(D.modes).map(([mode,v]) => {
+  const [ch,cn] = v.control, [hh,hn] = v.hesitation;
+  const lost = hh === 0;
+  return `<tr><td class="mono">${mode}</td>
+    <td class="num">${ch}/${cn}</td>
+    <td class="num">${hh}/${hn}</td>
+    <td><span class="pill ${lost?"lost":"kept"}">${VERDICT[mode]}</span></td></tr>`;
+}).join("");
+
+/* ---------- caveats ---------- */
+const CAVEATS = [
+  ["The recogniser is good.","Recognition itself was accurate throughout \u2014 the Hinglish, the fillers, the digit words and <code>1.25 lakh</code>, <code>ek karod pachas lakh</code>, <code>04032026</code> all came through. Most of what first looked like vendor failures were bugs in <b>our own extractor</b>, which had no date parser and read <code>1.25</code> as two numbers. Those are fixed; the numbers here are post-fix."],
+  ["The gate is a setting, not a defect.","<code>silence_duration_ms</code> is a documented per-session parameter and the endpointer does exactly what it is told. The finding is that <b>the default sits just below a common hesitation length</b>, not that anything is broken."],
+  ["n = 12.","A proving run, not a rate. Don't quote a percentage off it."],
+  ["The pause lengths are nominal.","A fixed 700 ms, not a distribution fitted to real speech. Until they are, PIR reads as <b>&ldquo;at 700 ms&rdquo;</b> and never as a field rate. The fitting pipeline is built and verified; the corpus (IndicVoices) is gated and needs its terms accepted before it can run."],
+  ["The caller is synthetic.","Utterances are TTS, so this measures a model of Hindi hesitation, not a Hindi speaker. That is precisely what the corpus-fitting step above exists to correct."],
+  ["The mock is an instrument, not a vendor.","A bundled energy VAD calibrates the scorers offline and runs CI for free. Never read it as a comparison."]
+];
+$("#caveats").innerHTML = CAVEATS.map(([h,b],i) =>
+  `<div class="caveat"><span class="no">${String(i+1).padStart(2,"0")}</span><p><b>${h}</b> ${b}</p></div>`).join("");
+
+sweep(); update();
+new MutationObserver(() => { draw(); sweep(); }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { draw(); sweep(); });
+</script>

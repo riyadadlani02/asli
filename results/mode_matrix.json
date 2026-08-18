@@ -1,0 +1,42 @@
+{
+  "transcribe": {
+    "control": [
+      6,
+      8
+    ],
+    "hesitation": [
+      6,
+      8
+    ]
+  },
+  "verbatim": {
+    "control": [
+      6,
+      8
+    ],
+    "hesitation": [
+      8,
+      8
+    ]
+  },
+  "translit": {
+    "control": [
+      4,
+      8
+    ],
+    "hesitation": [
+      0,
+      8
+    ]
+  },
+  "codemix": {
+    "control": [
+      6,
+      8
+    ],
+    "hesitation": [
+      0,
+      8
+    ]
+  }
+}
