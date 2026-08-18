@@ -1,0 +1,25 @@
+[project]
+name = "asli"
+version = "0.1.0"
+description = "Measure what an Indic voice agent does when things go wrong mid-conversation"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+agent = ["openai>=1.40"]
+
+[project.scripts]
+asli = "asli.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["asli"]

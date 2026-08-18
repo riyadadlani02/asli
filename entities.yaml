@@ -1,0 +1,92 @@
+# The constructions that break parsers built on English number conventions.
+# `canonical` is ground truth — we authored it, so it costs nothing and cannot drift.
+# `segments` splits the utterance for synthesis; `pause_after_ms` is the hesitation
+# we splice in, so the true end of the utterance is known exactly.
+
+- id: dig-01
+  entity_type: digits
+  canonical: "9877111"
+  lang: hi-IN
+  segments:
+    - text: "Mera mobile number hai"
+      pause_after_ms: 0
+    - text: "nine eight double seven, triple one"
+
+- id: dig-02
+  entity_type: digits
+  canonical: "40556"
+  lang: hi-IN
+  segments:
+    - text: "Account ke last five digits"
+    - text: "char zero double five six"
+
+- id: dig-03
+  entity_type: digits
+  canonical: "8009"
+  lang: en-IN
+  segments:
+    - text: "The reference is eight, double zero, nine"
+
+- id: dig-04
+  entity_type: digits
+  canonical: "77712345"
+  lang: hi-IN
+  segments:
+    - text: "Number likhiye, triple seven one two three four five"
+
+- id: amt-01
+  entity_type: amount
+  canonical: "250000"
+  lang: hi-IN
+  segments:
+    - text: "Mujhe transfer karna hai"
+    - text: "do lakh pachas hazaar rupaye"
+
+- id: amt-02
+  entity_type: amount
+  canonical: "350000"
+  lang: hi-IN
+  segments:
+    - text: "Loan amount saade teen lakh tha"
+
+- id: amt-03
+  entity_type: amount
+  canonical: "15000000"
+  lang: hi-IN
+  segments:
+    - text: "Property ki value ek crore pachas lakh hai"
+
+- id: amt-04
+  entity_type: amount
+  canonical: "125000"
+  lang: en-IN
+  segments:
+    - text: "The balance is one point two five lakh rupees"
+
+- id: amt-05
+  entity_type: amount
+  canonical: "7500"
+  lang: hi-IN
+  segments:
+    - text: "EMI saade sat hazaar hai"
+
+- id: dat-01
+  entity_type: date
+  canonical: "2026-03-04"
+  lang: en-IN
+  segments:
+    - text: "The due date is zero four zero three twenty twenty six"
+
+- id: dat-02
+  entity_type: date
+  canonical: "2026-09-15"
+  lang: hi-IN
+  segments:
+    - text: "Pandrah tareekh, September twenty twenty six"
+
+- id: dat-03
+  entity_type: date
+  canonical: "2026-01-02"
+  lang: en-IN
+  segments:
+    - text: "It was on two slash one slash twenty twenty six"
