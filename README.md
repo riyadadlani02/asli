@@ -20,30 +20,43 @@ This is **not a leaderboard and not a comparison**. No vendor is ranked here. Th
 
 Real numbers from this repo, reproducible with the commands shown. Read the caveats — they matter more than the figures.
 
-### PIR: the endpointing curve
+### Live: Sarvam `saaras:v3-realtime`
 
-12 utterances, one Hindi filler + a hesitation of known length spliced before the entity, against the built-in energy VAD (`asli sweep --suite pir`):
+`asli sweep --suite pir --agent sarvam --pause-ms 700` — 12 utterances, a Hindi filler and a 700 ms hesitation spliced before the entity, streamed in real time into the live endpoint:
 
-| silence gate | PIR @ 700 ms hesitation | PIR @ 400 ms hesitation |
-|---:|---:|---:|
-| 128 ms | 1.00 | 1.00 |
-| 256 ms | 1.00 | 1.00 |
-| 384 ms | 1.00 | 1.00 |
-| 512 ms | 1.00 | **0.00** |
-| 576 ms | 1.00 | 0.00 |
-| 768 ms | **0.00** | 0.00 |
-| 1024 ms | 0.00 | 0.00 |
+| `silence_duration_ms` | PIR | in injected pause | median ms early |
+|---:|---:|---:|---:|
+| 100 | 1.00 | 1.00 | 2434 |
+| 200 | 1.00 | 1.00 | 2620 |
+| 300 | 1.00 | 1.00 | 2520 |
+| 400 | 1.00 | 1.00 | 2420 |
+| **500 (default)** | **1.00** | 0.83 | 2320 |
+| 700 | 0.00 | 0.00 | — |
+| 900 | 0.00 | 0.00 | — |
+| 1200 | 0.00 | 0.00 | — |
 
-The cliff sits exactly where the arithmetic says it should, and it *moves with the hesitation length* — 384→512 ms for a 400 ms pause, 576→768 ms for a 700 ms one. That correspondence is the method validating itself: the harness is measuring the gap it built, not an artefact.
+**At the documented default of 500 ms, every one of the 12 callers was cut off mid-utterance** — a median of 2.3 seconds before they finished speaking. Raising `silence_duration_ms` to 700 removes the effect completely at this hesitation length. The cliff is sharp and it sits just above the default.
 
-**Why the gate length is the interesting axis.** Sarvam exposes endpointing as a documented parameter, on both of its streaming endpoints:
+This is a configuration finding, not a defect: the endpointer does exactly what it is set to do, and the setting is a documented, per-session query parameter. A caller who says `matlab…` and pauses for 700 ms is simply longer-gapped than a 500 ms gate allows.
 
-- `saaras:v3-realtime` (the voice-agent WebSocket) takes **`silence_duration_ms` directly, default 500**, alongside `threshold`, `prefix_padding_ms` and `min_speech_duration_ms`.
-- the older `saaras:v3` streaming API takes a frame count, `negative_frames_count` (default 18), where one frame is 512 samples — 32 ms at 16 kHz but **64 ms at 8 kHz**, so the same setting is ~576 ms wideband and **~1152 ms on a telephony leg**.
+Recognition itself was good. `मेरा मोबाइल नंबर है, मतलब। नाइन आठ डबल सेवन ट्रिपल वन` — the Hinglish, the filler and the digit words all came through.
 
-A 500 ms default sits just below the cliff for a 700 ms hesitation and just above it for a 400 ms one. That is a measurable, actionable difference rather than an opinion — and `asli sweep --agent sarvam` sweeps that exact parameter.
+### Live: a hesitation costs a digit, even when the turn is not cut
 
-### INEPA: parsing, on a *clean* transcript
+Same utterance, `mode=translit`, `silence_duration_ms=2000` so the turn cannot be split. 3/3 runs each, single turn in every case:
+
+| | output | |
+|---|---|---|
+| no hesitation | `Mera mobile number hai 9877111` | correct |
+| `matlab` + 700 ms pause | `Mera mobile number hai matlab 987711` | one digit lost |
+
+Truth is `9877111`. The multiplier words are not the problem — `triple seven one two three four five` → `77712345` and `eight, double zero, nine` → `8009` are both correct. The hesitation is what costs the digit, and it does so *deterministically and silently*, with a clean single-turn transcript and no error signal. An agent downstream has nothing to key on.
+
+That is the compound failure this harness exists to find: the disfluency does not merely risk a premature cut, it corrupts the number even when the endpointer holds.
+
+### Reference agent (not a vendor measurement)
+
+#### INEPA: parsing, on a clean transcript
 
 `asli run --suite inepa --llm` — 12 entities, perfect transcript, `gpt-4.1-mini` reference agent:
 
@@ -66,7 +79,7 @@ Under injected transcription errors this falls to **0.50**, including `"ek crore
 
 An instruction about confirmation behaviour changed numeric parsing. Anyone tuning a voice agent's prompt is moving both at once, and a single accuracy number hides it. `saade sat` is wrong under every prompt and every run — that one is a genuine gap.
 
-### SFR: does the agent notice?
+#### SFR: does the agent notice?
 
 Same 12 calls with damaged entities, two reference-agent stances (`--stance careful|eager`):
 
@@ -77,7 +90,7 @@ Same 12 calls with damaged entities, two reference-agent stances (`--stance care
 
 The careful agent scores 0.00 *because it confirms everything* — which is why `confirm_rate` is reported alongside. An agent that never proceeds cannot silently fail, and a metric that can't move isn't measuring anything. The eager stance is the same task with a "keep the call short" instruction, and 14% of mangled entities get acted on. **SFR separates two agent designs that INEPA and WER score identically.**
 
-### What degradation does
+#### What degradation does
 
 The 8 kHz G.711 μ-law round trip alone changes PIR **not at all**. Background babble at 5 dB SNR drives PIR to 0.00 at every gate — not an improvement: the noise fills the pause, so the endpointer stops firing *at all* and the turn never ends. That is the mirror failure of a premature cut, and the harness surfaces both.
 
@@ -85,10 +98,13 @@ The 8 kHz G.711 μ-law round trip alone changes PIR **not at all**. Background b
 
 ## Read this before citing any number above
 
-- **The ASR here is a mock, not a vendor.** The bundled `MockASR` is an energy-gated VAD used to calibrate the scorers and run CI for free. It is an *instrument*, not a system under test. Its noise collapse above is a property of fixed-threshold energy gating; a probability-based VAD should not behave that way. `SarvamWS` is implemented against the published protocol but **has never been run** — no API key. **No number on this page measures any vendor's product.**
+- **Two lanes, and only one is a vendor.** The live results are from `saaras:v3-realtime`. Everything under *Reference agent* uses the bundled `MockASR`, an energy-gated VAD that exists to calibrate the scorers and run CI for free — it is an *instrument*, not a system under test, and its noise collapse is a property of fixed-threshold energy gating that a probability-based VAD should not share. Don't read the two lanes as comparable.
+- **The PIR numbers are conservative.** Event timestamps are taken as *audio sent so far* when the event arrives, so network and server latency inflate the apparent endpoint time. That pushes measurements away from "premature", never toward it.
+- **The digit-loss result is n=1 utterance × 3 runs.** Deterministic in that sample, and the mechanism is clear, but it needs the full entity bank before it is a rate.
 - **INEPA is a measurement of the reference agent**, which is ours (`agent.py`, one fixed prompt). It says how a standard LLM agent handles Indian numeral conventions. It is not a verdict on anyone's parser. Swap yours in — it's one function.
 - **n = 12.** A proving run, not a rate. Don't quote a percentage off it.
-- **The LLM is not deterministic** even at `temperature=0`: `saade sat hazaar` returned `17500`, `37500` and `75000` across runs. All wrong, differently. The 0.75 aggregate was stable over 5 runs; individual values were not.
+- **SFR_asr abstains on the live lane.** Sarvam returns Devanagari; comparing it word-wise against a romanised script would score every entity as damaged, so the check returns `None` and those calls leave the denominator. `SFR_bb` still covers them. A script-aware entity check is owed.
+- **The reference agent's LLM is not deterministic** even at `temperature=0`: `saade sat hazaar` returned `17500`, `37500` and `75000` across runs. All wrong, differently. The 0.75 aggregate was stable over 5 runs; individual values were not.
 - **The disfluency timings are nominal.** Fixed 400/700 ms pauses, not a fitted distribution. Until they are fitted to real telephone speech, PIR reads as *"at this pause length"* — never as a field rate. See the roadmap.
 
 ## Quickstart
@@ -157,7 +173,7 @@ Timestamps are relative to audio t=0 and are what PIR reads. Everything else fol
 1. ~~INEPA end to end~~ — done, above.
 2. ~~Degradation layer + SFR~~ — done. Still owed: an LLM confirmation classifier with Cohen's κ against ~200 hand-labelled turns, replacing the current structured-output `action` field.
 3. **Disfluency fitting, then PIR for real.** Pull unscripted telephonic audio from IndicVoices or Voice of India, extract the empirical distribution of filler duration and pause length around `matlab…`, `woh kya bolte hain…`, `haan toh…`, `aisa hai ki…`, sample from the fit, and report the KS statistic. Synthetic hesitation otherwise measures the TTS's model of Hindi hesitation rather than real speakers — this is the step that converts the method's biggest weakness into a stated strength.
-4. Run the `SarvamWS` lane and publish the endpointing curve against a real endpoint.
+4. ~~Run the `SarvamWS` lane~~ — done, above. Owed next: a script-aware entity check so `SFR_asr` works on Devanagari output, and the digit-loss probe run across the whole entity bank rather than one utterance.
 
 ## Licence
 

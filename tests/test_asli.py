@@ -87,6 +87,28 @@ def test_sfr_is_pinned_by_agents_with_known_behaviour():
     assert agg["sfr_asr"] == 1.0 and agg["sfr_bb"] is None
 
 
+def test_sfr_abstains_when_the_scripts_are_not_comparable():
+    """A Devanagari transcript vs a romanised script says nothing about the entity."""
+    spec = CallSpec(id="d", entity_type="digits", canonical="9877111",
+                    segments=[Segment("nine eight double seven triple one")])
+    deva = "मेरा मोबाइल नंबर है मतलब नाइन एट डबल सेवन ट्रिपल वन"
+
+    assert score.mangled_entity(spec, deva) is None, "must abstain, not claim damage"
+    row = (spec, Result(spec_id="d", adapter="sarvam", transcript=deva,
+                        agent_entity="9877111", confirmed=False))
+    agg = score.aggregate([row])
+    assert agg["sfr_asr"] is None and agg["sfr_asr_n"] == 0
+
+    # a romanised transcript is still compared normally
+    assert score.mangled_entity(spec, "hai nine eight double seven triple one") is False
+    assert score.mangled_entity(spec, "hai five six double seven triple one") is True
+
+    # and a Devanagari script vs a Devanagari transcript stays comparable
+    deva_spec = CallSpec(id="d2", entity_type="digits", canonical="9877111",
+                         segments=[Segment("नाइन एट डबल सेवन ट्रिपल वन")])
+    assert score.mangled_entity(deva_spec, deva) is False
+
+
 def test_spoken_digits_binds_multipliers_to_the_following_digit():
     assert score.spoken_digits("nine eight double seven, triple one") == "9877111"
     assert score.spoken_digits("char zero double five six") == "40556"  # 4-0-55-6, not 4-0-5-5-6
