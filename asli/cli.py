@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from . import degrade, score, synth
+from . import degrade, fit as fitmod, score, synth
 from .drive import MockASR, SarvamWS
 from .spec import CallSpec, Result, Segment, to_jsonl
 
@@ -39,15 +39,34 @@ def load_entities() -> list[CallSpec]:
                      segments=[Segment(**s) for s in r["segments"]]) for r in rows]
 
 
-def build_pir(base: list[CallSpec], pause_ms: int) -> list[CallSpec]:
-    """Insert one filler + pause immediately before the entity in each utterance."""
+FIT_PATH = ROOT / "results" / "pause_fit.json"
+
+
+def build_pir(base: list[CallSpec], pause_ms: int, fitted: bool = False) -> list[CallSpec]:
+    """Insert one filler + pause immediately before the entity in each utterance.
+
+    Placement is deliberate: immediately *before* the entity is where a real speaker
+    hesitates, and it is the placement that turned out to matter.
+
+    With `fitted`, pause lengths are drawn from a distribution fitted to real speech
+    (`asli fit`) instead of a constant, which is what lets PIR be read as a rate rather
+    than as "at 700ms".
+    """
+    draws = None
+    if fitted:
+        if not FIT_PATH.exists():
+            raise SystemExit(f"no fit at {FIT_PATH} — run `asli fit --corpus DIR` first")
+        f = json.loads(FIT_PATH.read_text())
+        draws = fitmod.sample_pauses(len(base), f["mu"], f["sigma"], seed=0)
+
     out = []
     for i, spec in enumerate(base):
         s = copy.deepcopy(spec)
         filler = FILLERS[i % len(FILLERS)]
+        gap = draws[i] if draws else pause_ms
         head = s.segments[:-1]
-        s.segments = [*head, Segment(filler, pause_after_ms=pause_ms, kind="filler"), s.segments[-1]]
-        s.id = f"{spec.id}-pir-{pause_ms}"
+        s.segments = [*head, Segment(filler, pause_after_ms=gap, kind="filler"), s.segments[-1]]
+        s.id = f"{spec.id}-pir-{gap}"
         out.append(s)
     return out
 
@@ -135,7 +154,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="asli")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    for name in ("run", "sweep", "demo", "check"):
+    for name in ("run", "sweep", "demo", "check", "fit"):
         s = sub.add_parser(name)
         s.add_argument("--suite", default="inepa", choices=["inepa", "pir", "sfr"])
         s.add_argument("--llm", action="store_true", help="run the reference agent (needs Azure keys)")
@@ -153,6 +172,9 @@ def main(argv: list[str] | None = None) -> int:
                        choices=["verbatim", "transcribe", "translit", "codemix"],
                        help="Sarvam transcription mode; verbatim preserves spoken numerals")
         s.add_argument("--out", default=None)
+        s.add_argument("--corpus", default=None, help="directory of real-speech wavs, for `fit`")
+        s.add_argument("--fitted", action="store_true",
+                       help="draw pause lengths from the fitted distribution")
 
     a = p.parse_args(argv)
     dials = {k: v for k, v in (("telephony", a.telephony), ("snr_db", a.snr)) if v}
@@ -161,6 +183,24 @@ def main(argv: list[str] | None = None) -> int:
     base = load_entities()
     rate = 16000
 
+    if a.cmd == "fit":
+        if not a.corpus:
+            print("usage: asli fit --corpus DIR\n\n"
+                  "DIR should hold unscripted telephone speech — IndicVoices or Voice of\n"
+                  "India. IndicVoices is gated: accept the terms at\n"
+                  "  https://huggingface.co/datasets/ai4bharat/IndicVoices\n"
+                  "then download the hindi/ split and point --corpus at the wavs.",
+                  file=sys.stderr)
+            return 2
+        wavs = sorted(Path(a.corpus).rglob("*.wav"))
+        if not wavs:
+            print(f"no .wav files under {a.corpus}", file=sys.stderr)
+            return 2
+        f = fitmod.fit_corpus(wavs, out=FIT_PATH)
+        print(table(f"pause distribution ({f['n_files']} files, {f['n_pauses']} pauses)", f))
+        print(f"  wrote {FIT_PATH}\n  now: asli sweep --suite pir --agent sarvam --fitted")
+        return 0
+
     if a.cmd == "check":
         import os
 
@@ -168,7 +208,7 @@ def main(argv: list[str] | None = None) -> int:
             print("SARVAM_API_KEY is not set. Add it to .env:\n"
                   "  echo 'SARVAM_API_KEY=...' >> .env", file=sys.stderr)
             return 2
-        spec = build_pir(base, a.pause_ms)[0]
+        spec = build_pir(base, a.pause_ms, a.fitted)[0]
         pcm = audio_for(spec, dials)
         print(f"  sending {len(pcm) / rate:.1f}s of audio, paced in real time...")
         asr = make_adapter("sarvam", gate=a.frames if a.frames != 18 else 500,
@@ -186,7 +226,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "demo":
         out = ROOT / "demo"
         (out / "wav").mkdir(parents=True, exist_ok=True)
-        specs = build_pir(base, a.pause_ms)[:3]
+        specs = build_pir(base, a.pause_ms, a.fitted)[:3]
         for spec in specs:
             clean = synth.render(spec)
             synth.write_wav(out / "wav" / f"{spec.id}-clean.wav", clean)
@@ -201,7 +241,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if a.cmd == "sweep":
-        specs = build_pir(base, a.pause_ms)
+        specs = build_pir(base, a.pause_ms, a.fitted)
         audio = [(s, audio_for(s, dials)) for s in specs]
         # the mock's gate is a frame count; the real endpoint takes milliseconds
         gates = ((4, 8, 12, 16, 18, 24, 32, 48) if a.agent == "mock"
@@ -225,7 +265,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nwrote {dest}")
         return 0
 
-    specs = build_pir(base, a.pause_ms) if a.suite == "pir" else base
+    specs = build_pir(base, a.pause_ms, a.fitted) if a.suite == "pir" else base
     asr = make_adapter(a.agent, gate=a.frames, lang=a.lang, rate=rate, mode=a.mode)
     rows = run_suite(specs, asr, dials, a.llm, inject_error=(a.suite == "sfr"), stance=a.stance)
     agg = write(rows, Path(a.out or ROOT / "results" / f"{a.suite}.jsonl"))

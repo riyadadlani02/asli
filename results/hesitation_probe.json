@@ -1,0 +1,482 @@
+[
+  {
+    "id": "dig-01",
+    "type": "digits",
+    "cond": "plain",
+    "run": 0,
+    "truth": "9877111",
+    "transcript": "Mera mobile number hai 9877111",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-01",
+    "type": "digits",
+    "cond": "plain",
+    "run": 1,
+    "truth": "9877111",
+    "transcript": "Mera mobile number hai 9877111",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-01",
+    "type": "digits",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "9877111",
+    "transcript": "Mera mobile number hai matlab 987711",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-01",
+    "type": "digits",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "9877111",
+    "transcript": "Mera mobile number hai matlab 987711",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-02",
+    "type": "digits",
+    "cond": "plain",
+    "run": 0,
+    "truth": "40556",
+    "transcript": "Account ka last five digits. Chaar zero double five six.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-02",
+    "type": "digits",
+    "cond": "plain",
+    "run": 1,
+    "truth": "40556",
+    "transcript": "Account ka last five digits. Chaar zero double five six.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-02",
+    "type": "digits",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "40556",
+    "transcript": "Account ka last five digits matlab",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-02",
+    "type": "digits",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "40556",
+    "transcript": "Account ka last five digits matlab",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-03",
+    "type": "digits",
+    "cond": "plain",
+    "run": 0,
+    "truth": "8009",
+    "transcript": "The reference is 8009",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-03",
+    "type": "digits",
+    "cond": "plain",
+    "run": 1,
+    "truth": "8009",
+    "transcript": "The reference is 8009",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-03",
+    "type": "digits",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "8009",
+    "transcript": "Matlab. The reference is 8009",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-03",
+    "type": "digits",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "8009",
+    "transcript": "Matlab. The reference is 8009",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-04",
+    "type": "digits",
+    "cond": "plain",
+    "run": 0,
+    "truth": "77712345",
+    "transcript": "Number likhiye, 77712345.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-04",
+    "type": "digits",
+    "cond": "plain",
+    "run": 1,
+    "truth": "77712345",
+    "transcript": "Number likhiye, 77712345.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-04",
+    "type": "digits",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "77712345",
+    "transcript": "Matlab. Number likhiye, 77712345.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dig-04",
+    "type": "digits",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "77712345",
+    "transcript": "Matlab. Number likhiye, 77712345.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-01",
+    "type": "amount",
+    "cond": "plain",
+    "run": 0,
+    "truth": "250000",
+    "transcript": "Mujhe transfer karna hai do lakh pachees hazaar rupaye",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-01",
+    "type": "amount",
+    "cond": "plain",
+    "run": 1,
+    "truth": "250000",
+    "transcript": "Mujhe transfer karna hai do lakh pachees hazaar rupaye",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-01",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "250000",
+    "transcript": "Mujhe transfer karna hai matlab do lakh pachees hazaar rupaye",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-01",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "250000",
+    "transcript": "Mujhe transfer karna hai matlab do lakh pachees hazaar rupaye",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-02",
+    "type": "amount",
+    "cond": "plain",
+    "run": 0,
+    "truth": "350000",
+    "transcript": "Loan amount saadhe teen lakh tha",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-02",
+    "type": "amount",
+    "cond": "plain",
+    "run": 1,
+    "truth": "350000",
+    "transcript": "Loan amount saadhe teen lakh tha",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-02",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "350000",
+    "transcript": "Matlab loan amount 3.5 lakh tha.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-02",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "350000",
+    "transcript": "Matlab loan amount 3.5 lakh tha.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-03",
+    "type": "amount",
+    "cond": "plain",
+    "run": 0,
+    "truth": "15000000",
+    "transcript": "Property ki value ek karod pachas lakh hai",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-03",
+    "type": "amount",
+    "cond": "plain",
+    "run": 1,
+    "truth": "15000000",
+    "transcript": "Property ki value ek karod pachas lakh hai",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-03",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "15000000",
+    "transcript": "Matlab property ki value ek karod pachas lakh hai",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-03",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "15000000",
+    "transcript": "Matlab property ki value ek karod pachas lakh hai",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-04",
+    "type": "amount",
+    "cond": "plain",
+    "run": 0,
+    "truth": "125000",
+    "transcript": "The balance is 1.25 lakh rupees.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-04",
+    "type": "amount",
+    "cond": "plain",
+    "run": 1,
+    "truth": "125000",
+    "transcript": "The balance is 1.25 lakh rupees.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-04",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "125000",
+    "transcript": "Matlab, the balance is 1.25 lakh rupees.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-04",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "125000",
+    "transcript": "Matlab, the balance is 1.25 lakh rupees.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-05",
+    "type": "amount",
+    "cond": "plain",
+    "run": 0,
+    "truth": "7500",
+    "transcript": "Kimi saadhe sath hazaar hai",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-05",
+    "type": "amount",
+    "cond": "plain",
+    "run": 1,
+    "truth": "7500",
+    "transcript": "Kimi saadhe sath hazaar hai",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-05",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "7500",
+    "transcript": "Matlab ye mein saade saat hazaar hai",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "amt-05",
+    "type": "amount",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "7500",
+    "transcript": "Matlab ye mein saade saat hazaar hai",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-01",
+    "type": "date",
+    "cond": "plain",
+    "run": 0,
+    "truth": "2026-03-04",
+    "transcript": "The due date is 04032026.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-01",
+    "type": "date",
+    "cond": "plain",
+    "run": 1,
+    "truth": "2026-03-04",
+    "transcript": "The due date is 04032026.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-01",
+    "type": "date",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "2026-03-04",
+    "transcript": "Matlab The due date is 04032026",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-01",
+    "type": "date",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "2026-03-04",
+    "transcript": "Matlab The due date is 04032026",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-02",
+    "type": "date",
+    "cond": "plain",
+    "run": 0,
+    "truth": "2026-09-15",
+    "transcript": "Pandra Tarik, September 2026.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-02",
+    "type": "date",
+    "cond": "plain",
+    "run": 1,
+    "truth": "2026-09-15",
+    "transcript": "Pandra Tarik, September 2026.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-02",
+    "type": "date",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "2026-09-15",
+    "transcript": "Matlab. Pandra Tariq, September 2026.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-02",
+    "type": "date",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "2026-09-15",
+    "transcript": "Matlab. Pandra Tariq, September 2026.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-03",
+    "type": "date",
+    "cond": "plain",
+    "run": 0,
+    "truth": "2026-01-02",
+    "transcript": "It was on 2/1/2026.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-03",
+    "type": "date",
+    "cond": "plain",
+    "run": 1,
+    "truth": "2026-01-02",
+    "transcript": "It was on 2/1/2026.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-03",
+    "type": "date",
+    "cond": "hesitation",
+    "run": 0,
+    "truth": "2026-01-02",
+    "transcript": "Matlab. It was on 2/1/2026.",
+    "turns": 1,
+    "error": ""
+  },
+  {
+    "id": "dat-03",
+    "type": "date",
+    "cond": "hesitation",
+    "run": 1,
+    "truth": "2026-01-02",
+    "transcript": "Matlab. It was on 2/1/2026.",
+    "turns": 1,
+    "error": ""
+  }
+]

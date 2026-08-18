@@ -87,26 +87,46 @@ def test_sfr_is_pinned_by_agents_with_known_behaviour():
     assert agg["sfr_asr"] == 1.0 and agg["sfr_bb"] is None
 
 
-def test_sfr_abstains_when_the_scripts_are_not_comparable():
-    """A Devanagari transcript vs a romanised script says nothing about the entity."""
+def test_entity_survival_is_script_independent():
+    """Devanagari, roman, digit words and normalised digits are the same entity."""
     spec = CallSpec(id="d", entity_type="digits", canonical="9877111",
                     segments=[Segment("nine eight double seven triple one")])
-    deva = "मेरा मोबाइल नंबर है मतलब नाइन एट डबल सेवन ट्रिपल वन"
 
-    assert score.mangled_entity(spec, deva) is None, "must abstain, not claim damage"
-    row = (spec, Result(spec_id="d", adapter="sarvam", transcript=deva,
+    for intact in ("मेरा मोबाइल नंबर है नाइन एट डबल सेवन ट्रिपल वन",
+                   "Mera mobile number hai 9877111",
+                   "मेरा नंबर ९८७७१११",
+                   "hai nine eight double seven triple one"):
+        assert score.mangled_entity(spec, intact) is False, intact
+
+    # the real failure seen live: one digit lost after a hesitation
+    assert score.mangled_entity(spec, "Mera mobile number hai matlab 987711") is True
+
+    # non-entity words may contribute digits ("last five digits") without being damage
+    spec2 = CallSpec(id="d2", entity_type="digits", canonical="40556",
+                     segments=[Segment("char zero double five six")])
+    assert score.mangled_entity(spec2, "Account ka last five digits. Chaar zero double five six.") is False
+
+    # nothing numeric recoverable -> abstain rather than invent damage
+    assert score.mangled_entity(spec, "sorry, could you repeat that") is None
+    row = (spec, Result(spec_id="d", adapter="sarvam", transcript="sorry, could you repeat that",
                         agent_entity="9877111", confirmed=False))
-    agg = score.aggregate([row])
-    assert agg["sfr_asr"] is None and agg["sfr_asr_n"] == 0
+    assert score.aggregate([row])["sfr_asr_n"] == 0
 
-    # a romanised transcript is still compared normally
-    assert score.mangled_entity(spec, "hai nine eight double seven triple one") is False
-    assert score.mangled_entity(spec, "hai five six double seven triple one") is True
 
-    # and a Devanagari script vs a Devanagari transcript stays comparable
-    deva_spec = CallSpec(id="d2", entity_type="digits", canonical="9877111",
-                         segments=[Segment("नाइन एट डबल सेवन ट्रिपल वन")])
-    assert score.mangled_entity(deva_spec, deva) is False
+def test_indian_amounts_parse_as_lakh_and_crore():
+    """Lakh and crore are their own scales, and 'saade' attaches before the scale."""
+    for text, want in [
+        ("do lakh pachas hazaar rupaye", "250000"),
+        ("saade teen lakh", "350000"),
+        ("saade sat hazaar", "7500"),
+        ("ek crore pachas lakh", "15000000"),
+        ("one point two five lakh rupees", "125000"),
+        ("दो लाख पचास हज़ार", "250000"),
+        ("Rs 2,50,000", "250000"),      # a figure, not speech
+        ("₹1,25,000", "125000"),
+        ("250000", "250000"),
+    ]:
+        assert score.normalise("amount", text) == want, f"{text} -> {score.normalise('amount', text)}"
 
 
 def test_spoken_digits_binds_multipliers_to_the_following_digit():

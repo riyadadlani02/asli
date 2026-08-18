@@ -1,0 +1,106 @@
+{
+  "rows": [
+    {
+      "id": "dig-01",
+      "type": "digits",
+      "truth": "9877111",
+      "plain": "9877111",
+      "hesitation": "987711",
+      "verdict": "BROKEN BY HESITATION"
+    },
+    {
+      "id": "dig-02",
+      "type": "digits",
+      "truth": "40556",
+      "plain": "540556",
+      "hesitation": "5",
+      "verdict": "BROKEN BY HESITATION"
+    },
+    {
+      "id": "dig-03",
+      "type": "digits",
+      "truth": "8009",
+      "plain": "8009",
+      "hesitation": "8009",
+      "verdict": "correct both"
+    },
+    {
+      "id": "dig-04",
+      "type": "digits",
+      "truth": "77712345",
+      "plain": "77712345",
+      "hesitation": "77712345",
+      "verdict": "correct both"
+    },
+    {
+      "id": "amt-01",
+      "type": "amount",
+      "truth": "250000",
+      "plain": "225000",
+      "hesitation": "225000",
+      "verdict": "wrong both"
+    },
+    {
+      "id": "amt-02",
+      "type": "amount",
+      "truth": "350000",
+      "plain": "350000",
+      "hesitation": "350000",
+      "verdict": "correct both"
+    },
+    {
+      "id": "amt-03",
+      "type": "amount",
+      "truth": "15000000",
+      "plain": "15000000",
+      "hesitation": "15000000",
+      "verdict": "correct both"
+    },
+    {
+      "id": "amt-04",
+      "type": "amount",
+      "truth": "125000",
+      "plain": "125000",
+      "hesitation": "125000",
+      "verdict": "correct both"
+    },
+    {
+      "id": "amt-05",
+      "type": "amount",
+      "truth": "7500",
+      "plain": "",
+      "hesitation": "7500",
+      "verdict": "wrong only when plain"
+    },
+    {
+      "id": "dat-01",
+      "type": "date",
+      "truth": "2026-03-04",
+      "plain": "2026-03-04",
+      "hesitation": "2026-03-04",
+      "verdict": "correct both"
+    },
+    {
+      "id": "dat-02",
+      "type": "date",
+      "truth": "2026-09-15",
+      "plain": "2026-09-15",
+      "hesitation": "2026-09-15",
+      "verdict": "correct both"
+    },
+    {
+      "id": "dat-03",
+      "type": "date",
+      "truth": "2026-01-02",
+      "plain": "2026-01-02",
+      "hesitation": "2026-01-02",
+      "verdict": "correct both"
+    }
+  ],
+  "tally": {
+    "BROKEN BY HESITATION": 2,
+    "correct both": 8,
+    "wrong both": 1,
+    "wrong only when plain": 1
+  }
+}
