@@ -912,7 +912,7 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
   catch(e){ slog("could not open the socket: "+e.name,"hot"); liveBusy=false;
     document.querySelector("#sbRun").disabled=false; return; }
 
-  let sent=0, finals=[], ended=false, cutEarly=false, cutAtMs=0, lastPartial="";
+  let sent=0, finals=[], ended=false, cutEarly=false, cutAtMs=0, lastPartial="", kinds=new Set();
   const done=()=>{ if(ended) return; ended=true; liveBusy=false;
     document.querySelector("#sbRun").disabled=false;
     const text=finals.join(" ").trim();
@@ -969,6 +969,9 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
     }
     else if(m.event==="error"){ slog("error: "+(m.message||m.code),"hot"); clearTimeout(guard); done(); }
     else if(m.event==="session.end"){ clearTimeout(guard); done(); }
+    // name every event kind the socket emits, once. Without this an event under an
+    // unexpected name is indistinguishable from one that never arrived.
+    else if(m.event&&!kinds.has(m.event)){ kinds.add(m.event); slog(`\u00b7 ${m.event}`); }
   };
   ws.onerror=()=>slog("socket error \u2014 check the key and that your network allows wss to api.sarvam.ai","hot");
   ws.onclose=e=>{ clearTimeout(guard);
