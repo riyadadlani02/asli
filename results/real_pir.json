@@ -7,7 +7,8 @@
       "n": 20,
       "pir": 0.6,
       "in_pause": 0.5,
-      "median_ms_early": 4300
+      "median_ms_early": 4300,
+      "on_dangling": 0.5
     }
   ],
   "pause_silenced": false,

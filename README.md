@@ -105,25 +105,28 @@ python tests/test_sfr_text.py
 You should see:
 
 ```
-    ok  test_entity_survival_is_script_independent
-    ok  test_fit_counts_only_the_clips_usable_as_a_real_caller
-    ok  test_gate_advice_prices_the_latency_and_recommends_within_budget
-    ok  test_indian_amounts_parse_as_lakh_and_crore
-    ok  test_noise_lands_at_the_snr_we_asked_for
-    ok  test_packet_loss_removes_roughly_the_share_requested
-    ok  test_pause_detection_survives_a_real_noise_floor
-    ok  test_pir_fires_only_when_the_gate_is_shorter_than_the_pause
-    ok  test_real_audio_spec_locates_the_pause_and_bounds_its_own_error
-    ok  test_recovery_separates_the_first_turn_view_from_the_session
-    ok  test_render_timing_is_exact_by_construction
-    ok  test_sfr_is_pinned_by_agents_with_known_behaviour
-    ok  test_spoken_digits_binds_multipliers_to_the_following_digit
-    ok  test_telephony_keeps_the_tone_and_drops_the_top_octave
+  ok  test_dangling_rates_are_reported_over_the_cuts_only
+  ok  test_dangling_separates_unfinished_endings_from_finished_ones
+  ok  test_entity_survival_is_script_independent
+  ok  test_fit_counts_only_the_clips_usable_as_a_real_caller
+  ok  test_gate_advice_prices_the_latency_and_recommends_within_budget
+  ok  test_indian_amounts_parse_as_lakh_and_crore
+  ok  test_noise_lands_at_the_snr_we_asked_for
+  ok  test_packet_loss_removes_roughly_the_share_requested
+  ok  test_pause_detection_survives_a_real_noise_floor
+  ok  test_pir_fires_only_when_the_gate_is_shorter_than_the_pause
+  ok  test_pir_reports_the_word_the_turn_was_cut_on
+  ok  test_real_audio_spec_locates_the_pause_and_bounds_its_own_error
+  ok  test_recovery_separates_the_first_turn_view_from_the_session
+  ok  test_render_timing_is_exact_by_construction
+  ok  test_sfr_is_pinned_by_agents_with_known_behaviour
+  ok  test_spoken_digits_binds_multipliers_to_the_following_digit
+  ok  test_telephony_keeps_the_tone_and_drops_the_top_octave
   
-  14 passed
+  17 passed
 ```
 
-Those fourteen checks are the harness proving its own scoring is correct — for example,
+Those seventeen checks are the harness proving its own scoring is correct — for example,
 that a 256 ms endpointing gate *does* trip on a 700 ms hesitation and a 1024 ms one
 *doesn't*. If the scoring can't be pinned, no measured number would mean anything.
 
