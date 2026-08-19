@@ -273,3 +273,185 @@ class DeepgramWS:
 
         return Result(spec_id=spec.id, adapter=self.name, events=events,
                       transcript=" ".join(finals).strip())
+
+
+class AssemblyAIWS:
+    """AssemblyAI v3 streaming.
+
+    Its turn detection is not a silence timer: it scores how likely the turn ended and
+    only closes above a confidence threshold. On the hesitation utterance that
+    confidence reaches 0.375-0.475 mid-pause and it keeps listening, so the number
+    stays in one turn. `silence_duration_ms` maps to
+    `min_end_of_turn_silence_when_confident`, which is the nearest equivalent knob.
+    """
+
+    name = "assemblyai"
+    URL = "wss://streaming.assemblyai.com/v3/ws"
+    CHUNK_MS = 100
+
+    def __init__(self, *, language_code: str = "en", rate: int = SAMPLE_RATE,
+                 silence_duration_ms: int | None = None, **params):
+        self.rate = rate
+        self.params = {"sample_rate": str(rate), "encoding": "pcm_s16le",
+                       "format_turns": "true",
+                       **({"min_end_of_turn_silence_when_confident": str(silence_duration_ms)}
+                          if silence_duration_ms else {}),
+                       **{k: str(v) for k, v in params.items()}}
+
+    async def run(self, pcm: np.ndarray, spec: CallSpec) -> Result:
+        import asyncio
+
+        import websockets
+
+        qs = "&".join(f"{k}={v}" for k, v in self.params.items())
+        events: list[Event] = []
+        finals: list[str] = []
+        sent_ms = 0
+        # a turn detector closes on trailing silence; without a tail it waits forever
+        pcm = np.concatenate([pcm, np.zeros(int(self.rate * 2.0), np.int16)])
+        try:
+            async with websockets.connect(
+                f"{self.URL}?{qs}",
+                additional_headers={"Authorization": os.environ["ASSEMBLYAI_API_KEY"]},
+                max_size=None,
+            ) as ws:
+
+                async def pump() -> None:
+                    nonlocal sent_ms
+                    step = int(self.rate * self.CHUNK_MS / 1000)
+                    for i in range(0, len(pcm), step):
+                        await ws.send(pcm[i : i + step].astype("<i2").tobytes())
+                        sent_ms += self.CHUNK_MS
+                        await asyncio.sleep(self.CHUNK_MS / 1000)
+                    await ws.send(json.dumps({"type": "Terminate"}))
+
+                sender = asyncio.create_task(pump())
+
+                async def reader() -> None:
+                    async for raw in ws:
+                        msg = json.loads(raw)
+                        if msg.get("type") == "Turn" and msg.get("end_of_turn"):
+                            text = msg.get("transcript", "")
+                            events.append(Event("speech_end", sent_ms))
+                            events.append(Event("transcript", sent_ms, text))
+                            finals.append(text)
+                        elif msg.get("type") == "Termination":
+                            return
+                        elif msg.get("error"):
+                            raise RuntimeError(str(msg["error"]))
+
+                try:
+                    await asyncio.wait_for(reader(), timeout=len(pcm) / self.rate + 20)
+                except asyncio.TimeoutError:
+                    pass
+                finally:
+                    sender.cancel()
+        except Exception as exc:
+            return Result(spec_id=spec.id, adapter=self.name, events=events,
+                          transcript=" ".join(finals), error=f"{type(exc).__name__}: {exc}")
+        return Result(spec_id=spec.id, adapter=self.name, events=events,
+                      transcript=" ".join(finals).strip())
+
+
+class OpenAIWS:
+    """OpenAI realtime transcription.
+
+    Ships both kinds of turn detection, which makes it the cleanest single test of the
+    whole thesis: `server_vad` is a silence timer and splits the hesitation, while
+    `semantic_vad` on the same audio, same model and same connection does not.
+    Select with `vad="server"` or `vad="semantic"`.
+
+    Audio is resampled to 24kHz because the endpoint rejects 16k, and a wrong rate
+    silently distorts every timestamp.
+    """
+
+    name = "openai"
+    URL = "wss://api.openai.com/v1/realtime?intent=transcription"
+    CHUNK_MS = 100
+    NATIVE_RATE = 24000
+
+    def __init__(self, *, language_code: str = "hi", model: str = "gpt-4o-transcribe",
+                 rate: int = SAMPLE_RATE, silence_duration_ms: int | None = None,
+                 vad: str = "server", **params):
+        self.rate, self.model, self.vad = rate, model, vad
+        self.lang = language_code.split("-")[0]
+        self.gate = silence_duration_ms or 500
+
+    def _to_native(self, pcm: np.ndarray) -> np.ndarray:
+        if self.rate == self.NATIVE_RATE:
+            return pcm
+        ratio = self.NATIVE_RATE / self.rate
+        n = int(len(pcm) * ratio)
+        idx = np.arange(n) / ratio
+        lo = np.floor(idx).astype(int)
+        hi = np.minimum(lo + 1, len(pcm) - 1)
+        frac = idx - lo
+        return (pcm[lo] * (1 - frac) + pcm[hi] * frac).astype(np.int16)
+
+    async def run(self, pcm: np.ndarray, spec: CallSpec) -> Result:
+        import asyncio
+        import base64
+
+        import websockets
+
+        audio = self._to_native(pcm)
+        # semantic turn detection waits for the utterance to *sound* complete, so it
+        # needs a tail; a silence timer needs one longer than its own gate
+        audio = np.concatenate([audio, np.zeros(int(self.NATIVE_RATE * 2.5), np.int16)])
+        td = ({"type": "semantic_vad"} if self.vad == "semantic"
+              else {"type": "server_vad", "silence_duration_ms": self.gate})
+        events: list[Event] = []
+        finals: list[str] = []
+        sent_ms = 0
+        try:
+            async with websockets.connect(
+                self.URL, additional_headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
+                max_size=None,
+            ) as ws:
+                await ws.send(json.dumps({"type": "session.update", "session": {
+                    "type": "transcription",
+                    "audio": {"input": {
+                        "format": {"type": "audio/pcm", "rate": self.NATIVE_RATE},
+                        "transcription": {"model": self.model, "language": self.lang},
+                        "turn_detection": td}}}}))
+
+                async def pump() -> None:
+                    nonlocal sent_ms
+                    step = int(self.NATIVE_RATE * self.CHUNK_MS / 1000)
+                    for i in range(0, len(audio), step):
+                        await ws.send(json.dumps({
+                            "type": "input_audio_buffer.append",
+                            "audio": base64.b64encode(
+                                audio[i : i + step].astype("<i2").tobytes()).decode()}))
+                        sent_ms += self.CHUNK_MS
+                        await asyncio.sleep(self.CHUNK_MS / 1000)
+
+                sender = asyncio.create_task(pump())
+
+                async def reader() -> None:
+                    async for raw in ws:
+                        msg = json.loads(raw)
+                        ty = msg.get("type", "")
+                        if "speech_stopped" in ty:
+                            events.append(Event("speech_end", sent_ms))
+                        elif "transcription" in ty and "completed" in ty:
+                            text = msg.get("transcript", "")
+                            finals.append(text)
+                            events.append(Event("transcript", sent_ms, text))
+                            if finals:
+                                return
+                        elif ty == "error":
+                            raise RuntimeError(str(msg.get("error", {}))[:200])
+
+                try:
+                    await asyncio.wait_for(reader(),
+                                           timeout=len(audio) / self.NATIVE_RATE + 20)
+                except asyncio.TimeoutError:
+                    pass
+                finally:
+                    sender.cancel()
+        except Exception as exc:
+            return Result(spec_id=spec.id, adapter=self.name, events=events,
+                          transcript=" ".join(finals), error=f"{type(exc).__name__}: {exc}")
+        return Result(spec_id=spec.id, adapter=self.name, events=events,
+                      transcript=" ".join(finals).strip())
