@@ -1,4 +1,7 @@
-<title>The Turn Ended Early</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Final Dropped The Number</title>
+<meta name="description" content="The streaming partials carried all seven digits; the final transcript, 105ms later, ended at the filler. asli measures what an Indic voice agent does when things go wrong mid-conversation.">
 <style>
 :root{
   --ink:#000; --ground:#050402; --deep:#2A0800; --panel:#0C0906;
@@ -133,6 +136,8 @@ h1{font-size:clamp(2.3rem,8.4vw,7rem);margin-bottom:1.6rem}
 h2{font-size:clamp(2.4rem,8vw,6rem);margin-bottom:1.2rem;max-width:15ch}
 h1 .q,h2 .q{color:var(--orange)}
 .lede{max-width:56ch;color:var(--bone2);font-size:clamp(.98rem,1.6vw,1.1rem)}
+.lede a,.sub a{color:var(--orange);text-decoration:none;border-bottom:1px solid var(--edge)}
+.lede a:hover,.sub a:hover{border-bottom-color:var(--orange)}
 .lede b{color:var(--bone);font-weight:600}
 .sub{font-size:.82rem;color:var(--bone3);max-width:60ch}
 code{font-family:var(--mono);font-size:.9em;color:var(--orange)}
@@ -285,9 +290,10 @@ footer b{color:var(--orange)}
 
 <section class="scene" id="hero">
   <div class="stamp">saaras:v3-realtime &nbsp;<b>/</b>&nbsp; 12 utterances &nbsp;<b>/</b>&nbsp; august 2026</div>
-  <h1>She hesitated.<br><span class="q">The turn ended<br>without the number.</span></h1>
-  <p class="lede">Indian callers hesitate mid-sentence. Turn detection reads the gap as the end of the turn &mdash; so at the documented default her turn is closed <em>before she says the number</em>, and an agent replying then answers a question she has not finished asking. Press play and watch where the turn ends.</p>
-  <div class="tags"><span class="hot">hesitation 700ms</span><span>gate 500ms</span><span>pir 1.00</span><span>n = 12</span></div>
+  <h1>She hesitated.<br><span class="q">The final transcript<br>dropped the number.</span></h1>
+  <p class="lede">Indian callers hesitate mid-sentence &mdash; <em>matlab</em>, the verbal equivalent of &ldquo;umm&rdquo;. The gap splits the turn, and in two of the four output modes the half after the filler never returns: the partials carry all seven digits, then the final that lands 105&nbsp;ms later ends at <em>matlab</em> &mdash; reporting that it covered the whole turn.</p>
+  <p class="sub" style="margin-top:1rem;max-width:56ch"><b>Two things this is not:</b> recognition was accurate throughout, and the endpointing gate is a documented setting doing what it is told. Neither is the finding &mdash; <a href="#trace">the dropped entity</a> is.</p>
+  <div class="tags"><span class="hot">translit 0/8</span><span>codemix 0/8</span><span>verbatim 8/8</span></div>
 </section>
 
 <section class="scene rev" id="instrument">
@@ -309,11 +315,27 @@ footer b{color:var(--orange)}
   </div>
   <div class="tags"><span>segment-wise tts</span><span>spliced silence</span><span class="hot">true end known</span><span>no forced alignment</span></div>
 </section>
+<section class="scene rev" id="modes">
+  <div class="idx"><b>01</b><span>where it happens</span></div>
+  <h2>Four modes. <span class="q">One</span> keeps the number.</h2>
+  <p class="lede">Same audio, same hesitation, same gate &mdash; only the requested output mode changes. With the filler sitting immediately before the digits, <code>verbatim</code> returns the number 8 times out of 8 and <code>transcribe</code> 6, while <code>translit</code> and <code>codemix</code> return it <b>0 times out of 8</b>. On the two shorter utterances the transcript simply stops at the filler: <code>&ldquo;The reference is Matlab&rdquo;</code>, and the entity is gone rather than mangled.</p>
+  <div class="chips" role="tablist" id="chips"></div>
+  <div class="modeout" id="modeout"></div>
+  <div class="tags"><span>4 modes &times; 4 utterances &times; 2 runs</span><span>filler before the entity</span><span class="hot">translit 0/8</span><span>codemix 0/8</span><span>verbatim 8/8</span></div>
+</section>
+
+<section class="scene rev" id="trace">
+  <div class="idx"><b>02</b><span>the socket trace</span></div>
+  <h2>The partial is complete.<br>The final <span class="q">is not</span>.</h2>
+  <p class="lede">Every message on the socket, no early exit. The partials carry the whole utterance. The final that lands 105&nbsp;ms later has the digits removed &mdash; while reporting <code>end_s 3.607</code>, claiming to cover the entire turn.</p>
+  <figure><div class="trace" id="tr"></div></figure>
+  <div class="tags"><span>transcript.partial</span><span class="hot">transcript.final</span><span>vad.speech_end</span><span>session.end</span></div>
+</section>
 
 <section id="sky">
   <canvas id="skycv" aria-hidden="true"></canvas>
   <div class="inner">
-    <div class="idx"><b>01</b><span>the sandbox</span></div>
+    <div class="idx"><b>03</b><span>the sandbox</span></div>
     <h2>Fly your own caller.</h2>
     <p class="lede">Set how long she hesitates and how patient the endpointer is. The left panel is a <b>model</b> &mdash; the same arithmetic the harness measures, with our real datapoints marked. The right panel is <b>not</b> a model: it streams the audio to a live endpoint and reports what actually comes back.</p>
 
@@ -347,7 +369,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="cliff">
-  <div class="idx"><b>02</b><span>the measurement</span></div>
+  <div class="idx"><b>04</b><span>the measurement</span></div>
   <h2>The cliff sits <span class="q">just above</span> the default.</h2>
   <p class="lede">Twelve utterances streamed in real time at each gate setting. Flat at 1.00 through every value up to and including the 500&nbsp;ms default, then straight to zero. <b>Moving the gate to 700&nbsp;ms removes the effect entirely</b> at this hesitation length.</p>
   <p class="lede" style="margin-top:.9rem">And how often does a caller actually pause that long? Measured on 5.02&nbsp;hours of spontaneous Hindi telephone speech: <b>17.9% of mid-utterance pauses exceed the 500&nbsp;ms default</b> &mdash; about one in six. At 700&nbsp;ms it is one in seventeen.</p>
@@ -359,28 +381,13 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="line">
-  <div class="idx"><b>03</b><span>the line</span></div>
+  <div class="idx"><b>05</b><span>the line</span></div>
   <h2>What the recogniser is <span class="q">actually given</span>.</h2>
   <p class="lede">The same utterance down a real telephony path. Everything above 3.4&nbsp;kHz &mdash; the detail separating one digit word from another &mdash; is gone before any model sees it.</p>
   <div class="grid" id="agrid"></div>
   <div class="tags"><span>8 khz &micro;-law</span><span>babble</span><span>packet loss</span><span>jitter</span><span>measured snr</span><span class="hot">ffmpeg codec path</span></div>
 </section>
 
-<section class="scene rev" id="modes">
-  <div class="idx"><b>04</b><span>where it happens</span></div>
-  <h2>Four modes. <span class="q">One</span> keeps the number.</h2>
-  <p class="lede">Same audio, same hesitation, same gate. The recogniser hears all seven digits every time &mdash; but only <code>verbatim</code> returns them. <b>The romanising modes drop one, and on shorter utterances they lose the number entirely.</b></p>
-  <div class="chips" role="tablist" id="chips"></div>
-  <div class="modeout" id="modeout"></div>
-</section>
-
-<section class="scene rev" id="trace">
-  <div class="idx"><b>05</b><span>the smoking gun</span></div>
-  <h2>The partial is complete.<br>The final <span class="q">is not</span>.</h2>
-  <p class="lede">Every message on the socket, no early exit. The partials carry the whole utterance. The final that lands 105&nbsp;ms later has the digits removed &mdash; while reporting <code>end_s 3.607</code>, claiming to cover the entire turn.</p>
-  <figure><div class="trace" id="tr"></div></figure>
-  <div class="tags"><span>transcript.partial</span><span class="hot">transcript.final</span><span>vad.speech_end</span><span>session.end</span></div>
-</section>
 
 <section class="scene rev" id="general">
   <div class="idx"><b>06</b><span>the generalisation</span></div>
@@ -415,7 +422,7 @@ footer b{color:var(--orange)}
   <h2>Point it at <span class="q">your own</span> agent.</h2>
   <p class="lede">The harness is the durable artefact; these numbers are just what it found on one afternoon. An adapter is a single method.</p>
   <pre><b>uv</b> venv --python 3.12 &amp;&amp; <b>uv</b> pip install -e ".[agent]"
-python tests/test_asli.py                 <span style="color:var(--bone3)"># 9 checks. no keys, no network</span>
+python tests/test_asli.py                 <span style="color:var(--bone3)"># 11 checks. no keys, no network</span>
 
 echo "SARVAM_API_KEY=..." &gt;&gt; .env
 <b>uv</b> run asli check                         <span style="color:var(--bone3)"># one call, raw event stream</span>
@@ -691,12 +698,13 @@ $("#tr").innerHTML=[
   [4027,"session.end","end_s 3.607, reported as covering the full turn",""]
 ].map(([t,ev,tx,cls,tag])=>`<div class="r ${cls||""}"><span class="t">${t}ms</span><span class="e">${ev}${tx?' <span style="font-family:var(--deva)">'+tx+'</span>':""}${tag?'<span class="tag2">'+tag+'</span>':""}</span></div>`).join("");
 
+const FIT=D.fit;
 $("#cav").innerHTML=[
   ["The recogniser is good.","Recognition was accurate throughout &mdash; the Hinglish, the fillers, <code>1.25 lakh</code>, <code>ek karod pachas lakh</code>, <code>04032026</code> all came through. Most of what first looked like vendor failures were bugs in our own extractor. Those are fixed; these numbers are post-fix."],
   ["The gate is a setting.","<code>silence_duration_ms</code> is documented and per-session, and the endpointer does exactly what it is told. The finding is that the default sits just below a common hesitation length."],
   ["n = 12.","A proving run, not a rate. Don't quote a percentage off it."],
   ["700ms is a long pause, not a typical one.","Measured against 5 hours of spontaneous Hindi telephone speech, 700&nbsp;ms sits at the <b>94th percentile</b>. A typical pause is 320&nbsp;ms and does not trip the default. The honest rate is that <b>17.9% of real mid-utterance pauses</b> are long enough to end the turn early &mdash; about one in six, not all of them."],
-  ["The caller is still synthetic.","Pause <em>timing</em> now comes from real speech, but the utterances are TTS, so the acoustics and where the hesitation falls in a sentence remain synthetic."],
+  ["The caller is still synthetic &mdash; and this is what closes it.","Pause <em>timing</em> is drawn from real speech, but the utterances are TTS, so the acoustics and the position of the hesitation within a sentence are not. Closing that does not need new recordings. The corpus behind the fit is "+FIT.n_files.toLocaleString("en")+" real unscripted telephone utterances, and <b>"+FIT.files_with_long_pause+" of them already carry a mid-utterance pause of 500&nbsp;ms or longer</b> &mdash; long enough to be the caller as-is. The true end comes from the same energy VAD that located the pause, so it is measured with a &plusmn;20&nbsp;ms frame rather than constructed, and a hand-checked subsample bounds that error. That makes PIR real-audio end to end. It does <em>not</em> transfer to INEPA or SFR, which need a known entity inside the utterance and so stay authored &mdash; that limit is structural, not a to-do."],
   ["No vendor is ranked.","One system was characterised, generously and in public. The bundled mock VAD is an instrument for calibrating scorers offline, never a comparison."]
 ].map(([h,b])=>`<div><h3>${h}</h3><p>${b}</p></div>`).join("");
 

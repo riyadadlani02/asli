@@ -4,22 +4,58 @@
 
 **Live demo:** https://riyadadlani02.github.io/asli/ · [mirror](https://asli-riya02.vercel.app)
 
-![The asli site — She hesitated. The turn ended without the number.](docs/img/hero.png)
+![Four output modes on the same audio — only verbatim returns all seven digits](docs/img/modes.png)
 
 ---
 
-## In plain terms
+## The finding, first
 
 When you call a bank and say your account number, you might pause in the middle —
 *"my number is, matlab…* (pause) *…nine eight double seven, triple one"*. Indian
 speakers do this constantly. `matlab`, `haan toh`, `woh kya bolte hain` are the
 verbal equivalent of "umm".
 
+Put that filler immediately before the digits and, in two of the four output modes,
+**the digits never arrive in the final transcript** — even though the recogniser
+clearly heard them:
+
+```
+[3917ms] transcript.partial   द रेफ़रेंस इज़ मतलब एट डबल ज़ीरो नाइन   ← all of it
+[4022ms] transcript.final     The reference is Matlab                ← 8009 is gone
+[4027ms] session.end          end_s 3.607, reported as covering the full turn
+```
+
+The partial has the number. The final, 105 ms later, does not — and nothing in the
+session reports a truncation. Across 4 utterances × 2 runs with the filler before the
+entity:
+
+| mode | number survives | |
+|---|---:|---|
+| `verbatim` | **8/8** | native script, spoken form preserved |
+| `transcribe` | 6/8 | native script |
+| `translit` | **0/8** | romanised — entity dropped |
+| `codemix` | **0/8** | romanised — entity dropped |
+
+On the two shorter utterances the transcript simply ends at the filler, which is
+scored as capitalised content (`Matlab`). This is the part that is a defect rather
+than a setting, and it is [reproducible in one call](#step-3--one-test-call).
+
+Two things it is **not**. Recognition itself was accurate throughout — the Hinglish,
+the fillers, `1.25 lakh`, `ek karod pachas lakh`, `04032026` all came through. And the
+endpointing gate below (`silence_duration_ms`) is a documented per-session setting
+doing exactly what it is told; that its default sits just under a common hesitation
+length is a tuning curve, not a bug.
+
+## What else is measured
+
+![The asli site — the turn ends inside the hesitation, before the number](docs/img/hero.png)
+
+
 Voice agents decide you've finished talking by waiting for silence. If they wait
 **500 milliseconds** and your "umm" pause lasts **700 milliseconds**, the agent
 thinks you're done — and replies before you've said the number.
 
-That's what this measures. Not "did the microphone hear you correctly" (everyone
+That's the other half of this. Not "did the microphone hear you correctly" (everyone
 measures that), but "did the agent *behave* correctly when something went wrong".
 
 Three things get measured:
@@ -30,8 +66,8 @@ Three things get measured:
 | **INEPA** | Did it understand Indian number formats? | `do lakh pachas hazaar` = ₹250,000, not ₹350,000 |
 | **SFR** | When it misheard, did it check — or just act? | Heard `5677111` instead of `9877111` and proceeded anyway |
 
-**This is not a leaderboard.** No vendor is ranked. The main result is a tuning
-curve: *here is the setting at which Indian hesitations stop being cut off.*
+**This is not a leaderboard.** No vendor is ranked. One system was characterised, in
+public, with its own documentation open next to it.
 
 ---
 
@@ -50,19 +86,21 @@ You should see:
 
 ```
   ok  test_entity_survival_is_script_independent
+  ok  test_fit_counts_only_the_clips_usable_as_a_real_caller
   ok  test_indian_amounts_parse_as_lakh_and_crore
   ok  test_noise_lands_at_the_snr_we_asked_for
   ok  test_packet_loss_removes_roughly_the_share_requested
+  ok  test_pause_detection_survives_a_real_noise_floor
   ok  test_pir_fires_only_when_the_gate_is_shorter_than_the_pause
   ok  test_render_timing_is_exact_by_construction
   ok  test_sfr_is_pinned_by_agents_with_known_behaviour
   ok  test_spoken_digits_binds_multipliers_to_the_following_digit
   ok  test_telephony_keeps_the_tone_and_drops_the_top_octave
 
-9 passed
+11 passed
 ```
 
-Those nine checks are the harness proving its own scoring is correct — for example,
+Those eleven checks are the harness proving its own scoring is correct — for example,
 that a 256 ms endpointing gate *does* trip on a 700 ms hesitation and a 1024 ms one
 *doesn't*. If the scoring can't be pinned, no measured number would mean anything.
 
@@ -349,7 +387,7 @@ answers a question she hadn't finished asking.
 The 700 ms hesitation used above had to come from somewhere. It now does.
 
 **Source:** [Gram Vaani Hindi](https://www.openslr.org/118/) (OpenSLR SLR118) development
-set — 1,882 recordings, **5.02 hours of spontaneous Hindi telephone speech**, 8 kHz, from
+set — 1,885 recordings, **5.02 hours of spontaneous Hindi telephone speech**, 8 kHz, from
 a community voice platform in rural India. Unscripted callers on real phone lines: the
 population this harness is about. Openly downloadable, free for academic use.
 
@@ -359,8 +397,9 @@ tar xzf GV_Dev_5h.tar.gz
 uv run asli fit --corpus GV_Dev_5h/Audio
 ```
 
-48,631 silences measured; 6,514 are pauses of ≥200 ms (below that they are articulatory
-gaps between words, not hesitation — 200 ms is the conventional cut).
+48,631 silences measured across the 1,788 recordings with enough energy contrast to
+separate speech from floor at all; 6,514 are pauses of ≥200 ms (below that they are
+articulatory gaps between words, not hesitation — 200 ms is the conventional cut).
 
 | | |
 |---|---|
@@ -453,7 +492,6 @@ reports what actually came back.
 "measured on saaras:v3-realtime at this exact setting". Otherwise it is labelled
 as modelled.*
 
-![Four output modes — only verbatim keeps all seven digits](docs/img/modes.png)
 
 ---
 
@@ -555,7 +593,8 @@ That file *is* the artefact — every number in this README is computed from it.
 - **The hesitation lengths are now grounded, the caller still is not.** Pause lengths
   come from 5 hours of real spontaneous Hindi telephone speech (above), so the *timing*
   is no longer arbitrary. The utterances themselves are still TTS, so the acoustics and
-  the placement of hesitation within a sentence remain synthetic.
+  the placement of hesitation within a sentence remain synthetic. **What closes it is
+  in the repo already** — see below.
 - **The pause distribution is all mid-utterance silences**, not specifically those after
   a filler. Filler-conditioned timing needs word-aligned transcripts.
 - **PIR is conservative.** Event times are taken as *audio sent so far*, so network
@@ -569,6 +608,39 @@ That file *is* the artefact — every number in this README is computed from it.
 - **The mode result is n = 4 entities × 2 runs** at one gate. The direction is
   consistent and the mechanism is visible in the socket trace, but it wants the full
   bank before it's a rate.
+
+### Closing the synthetic-caller gap
+
+The obvious objection to every PIR number here is *the caller is a TTS voice, so both
+the acoustics and the position of the hesitation inside the sentence are yours, not a
+speaker's*. That is fair, and it does not need new recordings to fix.
+
+PIR needs exactly one thing from an utterance: **the moment speech actually ended.** It
+does not need a known entity — that is what INEPA and SFR need. So real audio can drive
+PIR directly, and the corpus behind the pause fit is already the right audio:
+
+```bash
+uv run asli fit --corpus corpus/GV_Dev_5h    # writes results/pause_fit.json
+```
+
+```
+  files_used                1788
+  files_with_long_pause      813        ← usable as a real caller, unmodified
+  long_pause_ms              500
+```
+
+**813 of 1,885 real unscripted telephone utterances already carry a mid-utterance pause
+of 500 ms or longer** — long enough that the documented default would end the turn
+inside it. Streaming those instead of TTS gives a real-acoustics, real-placement PIR,
+with the true end taken from the same energy VAD that located the pause: measured to a
+±20 ms analysis frame rather than known by construction, with a hand-checked subsample
+to bound that error. The cost of the certainty is stated rather than hidden — this is
+the one place the harness would give up exact ground truth, and the error bar replaces
+it.
+
+What this does **not** close, and cannot: INEPA and SFR need a known account number
+inside the utterance to score against. Spontaneous corpus speech does not contain one.
+Those lanes stay authored, and that is structural rather than a to-do.
 
 ---
 
@@ -609,6 +681,10 @@ timing claim in the harness.
    retrieval pipeline too, and the detectability control holds. Two negatives worth
    the same billing: the stance gap is 0.137, not the ≥0.3 predicted before the run,
    and the prompt-entanglement effect seen in voice did not replicate at all.
+6. **Real-caller PIR** — next up: stream the 813 corpus utterances that already carry a ≥500 ms
+   mid-utterance pause, with the true end from the VAD plus a hand-checked error bar,
+   instead of TTS. Removes the last synthetic element from the PIR lane. See *Closing
+   the synthetic-caller gap*.
 
 ## The site
 
