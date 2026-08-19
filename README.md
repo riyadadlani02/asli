@@ -181,6 +181,8 @@ MIT.
 
 ## The site
 
+**Live: https://asli-riya02.vercel.app**
+
 `site/index.html` is a standalone, single-file interactive site — the utterance audio,
 waveforms and every number are embedded, so it has no build step and no external
 requests. Open it directly, or drop it on any static host:
