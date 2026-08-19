@@ -1,0 +1,310 @@
+# Experiment B, redesigned. Three arms, not two.
+#
+# The old design could not distinguish "semantic detection has a verb-final blind spot"
+# from "semantic detection is just bad at Hindi". This one can, because it adds a
+# positive control: an arm where the pause falls after an English-SHAPED dangler — a
+# genitive or a conjunction, the Hindi equivalent of stopping on "the" or "and".
+#
+#   dangler     <head ending in uska/aur/kyunki> … <entity>   English-shaped incomplete
+#   filler      <head ending in verb> matlab … <entity>       discourse marker
+#   verb-final  <head ending in verb> … <entity>              legal-looking sentence end
+#
+# The dangler arm is the gate. If semantic detection cannot hold that, it cannot do
+# semantic end-of-turn in Hindi at all and the verb-final comparison is unreportable.
+# If it holds the dangler and splits the verb-final, the blind spot is real AND
+# specific — which is the only version of this claim that survives review.
+#
+# Heads are long and unambiguously declarative: the old corpus lost 8/48 rows to heads
+# short enough to be read as questions. `filler_head` is built as verb_head + " matlab",
+# so the filler and verb-final arms differ by exactly one token.
+#
+# Digits and amounts only. Spoken dates need a digit year to parse, and the entity is
+# only a secondary readout here — PIR is scored off the splice, not the transcript.
+
+- id: vf-01
+  entity_type: digits
+  canonical: "9877111"
+  entity: "nine eight double seven, triple one"
+  verb: "hai"
+  verb_head: "Jo mobile number maine bank mein register karvaya tha, woh hai"
+  dangler_head: "Jo mobile number maine bank mein register karvaya tha, uska"
+
+- id: vf-02
+  entity_type: digits
+  canonical: "40556"
+  entity: "char zero double five six"
+  verb: "hain"
+  verb_head: "Aapke record mein mere account ke jo aakhri paanch ank hain, woh hain"
+  dangler_head: "Aapke record mein mere account ke jo aakhri paanch ank hain, unka"
+
+- id: vf-03
+  entity_type: digits
+  canonical: "8009"
+  entity: "eight, double zero, nine"
+  verb: "likh leejiye"
+  verb_head: "Maine jo complaint darj karvayi thi, uska reference number likh leejiye"
+  dangler_head: "Maine jo complaint darj karvayi thi, uska reference number aur"
+
+- id: vf-04
+  entity_type: amount
+  canonical: "250000"
+  entity: "do lakh pachas hazaar rupaye"
+  verb: "hai"
+  verb_head: "Main apne account se jo raqam transfer karna chahta hoon, woh hai"
+  dangler_head: "Main apne account se jo raqam transfer karna chahta hoon, uska"
+
+- id: vf-05
+  entity_type: amount
+  canonical: "350000"
+  entity: "saade teen lakh"
+  verb: "tha"
+  verb_head: "Bank ne mere loan ke liye jo amount sanction kiya tha, woh tha"
+  dangler_head: "Bank ne mere loan ke liye jo amount sanction kiya tha, uska"
+
+- id: vf-06
+  entity_type: digits
+  canonical: "77712345"
+  entity: "triple seven one two three four five"
+  verb: "hai"
+  verb_head: "Meri policy ka jo number aapke system mein darj hai, woh hai"
+  dangler_head: "Meri policy ka jo number aapke system mein darj hai, uska"
+
+- id: vf-07
+  entity_type: amount
+  canonical: "900000"
+  entity: "nau lakh"
+  verb: "kiya hai"
+  verb_head: "Maine apni gaadi ke nuksaan ke liye jo claim file kiya hai"
+  dangler_head: "Maine apni gaadi ke nuksaan ke liye claim file kiya hai lekin"
+
+- id: vf-08
+  entity_type: digits
+  canonical: "5540321"
+  entity: "double five four zero three two one"
+  verb: "hoga"
+  verb_head: "Aapke computer par mera jo customer identification number dikh raha hoga, woh hai"
+  dangler_head: "Aapke computer par mera jo customer identification number dikh raha hoga, uska"
+
+- id: vf-09
+  entity_type: amount
+  canonical: "47500"
+  entity: "saintalis hazaar paanch sau"
+  verb: "hui thi"
+  verb_head: "Mere credit card se jo transaction pichhle hafte hui thi, woh thi"
+  dangler_head: "Mere credit card se jo transaction pichhle hafte hui thi, uski"
+
+- id: vf-10
+  entity_type: digits
+  canonical: "220914"
+  entity: "double two zero nine one four"
+  verb: "diya hai"
+  verb_head: "Service centre wale ne mujhe jo ticket number diya hai, woh hai"
+  dangler_head: "Service centre wale ne mujhe jo ticket number diya hai, uska"
+
+- id: vf-11
+  entity_type: amount
+  canonical: "1250000"
+  entity: "baarah lakh pachas hazaar"
+  verb: "bacha hai"
+  verb_head: "Mere home loan par abhi jo principal amount bacha hai, woh hai"
+  dangler_head: "Mere home loan par abhi jo principal amount bacha hai, uska"
+
+- id: vf-12
+  entity_type: digits
+  canonical: "918273645"
+  entity: "nine one eight two seven three six four five"
+  verb: "aaya tha"
+  verb_head: "Payment karne ke baad mere phone par jo reference aaya tha, woh hai"
+  dangler_head: "Payment karne ke baad mere phone par jo reference aaya tha, uska"
+
+- id: vf-13
+  entity_type: amount
+  canonical: "6500000"
+  entity: "pain sath lakh"
+  verb: "tay hua hai"
+  verb_head: "Flat kharidne ke liye humaare beech jo sauda tay hua hai, woh hai"
+  dangler_head: "Flat kharidne ke liye humaare beech jo sauda tay hua hai, uska"
+
+- id: vf-14
+  entity_type: digits
+  canonical: "6612"
+  entity: "double six one two"
+  verb: "chahiye"
+  verb_head: "Locker kholne ke liye mujhe jo pin number yaad rakhna chahiye"
+  dangler_head: "Locker kholne ke liye mujhe pin number yaad rakhna chahiye kyunki"
+
+- id: vf-15
+  entity_type: amount
+  canonical: "7500"
+  entity: "saade saat hazaar"
+  verb: "kat ti hai"
+  verb_head: "Har mahine meri salary se jo EMI apne aap kat ti hai, woh hai"
+  dangler_head: "Har mahine meri salary se jo EMI apne aap kat ti hai, uski"
+
+- id: vf-16
+  entity_type: digits
+  canonical: "300145"
+  entity: "three double zero one four five"
+  verb: "likha hua hai"
+  verb_head: "Mere paas jo purana passbook hai usme jo branch code likha hua hai, woh hai"
+  dangler_head: "Mere paas jo purana passbook hai usme jo branch code likha hua hai, uska"
+
+- id: vf-17
+  entity_type: amount
+  canonical: "12000000"
+  entity: "ek crore bees lakh"
+  verb: "mila hai"
+  verb_head: "Meri term insurance policy mein jo total cover mujhe mila hai, woh hai"
+  dangler_head: "Meri term insurance policy mein jo total cover mujhe mila hai, uska"
+
+- id: vf-18
+  entity_type: digits
+  canonical: "4471"
+  entity: "double four seven one"
+  verb: "batate hain"
+  verb_head: "Jo agent mere ghar aaye the woh apna code hamesha yahi batate hain"
+  dangler_head: "Jo agent mere ghar aaye the woh apna code batate hain aur"
+
+- id: vf-19
+  entity_type: amount
+  canonical: "185000"
+  entity: "ek lakh pachaasi hazaar"
+  verb: "bhara tha"
+  verb_head: "Pichhle saal maine income tax ke roop mein jo paisa bhara tha, woh tha"
+  dangler_head: "Pichhle saal maine income tax ke roop mein jo paisa bhara tha, uska"
+
+- id: vf-20
+  entity_type: digits
+  canonical: "560037"
+  entity: "five six zero zero three seven"
+  verb: "aata hai"
+  verb_head: "Mera ghar Bangalore mein jis area mein aata hai uska pin code yahi hai"
+  dangler_head: "Mera ghar Bangalore mein jis area mein aata hai uske pin code ka"
+
+- id: vf-21
+  entity_type: amount
+  canonical: "22000"
+  entity: "bais hazaar"
+  verb: "dena padta hai"
+  verb_head: "Mujhe har mahine makaan maalik ko jo kiraya dena padta hai, woh hai"
+  dangler_head: "Mujhe har mahine makaan maalik ko jo kiraya dena padta hai, uska"
+
+- id: vf-22
+  entity_type: digits
+  canonical: "9988"
+  entity: "double nine double eight"
+  verb: "khatam hota hai"
+  verb_head: "Mera debit card jin chaar ankon par khatam hota hai, woh hain"
+  dangler_head: "Mera debit card jin chaar ankon par khatam hota hai, unka"
+
+- id: vf-23
+  entity_type: amount
+  canonical: "500000"
+  entity: "paanch lakh"
+  verb: "kar di hai"
+  verb_head: "Maine apni beti ki shaadi ke liye jo fixed deposit kar di hai, woh hai"
+  dangler_head: "Maine apni beti ki shaadi ke liye jo fixed deposit kar di hai, uski"
+
+- id: vf-24
+  entity_type: digits
+  canonical: "112233"
+  entity: "double one double two double three"
+  verb: "note kar leejiye"
+  verb_head: "Mere pichhle application ka jo acknowledgement number hai woh note kar leejiye"
+  dangler_head: "Mere pichhle application ka acknowledgement number note kar leejiye aur"
+
+- id: vf-25
+  entity_type: amount
+  canonical: "75000"
+  entity: "pachhattar hazaar"
+  verb: "lagta hai"
+  verb_head: "Is operation mein hospital ka jo kul kharcha lagta hai, woh hai"
+  dangler_head: "Is operation mein hospital ka jo kul kharcha lagta hai, uska"
+
+- id: vf-26
+  entity_type: digits
+  canonical: "700032"
+  entity: "seven double zero zero three two"
+  verb: "rehte the"
+  verb_head: "Hum pehle Kolkata mein jis pin code par rehte the, woh hai"
+  dangler_head: "Hum pehle Kolkata mein jis pin code par rehte the, uska"
+
+- id: vf-27
+  entity_type: amount
+  canonical: "1500"
+  entity: "pandrah sau"
+  verb: "aata hai"
+  verb_head: "Mere ghar ka jo bijli ka bill har mahine aata hai, woh hai"
+  dangler_head: "Mere ghar ka jo bijli ka bill har mahine aata hai, uska"
+
+- id: vf-28
+  entity_type: digits
+  canonical: "34567"
+  entity: "three four five six seven"
+  verb: "bataya tha"
+  verb_head: "Pichhli baar jis officer se baat hui thi usne jo extension bataya tha, woh hai"
+  dangler_head: "Pichhli baar jis officer se baat hui thi usne jo extension bataya tha, uska"
+
+- id: vf-29
+  entity_type: amount
+  canonical: "45000"
+  entity: "paintalis hazaar"
+  verb: "milti hai"
+  verb_head: "Mujhe har mahine company se jo salary account mein milti hai, woh hai"
+  dangler_head: "Mujhe har mahine company se jo salary account mein milti hai, uski"
+
+- id: vf-30
+  entity_type: digits
+  canonical: "20260415"
+  entity: "two zero two six zero four one five"
+  verb: "hoti hai"
+  verb_head: "Mere fixed deposit ki jo maturity date system mein hoti hai, woh hai"
+  dangler_head: "Mere fixed deposit ki jo maturity date system mein hoti hai, uski"
+
+- id: vf-31
+  entity_type: amount
+  canonical: "3200"
+  entity: "battees sau"
+  verb: "hua tha"
+  verb_head: "Pichhle mahine mera jo mobile ka bill hua tha, woh tha"
+  dangler_head: "Pichhle mahine mera jo mobile ka bill hua tha, uska"
+
+- id: vf-32
+  entity_type: digits
+  canonical: "888123"
+  entity: "triple eight one two three"
+  verb: "jaari kiya hai"
+  verb_head: "Company ne mujhe jo naya employee code jaari kiya hai, woh hai"
+  dangler_head: "Company ne mujhe jo naya employee code jaari kiya hai, uska"
+
+- id: vf-33
+  entity_type: amount
+  canonical: "99000"
+  entity: "ninyaanave hazaar"
+  verb: "bhara hai"
+  verb_head: "Maine is saal apne bete ki school fees mein jo paisa bhara hai, woh hai"
+  dangler_head: "Maine is saal apne bete ki school fees mein jo paisa bhara hai, uska"
+
+- id: vf-34
+  entity_type: digits
+  canonical: "10203"
+  entity: "one zero two zero three"
+  verb: "daala tha"
+  verb_head: "Online form bharte waqt maine jo security question ka answer daala tha, woh hai"
+  dangler_head: "Online form bharte waqt maine jo security question ka answer daala tha, uska"
+
+- id: vf-35
+  entity_type: amount
+  canonical: "260000"
+  entity: "do lakh saath hazaar"
+  verb: "chukana hai"
+  verb_head: "Mujhe is gaadi ke loan ka jo bakaya abhi chukana hai, woh hai"
+  dangler_head: "Mujhe is gaadi ke loan ka jo bakaya abhi chukana hai, uska"
+
+- id: vf-36
+  entity_type: digits
+  canonical: "555000"
+  entity: "triple five triple zero"
+  verb: "chalta hai"
+  verb_head: "Hamaare office ka jo landline number ab bhi chalta hai, woh hai"
+  dangler_head: "Hamaare office ka jo landline number ab bhi chalta hai, uska"
