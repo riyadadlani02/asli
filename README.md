@@ -181,7 +181,10 @@ MIT.
 
 ## The site
 
-**Live: https://asli-riya02.vercel.app**
+**Live:** https://riyadadlani02.github.io/asli/ · [mirror](https://asli-riya02.vercel.app)
+
+`docs/` holds the published copy that GitHub Pages serves; `build_site.py` writes
+both it and `site/index.html`, so commit `docs/` when the page changes.
 
 `site/index.html` is a standalone, single-file interactive site — the utterance audio,
 waveforms and every number are embedded, so it has no build step and no external
