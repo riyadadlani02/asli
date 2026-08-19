@@ -276,12 +276,10 @@ class DeepgramWS:
 
 
 class OpenAIWS:
-    """OpenAI realtime transcription.
+    """OpenAI realtime transcription, server_vad.
 
-    Ships both kinds of turn detection, which makes it the cleanest single test of the
-    whole thesis: `server_vad` is a silence timer and splits the hesitation, while
-    `semantic_vad` on the same audio, same model and same connection does not.
-    Select with `vad="server"` or `vad="semantic"`.
+    `server_vad` is a silence timer, so `silence_duration_ms` means the same thing here
+    as on the other lanes and the sweep axis is comparable across all of them.
 
     Audio is resampled to 24kHz because the endpoint rejects 16k, and a wrong rate
     silently distorts every timestamp.
@@ -293,9 +291,8 @@ class OpenAIWS:
     NATIVE_RATE = 24000
 
     def __init__(self, *, language_code: str = "hi", model: str = "gpt-4o-transcribe",
-                 rate: int = SAMPLE_RATE, silence_duration_ms: int | None = None,
-                 vad: str = "server", **params):
-        self.rate, self.model, self.vad = rate, model, vad
+                 rate: int = SAMPLE_RATE, silence_duration_ms: int | None = None, **params):
+        self.rate, self.model = rate, model
         self.lang = language_code.split("-")[0]
         self.gate = silence_duration_ms or 500
 
@@ -317,11 +314,9 @@ class OpenAIWS:
         import websockets
 
         audio = self._to_native(pcm)
-        # semantic turn detection waits for the utterance to *sound* complete, so it
-        # needs a tail; a silence timer needs one longer than its own gate
+        # a silence timer needs a tail longer than its own gate to close the last turn
         audio = np.concatenate([audio, np.zeros(int(self.NATIVE_RATE * 2.5), np.int16)])
-        td = ({"type": "semantic_vad"} if self.vad == "semantic"
-              else {"type": "server_vad", "silence_duration_ms": self.gate})
+        td = {"type": "server_vad", "silence_duration_ms": self.gate}
         events: list[Event] = []
         finals: list[str] = []
         sent_ms = 0

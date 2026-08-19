@@ -95,8 +95,7 @@ def call(adapter, pcm: np.ndarray, spec: CallSpec) -> Result:
     return asyncio.run(out) if inspect.isawaitable(out) else out
 
 
-ADAPTERS = {"sarvam": SarvamWS, "deepgram": DeepgramWS, "openai": OpenAIWS,
-            "openai-semantic": lambda **kw: OpenAIWS(vad="semantic", **kw)}
+ADAPTERS = {"sarvam": SarvamWS, "deepgram": DeepgramWS, "openai": OpenAIWS}
 
 
 def make_adapter(name: str, *, gate: int, lang: str, rate: int, mode: str = "verbatim"):
@@ -175,8 +174,7 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("--frames", type=int, default=18, help="negative_frames_count")
         s.add_argument("--stance", default="careful", choices=["careful", "eager"],
                        help="reference-agent stance; SFR should separate the two")
-        s.add_argument("--agent", default="mock", choices=["mock", "sarvam", "deepgram",
-                                "openai", "openai-semantic"],
+        s.add_argument("--agent", default="mock", choices=["mock", "sarvam", "deepgram", "openai"],
                        help="system under test; the real lanes need SARVAM_API_KEY / "
                             "DEEPGRAM_API_KEY")
         s.add_argument("--lang", default="hi-IN")
