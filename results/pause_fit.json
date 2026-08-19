@@ -24,5 +24,14 @@
   "n_files": 1885,
   "files_skipped": 97,
   "long_pause_ms": 500,
-  "files_with_long_pause": 813
+  "files_with_long_pause": 813,
+  "calls_exceed": {
+    "300": 0.8468,
+    "400": 0.6219,
+    "500": 0.4256,
+    "700": 0.1734,
+    "900": 0.0129,
+    "1200": 0.0039
+  },
+  "file_max_median_ms": 460
 }

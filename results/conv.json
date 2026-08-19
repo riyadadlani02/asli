@@ -1,0 +1,13 @@
+{
+  "gate_ms": 500,
+  "pause_ms": 700,
+  "n": 12,
+  "n_cut": 12,
+  "reply_latency_ms": 800,
+  "pir": 1.0,
+  "entity_first_turn": 0.0,
+  "entity_full_session": 0.6667,
+  "entity_session_abstained": 3,
+  "rcr": 1.0,
+  "median_silence_budget_ms": 2320
+}

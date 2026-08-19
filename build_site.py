@@ -19,6 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
+from asli import fit as fitmod
 from asli.synth import read_wav
 
 ROOT = Path(__file__).parent
@@ -68,6 +69,111 @@ def _text_lane() -> dict:
     return out
 
 
+def pct(x: float | None) -> str:
+    return "-" if x is None else f"{x * 100:.1f}%".replace(".0%", "%")
+
+
+def subs() -> dict[str, str]:
+    """Prose numbers, taken from the stored results rather than typed into the page.
+
+    The page states figures in sentences as well as in charts, and a sentence drifts
+    from the data as quietly as a chart does. These are the ones a reader would quote.
+    """
+    fit = json.loads((ROOT / "results/pause_fit.json").read_text())
+    conv = json.loads((ROOT / "results/conv.json").read_text())
+    rec = fitmod.recommended_gate(fit)
+    advice = "".join(
+        f"<tr><td>{r['gate_ms']}{' (default)' if r['gate_ms'] == 500 else ''}</td>"
+        f"<td>{pct(r['pauses_tripped'])}</td><td>{pct(r['calls_affected'])}</td>"
+        f"<td>{r['added_latency_ms']:+d} ms</td></tr>"
+        for r in fitmod.gate_advice(fit))
+
+    d = {
+        "__T_CALLS500__": pct(fit["calls_exceed"]["500"]),
+        "__T_PAUSES500__": pct(fit["exceed"]["500"]),
+        "__T_ADVICE_ROWS__": advice,
+        "__T_REC__": (f"Within +{rec['budget_ms']} ms of added turn-end latency, "
+                      f"silence_duration_ms = {rec['gate_ms']} is the setting: callers "
+                      f"carrying a long enough pause go from {pct(rec['calls_affected_at_default'])} "
+                      f"to {pct(rec['calls_affected'])} — "
+                      f"{pct(rec['removes_share_of_affected_calls'])} of them removed. "
+                      f"That budget is a product decision, so it is an input here, "
+                      f"not an assumption."),
+        "__T_CONV_PIR__": f"{conv['n_cut']}/{conv['n']}",
+        "__T_FIRSTTURN__": pct(conv["entity_first_turn"]),
+        "__T_SESSION__": pct(conv["entity_full_session"]),
+        "__T_RCR__": pct(conv["rcr"]),
+        "__T_BUDGET__": f"{conv['median_silence_budget_ms']} ms",
+        "__T_ABSTAIN__": (
+            f"{conv['entity_session_abstained']} of the {conv['n']} sessions are scored as "
+            f"<em>abstained</em> rather than failed: they are spoken dates in Devanagari "
+            f"digit words, which this scorer cannot parse. Calling that a vendor failure "
+            f"would be inventing a result, so the session row is a rate over what is "
+            f"readable." if conv.get("entity_session_abstained") else ""),
+    }
+    d.update(_real_lane())
+    return d
+
+
+def _real_lane() -> dict[str, str]:
+    """The real-caller lane and its one-variable control.
+
+    The headline here is the *in-pause* figure, not raw PIR. A spontaneous ten-second
+    voice message should be split into several turns, so "a turn ended before the
+    recording did" is nearly free on this corpus; "a turn ended inside a hesitation of
+    500ms or more" is the thing the synthetic lane claims.
+    """
+    keys = ("__T_REAL_N__", "__T_REAL_ROWS__", "__T_REAL_VERDICT__", "__T_SPREAD__",
+            "__T_FLOOR__", "__T_REALHEAD__")
+    paths = {"as recorded": ROOT / "results/real_pir.json",
+             "hesitation replaced by digital silence": ROOT / "results/real_pir_silenced.json"}
+    got = {k: json.loads(v.read_text()) for k, v in paths.items() if v.exists()}
+    base = got.get("as recorded")
+    if not base or not base.get("gates"):
+        return {k: "-" for k in keys}
+
+    fit = json.loads((ROOT / "results/pause_fit.json").read_text())
+    note = {"as recorded": "nothing touched",
+            "hesitation replaced by digital silence": "one variable: the pause floor"}
+    rows = "".join(
+        f"<tr><td>{k}</td><td><b>{pct(g['gates'][0]['in_pause'])}</b></td>"
+        f"<td>{pct(g['gates'][0]['pir'])}</td><td>{note[k]}</td></tr>"
+        for k, g in got.items() if g.get("gates"))
+
+    n = base["n"]
+    real = base["gates"][0]["in_pause"]
+    ctl = got.get("hesitation replaced by digital silence", {}).get("gates")
+    field = real * fit["calls_exceed"]["500"]
+    verdict = (f"<b>{round(real * n)} of the {n} real callers had a turn ended inside their own "
+               f"hesitation</b>, at the documented default, with no synthesis anywhere in the "
+               f"path. These recordings were selected for carrying a pause that long, so that "
+               f"rate is conditional on it; composed with the {pct(fit['calls_exceed']['500'])} "
+               f"of recordings that do, it puts roughly <b>{pct(field)} of this corpus's callers"
+               f"</b> in the same position — about 1 in "
+               f"{round(1 / field) if field else '-'}.")
+    if ctl:
+        gain = ctl[0]["in_pause"] - real
+        verdict += (f" The control says how much of the rest is the line rather than the "
+                    f"endpointer: replacing the hesitation with digital silence and changing "
+                    f"nothing else takes it to {pct(ctl[0]['in_pause'])} — "
+                    f"{'+' if gain >= 0 else ''}{round(gain * 100)} points. At a median pause "
+                    f"floor of {base.get('pause_floor_db_median')} dB the live line's own noise "
+                    f"protects some callers, but it is a secondary effect, not the explanation. "
+                    f"The exposed caller is the one on the quiet handset, and noise suppression "
+                    f"placed ahead of the VAD moves callers toward the cut, not away from it.")
+    verdict += (" The wider column is every early turn end, including the ordinary splitting of "
+                "a long monologue, and it is reported only for completeness: on spontaneous "
+                "voice messages that number is close to free.")
+    return {"__T_REAL_N__": str(n),
+            "__T_REAL_ROWS__": rows,
+            "__T_REAL_VERDICT__": verdict,
+            "__T_REALHEAD__": f"{round(real * n)} of {n} had the turn ended inside the "
+                              f"hesitation",
+            "__T_SPREAD__": f"{base.get('end_spread_median_ms', '-')} ms median, "
+                            f"{base.get('end_spread_max_ms', '-')} ms worst",
+            "__T_FLOOR__": f"{base.get('pause_floor_db_median', '-')} dB"}
+
+
 def collect() -> dict:
     d: dict = {"said": SAID}
     d["sweep"] = json.loads((ROOT / "results/pir_sweep_sarvam.json").read_text())
@@ -103,6 +209,9 @@ def to_ascii(html: str) -> str:
 def main() -> None:
     data = collect()
     tpl = (ROOT / "site/template.html").read_text()
+    for token, value in subs().items():
+        tpl = tpl.replace(token, value)
+    assert "__T_" not in tpl, "a prose token was left unfilled"
     html = to_ascii(tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False,
                                                        separators=(",", ":"))))
     assert all(ord(c) < 128 for c in html), "output must be ascii"
