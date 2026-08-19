@@ -71,6 +71,24 @@ body{margin:0;background:var(--ground);color:var(--bone);font-family:var(--sans)
 .btn-sky[disabled]{opacity:.45;cursor:not-allowed}
 .privacy{font-size:.72rem;color:#3A5470;line-height:1.5}
 .privacy b{color:#0A1A2A}
+.talkrow{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem .8rem;margin-top:.7rem}
+.btn-sky.alt{background:none;border:1px solid var(--orange);color:var(--orange)}
+.btn-sky.alt:hover{background:var(--orange);color:#fff}
+.btn-sky.alt.rec{background:var(--orange);color:#fff}
+.btn-sky.alt.rec::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff;
+  display:inline-block;margin-right:.5rem;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.talkhint{font-size:.72rem;color:#3A5470;flex:1 1 12rem;line-height:1.4}
+.report{margin-top:.8rem;border:1px solid rgba(10,26,42,.22);border-radius:8px;overflow:hidden}
+.report table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:.68rem}
+.report th{text-align:left;padding:.4rem .55rem;background:rgba(10,26,42,.07);color:#2C4A63;
+  font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;font-weight:400}
+.report td{padding:.4rem .55rem;border-top:1px solid rgba(10,26,42,.12);color:#20364A;
+  vertical-align:top;overflow-wrap:anywhere}
+.report tr.cut td{background:rgba(251,63,12,.1)}
+.report tr.cut td:last-child{color:#B32B06}
+.report .head{padding:.55rem .7rem;font-family:var(--mono);font-size:.66rem;color:#0A1A2A;
+  background:rgba(255,255,255,.45);border-bottom:1px solid rgba(10,26,42,.14)}
 .livelog{font-family:var(--mono);font-size:.68rem;background:rgba(10,26,42,.06);
   border:1px solid rgba(10,26,42,.14);border-radius:8px;padding:.6rem .7rem;max-height:11rem;
   overflow-y:auto;color:#20364A;display:flex;flex-direction:column;gap:.15rem}
@@ -358,14 +376,19 @@ footer b{color:var(--orange)}
 
       <div class="card">
         <h3>live &middot; your endpoint</h3>
-        <p class="privacy">Streams the embedded utterance to <b>api.sarvam.ai</b> over an encrypted socket, re-spliced to your hesitation length, paced in real time. Your key is held in memory for the length of the call and sent to nobody but Sarvam &mdash; this page is static and has no backend to send it to. Nothing is stored. <b>Use a scoped key you can rotate.</b></p>
+        <p class="privacy">Streams the embedded utterance to <b>api.sarvam.ai</b> over an encrypted socket, re-spliced to your hesitation length, paced in real time. Your key is held in memory for the length of the call and sent to nobody but Sarvam &mdash; this page is static and has no backend to send it to. Nothing is stored. <b>Use a scoped key you can rotate.</b> If you use the microphone, <b>your voice is streamed to Sarvam too</b>, and the mic is released the moment you stop.</p>
         <div class="keyrow">
           <input id="sbKey" type="password" placeholder="sarvam api key" autocomplete="off" spellcheck="false" aria-label="Sarvam API key">
           <button class="btn-sky" id="sbRun" type="button">run live</button>
         </div>
         <div class="knob" style="margin-top:.6rem"><div class="row"><span>output mode</span><b id="sbModeV">translit</b></div>
           <div class="fillers modes" id="sbModes"></div></div>
-        <div class="livelog" id="sbLog"><span>idle &mdash; enter a key to stream one call.</span></div>
+        <div class="talkrow">
+          <button class="btn-sky alt" id="sbTalk" type="button">speak into the mic</button>
+          <span class="talkhint" id="sbTalkHint">a real call, your voice &mdash; hesitate mid-sentence and watch where the turn ends</span>
+        </div>
+        <div class="livelog" id="sbLog"><span>idle &mdash; enter a key, then replay the embedded call or speak your own.</span></div>
+        <div class="report" id="sbReport" hidden></div>
       </div>
     </div>
 
@@ -838,6 +861,144 @@ function sandbox(){
 document.querySelector("#sbHes").addEventListener("input",sandbox);
 document.querySelector("#sbGate").addEventListener("input",sandbox);
 
+/* ================= SANDBOX: speak into the mic ================= */
+/* A real call has no ground truth \u2014 nobody authored when the speaker "actually"
+   finished \u2014 so PIR, which is a comparison against a known true end, is not
+   computable here and is not reported. What is computable is whether a turn ended
+   on a word that cannot end a Hindi utterance. That is the marker test, and it is
+   the honest basis for judging a call we did not script. */
+let talkState=null;
+
+function pcm16(f32){
+  const out=new Int16Array(f32.length);
+  for(let i=0;i<f32.length;i++){
+    const v=Math.max(-1,Math.min(1,f32[i]));
+    out[i]=v<0?v*32768:v*32767;
+  }
+  return out;
+}
+function downsample(f32, from, to){
+  if(from===to) return f32;
+  const ratio=from/to, n=Math.floor(f32.length/ratio), out=new Float32Array(n);
+  for(let i=0;i<n;i++){
+    const start=Math.floor(i*ratio), end=Math.min(f32.length,Math.floor((i+1)*ratio));
+    let sum=0; for(let j=start;j<end;j++) sum+=f32[j];
+    out[i]=sum/Math.max(1,end-start);   // average, not nearest \u2014 cheap anti-alias
+  }
+  return out;
+}
+
+async function startTalk(){
+  const key=document.querySelector("#sbKey").value.trim();
+  if(!key){ logEl.innerHTML=""; slog("no key entered \u2014 nothing was sent.","hot"); return; }
+  const gateMs=+document.querySelector("#sbGate").value;
+  const mode=sbModes.length>1?"translit":sbModes[0];
+  logEl.innerHTML=""; document.querySelector("#sbReport").hidden=true;
+  slog(`asking for the microphone\u2026`);
+
+  let stream;
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,
+        echoCancellation:true,noiseSuppression:true}}); }
+  catch(e){ slog("microphone refused or unavailable: "+e.name,"hot"); return; }
+
+  const AC=window.AudioContext||window.webkitAudioContext;
+  let ac; try{ ac=new AC({sampleRate:16000}); }catch(e){ ac=new AC(); }
+  const src=ac.createMediaStreamSource(stream);
+  const node=ac.createScriptProcessor(4096,1,1);
+
+  const qs=new URLSearchParams({language_code:"hi-IN",model:"saaras:v3-realtime",
+    sample_rate:"16000",encoding:"linear16",endpointing:"vad",return_timestamps:"true",
+    mode:mode,silence_duration_ms:String(gateMs)});
+  let ws;
+  try{ ws=new WebSocket("wss://api.sarvam.ai/speech-to-text-realtime/ws?"+qs,
+        ["api-subscription-key."+key]); }
+  catch(e){ slog("could not open the socket: "+e.name,"hot"); stopTracks(stream); return; }
+
+  const turns=[]; let sent=0, lastEnd=0, partial="";
+  talkState={ws,ac,node,src,stream,turns,gateMs,mode,stopped:false};
+
+  node.onaudioprocess=e=>{
+    if(!talkState||ws.readyState!==1) return;
+    const chunk=downsample(e.inputBuffer.getChannelData(0), ac.sampleRate, 16000);
+    ws.send(JSON.stringify({event:"audio_input",audio:b64(pcm16(chunk))}));
+    sent+=Math.round(chunk.length/16);
+  };
+  src.connect(node); node.connect(ac.destination);
+
+  ws.onopen=()=>{ slog(`recording \u00b7 gate ${gateMs}ms \u00b7 mode ${mode} \u2014 speak, and pause mid-sentence on purpose`); };
+  ws.onmessage=ev=>{
+    let m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
+    if(m.event==="vad.speech_end"){ slog(`vad.speech_end @ ~${(sent/1000).toFixed(1)}s`); }
+    else if(m.event==="transcript.partial"){ if(m.text) partial=m.text; }
+    else if(m.event==="transcript.final"){
+      const text=m.text||"";
+      const dang=danglingOf(text);
+      turns.push({from:lastEnd,to:sent,text,dangling:dang});
+      lastEnd=sent;
+      slog(`turn ${turns.length}: ${text||"(empty)"}`+(dang
+        ? `   \u2190 ${DANGLING_NOTE[dang]}`:""), DANGLING_REAL(dang)?"hot":"ok");
+      partial="";
+    }
+    else if(m.event==="error"){ slog("error: "+(m.message||m.code),"hot"); stopTalk(); }
+  };
+  ws.onclose=()=>{ if(talkState&&!talkState.stopped) stopTalk(); };
+
+  const b=document.querySelector("#sbTalk");
+  b.classList.add("rec"); b.textContent="stop and report";
+}
+
+function stopTracks(stream){ try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){} }
+
+async function stopTalk(){
+  const st=talkState; if(!st||st.stopped) return;
+  st.stopped=true;
+  const b=document.querySelector("#sbTalk");
+  b.classList.remove("rec"); b.textContent="speak into the mic";
+  try{ st.node.disconnect(); st.src.disconnect(); }catch(e){}
+  stopTracks(st.stream);                       // release the mic immediately
+  try{ if(st.ws.readyState===1) st.ws.send(JSON.stringify({event:"end"})); }catch(e){}
+  slog("stopped \u2014 waiting for the last transcript\u2026");
+  await new Promise(r=>setTimeout(r,2500));    // let a trailing final arrive
+  try{ st.ws.close(); }catch(e){}
+  try{ st.ac.close(); }catch(e){}
+  renderReport(st);
+  talkState=null;
+}
+
+function renderReport(st){
+  const el=document.querySelector("#sbReport");
+  const t=st.turns;
+  if(!t.length){
+    el.hidden=false;
+    el.innerHTML='<div class="head">no turns came back \u2014 too short, too quiet, or the key was rejected</div>';
+    return;
+  }
+  const cut=t.filter(x=>DANGLING_REAL(x.dangling)).length;
+  const na=t.filter(x=>x.dangling==="na").length;
+  const rows=t.map((x,i)=>
+    `<tr class="${DANGLING_REAL(x.dangling)?"cut":""}"><td>${i+1}</td>`+
+    `<td>${(x.from/1000).toFixed(1)}&ndash;${(x.to/1000).toFixed(1)}s</td>`+
+    `<td>${x.text||"(empty)"}</td>`+
+    `<td>${x.dangling?DANGLING_NOTE[x.dangling]:"a legal ending"}</td></tr>`).join("");
+  el.hidden=false;
+  el.innerHTML=
+    `<div class="head">live call &middot; gate ${st.gateMs}ms &middot; mode ${st.mode} &middot; `+
+    `${t.length} turn${t.length===1?"":"s"} &middot; `+
+    `<b style="color:${cut?"#B32B06":"#0A1A2A"}">${cut} ended mid-thought</b>`+
+    (na?` &middot; ${na} not checked (romanised)`:"")+`</div>`+
+    `<table><thead><tr><th>#</th><th>window</th><th>transcript</th><th>ending</th></tr></thead>`+
+    `<tbody>${rows}</tbody></table>`+
+    `<div class="head" style="border-top:1px solid rgba(10,26,42,.14);border-bottom:none">`+
+    `no PIR here: a real call has no authored end, so there is nothing to compare a `+
+    `turn end against. The marker test stands in \u2014 and it is a heuristic, not a `+
+    `measurement: strict and marginal tiers are grammatical, the filler tier only `+
+    `says she was mid-thought.</div>`;
+}
+
+document.querySelector("#sbTalk").addEventListener("click",()=>{
+  if(talkState&&!talkState.stopped) stopTalk(); else startTalk();
+});
+
 /* ================= SANDBOX: the live call ================= */
 const DEVA_DIG={"\u0936\u0942\u0928\u094d\u092f":0,"\u091c\u093c\u0940\u0930\u094b":0,"\u091c\u0940\u0930\u094b":0,"\u090f\u0915":1,"\u0935\u0928":1,"\u0926\u094b":2,"\u091f\u0942":2,"\u0924\u0940\u0928":3,"\u0925\u094d\u0930\u0940":3,"\u091a\u093e\u0930":4,
   "\u092b\u094b\u0930":4,"\u092a\u093e\u0901\u091a":5,"\u092a\u093e\u0902\u091a":5,"\u092b\u093e\u0907\u0935":5,"\u091b\u0939":6,"\u091b\u0947":6,"\u0938\u093f\u0915\u094d\u0938":6,"\u0938\u093e\u0924":7,"\u0938\u0947\u0935\u0928":7,"\u0906\u0920":8,"\u090f\u091f":8,"\u0928\u094c":9,"\u0928\u093e\u0907\u0928":9,
@@ -866,12 +1027,30 @@ function slog(msg,cls){ const s=document.createElement("span"); if(cls) s.classN
 const TOL_MS=100;   // one audio chunk, matching ATTRIBUTION_TOLERANCE_MS in the harness
 const DANGLING_STRICT=new Set("\u0915\u093f \u0915\u094d\u092f\u094b\u0902\u0915\u093f \u0907\u0938 \u0909\u0938 \u0932\u093f\u090f \u0926\u094d\u0935\u093e\u0930\u093e \u0905\u0917\u0930 \u091c\u092c\u0915\u093f".split(" "));
 const DANGLING_MARGINAL=new Set("\u0915\u093e \u0915\u0947 \u0915\u0940 \u0915\u094b \u092e\u0947\u0902 \u0938\u0947 \u0928\u0947 \u0924\u0915 \u092a\u0930 \u0924\u094b \u0914\u0930 \u092f\u0939 \u0935\u0939 \u091c\u094b".split(" "));
+/* A third and deliberately weaker tier. These are discourse fillers, not syntax:
+   "\u092e\u0924\u0932\u092c" CAN legally end an utterance ("...I mean."), so claiming otherwise would be
+   wrong. What it signals is that the speaker was mid-thought \u2014 which is exactly the
+   case this whole page is about, and which the two grammatical tiers above do not
+   catch. Kept separate so the strong claim stays strong. */
+const DANGLING_FILLER=new Set("\u092e\u0924\u0932\u092c \u092f\u093e\u0928\u0940 \u0935\u094b \u0935\u094b\u0939 \u0910\u0938\u093e \u0939\u093e\u0901 \u0939\u093e\u0902 \u0905\u091a\u094d\u091b\u093e \u092c\u0938 \u0905\u0930\u0947".split(" "));
 function danglingOf(text){
   const w=(text||"").trim().split(/\s+/);
   if(!w[0]) return "";
   const last=w[w.length-1].replace(/[\u0964,.?!\u200d]+$/,"");
-  return DANGLING_STRICT.has(last)?"strict":DANGLING_MARGINAL.has(last)?"marginal":"";
+  // The lists are Devanagari. A romanised transcript (translit, codemix) would score
+  // "legal ending" for every turn, which is a false negative dressed as a result.
+  // Romanised markers are not a safe substitute either \u2014 ka/to/par/is/se/ne collide
+  // with English words, so a naive list would fire on English endings. Abstain.
+  if(!/[\u0900-\u097f]/.test(text)) return "na";
+  return DANGLING_STRICT.has(last)?"strict"
+       : DANGLING_MARGINAL.has(last)?"marginal"
+       : DANGLING_FILLER.has(last)?"filler":"";
 }
+const DANGLING_NOTE={strict:"cannot end a Hindi utterance",
+                     marginal:"rarely ends a Hindi utterance",
+                     filler:"a filler \u2014 she was mid-thought, though it can legally end",
+                     na:"not checked \u2014 romanised output, the marker list is Devanagari"};
+const DANGLING_REAL=d=>d&&d!=="na";   // "na" is an abstention, never a finding
 
 async function buildPcm(hesMs, gateMs){
   const AC=window.AudioContext||window.webkitAudioContext;
@@ -947,9 +1126,10 @@ function runOne(key, pcm, trueEnd, windows, gateMs, mode, tagged){
         slog(tag+"\u2717 her turn was ended inside a hesitation at ~"+cutAtMs+"ms","hot");
         // the fix that costs nothing on turns already finished: read the word left
         // hanging, rather than lengthening the gate for every caller
-        slog(tag+`   last word before the pause: ${lastW}`+(dang
-          ? `  \u2014 ${dang}: cannot end a Hindi utterance, so she was not finished`
-          : "  \u2014 a legal ending, so this cut is defensible"), dang?"hot":"ok");
+        slog(tag+`   last word before the pause: ${lastW}`+(DANGLING_REAL(dang)
+          ? `  \u2014 ${DANGLING_NOTE[dang]}, so she was not finished`
+          : dang==="na" ? "  \u2014 romanised output, so the marker test does not apply"
+          : "  \u2014 a legal ending, so this cut is defensible"), DANGLING_REAL(dang)?"hot":"ok");
       }
       else slog(tag+"\u2713 she was allowed to finish","ok");
       slog(tag+`full transcript (${finals.length} turn${finals.length===1?"":"s"}): `+
