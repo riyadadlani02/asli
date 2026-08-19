@@ -1,4 +1,4 @@
-<title>She Said The Number</title>
+<title>The Turn Ended Early</title>
 <style>
 :root{
   --ink:#000; --ground:#050402; --deep:#2A0800; --panel:#0C0906;
@@ -16,6 +16,62 @@
 html{scroll-behavior:smooth;background:var(--ground)}
 body{margin:0;background:var(--ground);color:var(--bone);font-family:var(--sans);
   font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+
+/* ---------- sky scene ---------- */
+#sky{position:relative;color:#0A1A2A;overflow:hidden;border-top:1px solid var(--edge)}
+#skycv{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+#sky > .inner{position:relative;z-index:2;width:100%;max-width:88rem;margin:0 auto;
+  padding:clamp(6rem,13vh,9rem) clamp(1.2rem,5vw,4.5rem) clamp(6rem,12vh,8rem)}
+#sky .idx{color:#2C4A63}
+#sky .idx b{color:var(--orange)}
+#sky .idx::after{background:rgba(10,26,42,.2)}
+#sky h2{color:#0A1A2A}
+#sky .lede{color:#20364A}
+#sky .lede b{color:#0A1A2A}
+#sky .sub{color:#3A5470}
+#sky code{color:#B32B06}
+.tower{margin-top:1.8rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(19rem,1fr));gap:1rem}
+.card{background:rgba(255,255,255,.42);backdrop-filter:blur(18px) saturate(1.5);
+  -webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid rgba(255,255,255,.6);
+  border-radius:14px;padding:1.2rem;display:flex;flex-direction:column;gap:.9rem;
+  box-shadow:0 20px 50px -30px rgba(10,26,42,.6)}
+.card h3{font-family:var(--mono);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;
+  color:#2C4A63;font-weight:400}
+.knob{display:flex;flex-direction:column;gap:.35rem}
+.knob .row{display:flex;justify-content:space-between;align-items:baseline;
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#2C4A63}
+.knob .row b{color:#0A1A2A;font-variant-numeric:tabular-nums;font-size:.82rem}
+.card input[type=range]::-webkit-slider-runnable-track{background:rgba(10,26,42,.22)}
+.card input[type=range]::-moz-range-track{background:rgba(10,26,42,.22)}
+.card input[type=range]{width:100%}
+.fillers{display:flex;flex-wrap:wrap;gap:.35rem}
+.fillers button{font-family:var(--deva);font-size:.86rem;padding:.3rem .7rem;border-radius:99px;
+  border:1px solid rgba(10,26,42,.25);background:rgba(255,255,255,.5);color:#0A1A2A;cursor:pointer}
+.fillers button[aria-pressed=true]{border-color:var(--orange);background:var(--orange);color:#fff}
+.outcome{border-radius:10px;padding:.9rem 1rem;font-family:var(--mono);font-size:.78rem;line-height:1.55;
+  background:rgba(251,63,12,.14);border:1px solid rgba(251,63,12,.4);color:#5A1703}
+.outcome[data-ok="1"]{background:rgba(255,255,255,.5);border-color:rgba(10,26,42,.25);color:#0A1A2A}
+.outcome .big{display:block;font-family:var(--cond);font-stretch:condensed;font-weight:700;
+  text-transform:uppercase;font-size:1.5rem;letter-spacing:0;line-height:1;margin-bottom:.35rem}
+.measured{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;
+  color:#2C4A63;display:flex;align-items:center;gap:.4rem}
+.measured i{width:6px;height:6px;border-radius:50%;background:var(--orange);display:block}
+.keyrow{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.keyrow input[type=password]{flex:1 1 12rem;min-width:9rem;font-family:var(--mono);font-size:.76rem;
+  padding:.5rem .7rem;border-radius:8px;border:1px solid rgba(10,26,42,.28);
+  background:rgba(255,255,255,.65);color:#0A1A2A}
+.btn-sky{background:var(--orange);color:#fff;border:none;border-radius:99px;padding:.55rem 1.1rem;
+  font-family:var(--mono);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;
+  cursor:pointer;font-weight:600}
+.btn-sky[disabled]{opacity:.45;cursor:not-allowed}
+.privacy{font-size:.72rem;color:#3A5470;line-height:1.5}
+.privacy b{color:#0A1A2A}
+.livelog{font-family:var(--mono);font-size:.68rem;background:rgba(10,26,42,.06);
+  border:1px solid rgba(10,26,42,.14);border-radius:8px;padding:.6rem .7rem;max-height:11rem;
+  overflow-y:auto;color:#20364A;display:flex;flex-direction:column;gap:.15rem}
+.livelog .hot{color:#B32B06}
+.livelog .ok{color:#0F6B45}
 
 /* ambient field behind everything */
 #field{position:fixed;inset:0;z-index:0;pointer-events:none}
@@ -113,6 +169,8 @@ canvas.led{display:block;width:100%;height:clamp(110px,18vh,170px)}
   line-height:1.45;display:flex;flex-wrap:wrap;gap:.26em;align-items:baseline;margin-bottom:.4rem}
 .cursor{display:inline-block;width:.4ch;height:.92em;background:var(--orange);animation:blink 1.05s steps(2) infinite}
 @keyframes blink{50%{opacity:0}}
+.restnote{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;color:var(--bone3);
+  display:block;margin:-.2rem 0 .6rem}
 .dropped{font-family:var(--mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;
   color:var(--orange);border:1px solid var(--orange-dim);border-radius:99px;padding:.2rem .6rem}
 .transport{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;padding-top:1.2rem;border-top:1px solid var(--edge)}
@@ -210,8 +268,8 @@ footer b{color:var(--orange)}
 
 <section class="scene" id="hero">
   <div class="stamp">saaras:v3-realtime &nbsp;<b>/</b>&nbsp; 12 utterances &nbsp;<b>/</b>&nbsp; august 2026</div>
-  <h1>She said<br>the number.<br><span class="q">It never arrived.</span></h1>
-  <p class="lede">Indian callers hesitate mid-sentence. Turn detection reads the gap as the end of the turn &mdash; and at the documented default, every digit after the pause is gone. Press play and watch the transcript stop.</p>
+  <h1>She hesitated.<br><span class="q">The turn ended<br>without the number.</span></h1>
+  <p class="lede">Indian callers hesitate mid-sentence. Turn detection reads the gap as the end of the turn &mdash; so at the documented default her turn is closed <em>before she says the number</em>, and an agent replying then answers a question she has not finished asking. Press play and watch where the turn ends.</p>
   <div class="tags"><span class="hot">hesitation 700ms</span><span>gate 500ms</span><span>pir 1.00</span><span>n = 12</span></div>
 </section>
 
@@ -224,6 +282,7 @@ footer b{color:var(--orange)}
       <div class="said" id="said"></div>
       <div class="lane-lbl">what came back <span id="dropwrap"></span></div>
       <div class="heard" id="heard"></div>
+      <div id="restwrap"></div>
       <canvas class="led" id="led" role="img" aria-label="LED meter of the utterance showing where the turn was ended."></canvas>
       <div class="transport">
         <button class="btn" id="play" type="button"><span class="ico"></span><span id="playlbl">play</span></button>
@@ -234,8 +293,43 @@ footer b{color:var(--orange)}
   <div class="tags"><span>segment-wise tts</span><span>spliced silence</span><span class="hot">true end known</span><span>no forced alignment</span></div>
 </section>
 
+<section id="sky">
+  <canvas id="skycv" aria-hidden="true"></canvas>
+  <div class="inner">
+    <div class="idx"><b>01</b><span>the sandbox</span></div>
+    <h2>Fly your own caller.</h2>
+    <p class="lede">Set how long she hesitates and how patient the endpointer is. The left panel is a <b>model</b> &mdash; the same arithmetic the harness measures, with our real datapoints marked. The right panel is <b>not</b> a model: it streams the audio to a live endpoint and reports what actually comes back.</p>
+
+    <div class="tower">
+      <div class="card">
+        <h3>model &middot; instant, no key</h3>
+        <div class="knob"><div class="row"><span>hesitation</span><b id="sbHesV">700ms</b></div>
+          <input id="sbHes" type="range" min="200" max="1500" step="50" value="700" aria-label="hesitation length"></div>
+        <div class="knob"><div class="row"><span>silence_duration_ms</span><b id="sbGateV">500ms</b></div>
+          <input id="sbGate" type="range" min="100" max="1200" step="50" value="500" aria-label="endpointing gate"></div>
+        <div class="knob"><div class="row"><span>filler</span></div>
+          <div class="fillers" id="sbFillers"></div></div>
+        <div class="outcome" id="sbOut" data-ok="0"></div>
+        <div class="measured" id="sbMeas"></div>
+      </div>
+
+      <div class="card">
+        <h3>live &middot; your endpoint</h3>
+        <p class="privacy">Streams the embedded utterance to <b>api.sarvam.ai</b> over an encrypted socket, re-spliced to your hesitation length, paced in real time. Your key is held in memory for the length of the call and sent to nobody but Sarvam &mdash; this page is static and has no backend to send it to. Nothing is stored. <b>Use a scoped key you can rotate.</b></p>
+        <div class="keyrow">
+          <input id="sbKey" type="password" placeholder="sarvam api key" autocomplete="off" spellcheck="false" aria-label="Sarvam API key">
+          <button class="btn-sky" id="sbRun" type="button">run live</button>
+        </div>
+        <div class="livelog" id="sbLog"><span>idle &mdash; enter a key to stream one call.</span></div>
+      </div>
+    </div>
+
+    <div class="tags"><span>respliced in-browser</span><span>real-time paced</span><span class="hot">vad.speech_end</span><span>transcript.final</span></div>
+  </div>
+</section>
+
 <section class="scene rev" id="cliff">
-  <div class="idx"><b>01</b><span>the measurement</span></div>
+  <div class="idx"><b>02</b><span>the measurement</span></div>
   <h2>The cliff sits <span class="q">just above</span> the default.</h2>
   <p class="lede">Twelve utterances streamed in real time at each gate setting. Flat at 1.00 through every value up to and including the 500&nbsp;ms default, then straight to zero. <b>Moving the gate to 700&nbsp;ms removes the effect entirely</b> at this hesitation length.</p>
   <figure>
@@ -246,7 +340,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="line">
-  <div class="idx"><b>02</b><span>the line</span></div>
+  <div class="idx"><b>03</b><span>the line</span></div>
   <h2>What the recogniser is <span class="q">actually given</span>.</h2>
   <p class="lede">The same utterance down a real telephony path. Everything above 3.4&nbsp;kHz &mdash; the detail separating one digit word from another &mdash; is gone before any model sees it.</p>
   <div class="grid" id="agrid"></div>
@@ -254,7 +348,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="modes">
-  <div class="idx"><b>03</b><span>where it happens</span></div>
+  <div class="idx"><b>04</b><span>where it happens</span></div>
   <h2>Four modes. <span class="q">One</span> keeps the number.</h2>
   <p class="lede">Same audio, same hesitation, same gate. The recogniser hears all seven digits every time &mdash; but only <code>verbatim</code> returns them. <b>The romanising modes drop one, and on shorter utterances they lose the number entirely.</b></p>
   <div class="chips" role="tablist" id="chips"></div>
@@ -262,7 +356,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="trace">
-  <div class="idx"><b>04</b><span>the smoking gun</span></div>
+  <div class="idx"><b>05</b><span>the smoking gun</span></div>
   <h2>The partial is complete.<br>The final <span class="q">is not</span>.</h2>
   <p class="lede">Every message on the socket, no early exit. The partials carry the whole utterance. The final that lands 105&nbsp;ms later has the digits removed &mdash; while reporting <code>end_s 3.607</code>, claiming to cover the entire turn.</p>
   <figure><div class="trace" id="tr"></div></figure>
@@ -270,14 +364,14 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="honest">
-  <div class="idx"><b>05</b><span>read before citing</span></div>
+  <div class="idx"><b>06</b><span>read before citing</span></div>
   <h2>What this <span class="q">is not</span>.</h2>
   <p class="lede">A benchmark that hides its limits is marketing. These are the ones that change how you read everything above.</p>
   <div class="cav" id="cav"></div>
 </section>
 
 <section class="scene rev" id="run">
-  <div class="idx"><b>06</b><span>the tool</span></div>
+  <div class="idx"><b>07</b><span>the tool</span></div>
   <h2>Point it at <span class="q">your own</span> agent.</h2>
   <p class="lede">The harness is the durable artefact; these numbers are just what it found on one afternoon. An adapter is a single method.</p>
   <pre><b>uv</b> venv --python 3.12 &amp;&amp; <b>uv</b> pip install -e ".[agent]"
@@ -380,7 +474,11 @@ function renderHeard(at,cut){
   UNITS.forEach(u=>{ if(u.t<=Math.min(at,stop)){ const s=document.createElement("span");
       s.textContent=u.w+" "; heardEl.appendChild(s); } else if(u.t>stop) dropped=true; });
   if(at<END){ const c=document.createElement("span"); c.className="cursor"; heardEl.appendChild(c); }
-  $("#dropwrap").innerHTML=(dropped&&at>=stop)?'<span class="dropped">digits dropped</span>':"";
+  $("#dropwrap").innerHTML=(dropped&&at>=stop)
+    ? '<span class="dropped">turn ended here</span>' : "";
+  const rest=$("#restwrap");
+  if(rest) rest.innerHTML=(dropped&&at>=stop)
+    ? '<span class="restnote">&hellip; the digits arrive after this, as a separate turn</span>' : "";
 }
 
 /* LED meter */
@@ -535,8 +633,201 @@ $("#cav").innerHTML=[
   ["No vendor is ranked.","One system was characterised, generously and in public. The bundled mock VAD is an instrument for calibrating scorers offline, never a comparison."]
 ].map(([h,b])=>`<div><h3>${h}</h3><p>${b}</p></div>`).join("");
 
-function redraw(){ drawLed(); drawCells(); sweep(); drawField(); dotMark($("#bootmark"),"ASLI"); }
-addEventListener("resize",redraw);
+
+/* ================= SKY SCENE ================= */
+const sky=document.querySelector("#skycv"), sx=sky.getContext("2d");
+const CLOUDS=[...Array(14)].map((_,i)=>({x:Math.random(),y:.45+Math.random()*.6,
+  r:.16+Math.random()*.22, s:.006+Math.random()*.014, o:.35+Math.random()*.4}));
+let skyT=0;
+function drawSky(){
+  const sec=document.querySelector("#sky"); if(!sec) return;
+  const dpr=Math.min(devicePixelRatio||1,1.6);
+  const w=sec.clientWidth, h=sec.clientHeight;
+  if(!w||!h) return;  // layout not settled yet — never size the canvas to zero
+  sky.width=w*dpr; sky.height=h*dpr; sx.setTransform(dpr,0,0,dpr,0,0);
+  const g=sx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,"#2E6FB8"); g.addColorStop(.45,"#68A6DE"); g.addColorStop(1,"#C8E0F2");
+  sx.fillStyle=g; sx.fillRect(0,0,w,h);
+  CLOUDS.forEach(c=>{
+    const cx=((c.x + skyT*c.s) % 1.4 - .2)*w, cy=c.y*h, r=c.r*Math.max(w,h)*.55;
+    const rg=sx.createRadialGradient(cx,cy,r*.15,cx,cy,r);
+    rg.addColorStop(0,`rgba(255,255,255,${c.o})`);
+    rg.addColorStop(.55,`rgba(246,250,255,${c.o*.5})`);
+    rg.addColorStop(1,"rgba(255,255,255,0)");
+    sx.fillStyle=rg; sx.beginPath(); sx.arc(cx,cy,r,0,6.284); sx.fill();
+  });
+}
+function animSky(){ if(!REDUCE){ skyT+=0.12; drawSky(); } requestAnimationFrame(animSky); }
+
+/* ================= SANDBOX: the model ================= */
+const FILLERS=[["मतलब","matlab"],["हाँ तो","haan toh"],["वो क्या बोलते हैं","woh kya bolte hain"],["ऐसा है कि","aisa hai ki"]];
+let sbFiller=0;
+document.querySelector("#sbFillers").innerHTML=FILLERS.map((f,i)=>
+  `<button type="button" aria-pressed="${i===0}" data-i="${i}">${f[0]}</button>`).join("");
+document.querySelector("#sbFillers").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  sbFiller=+b.dataset.i;
+  document.querySelectorAll("#sbFillers button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  sandbox();
+});
+function sandbox(){
+  const hes=+document.querySelector("#sbHes").value, g=+document.querySelector("#sbGate").value;
+  document.querySelector("#sbHesV").textContent=hes+"ms";
+  document.querySelector("#sbGateV").textContent=g+"ms";
+  const fires=g<hes, early=hes-g+(END-PAUSE[1]);
+  const o=document.querySelector("#sbOut");
+  o.dataset.ok=fires?"0":"1";
+  o.innerHTML=fires
+    ? `<span class="big">cut off</span>The gate elapses ${hes-g}ms before she resumes. Her turn ends mid-sentence and everything after &ldquo;${FILLERS[sbFiller][1]}&rdquo; is lost.`
+    : `<span class="big">she finishes</span>The gate outlasts the ${hes}ms hesitation by ${g-hes}ms. The number survives.`;
+  const m=D.sweep.find(p=>p.silence_ms===g);
+  document.querySelector("#sbMeas").innerHTML = (m && hes===700)
+    ? `<i></i>measured on saaras:v3-realtime at this exact setting &mdash; PIR ${m.pir.toFixed(2)}, n=12`
+    : `<i style="background:rgba(10,26,42,.3)"></i>modelled &mdash; move the gate to a measured point (100&ndash;1200) at 700ms hesitation to compare`;
+}
+document.querySelector("#sbHes").addEventListener("input",sandbox);
+document.querySelector("#sbGate").addEventListener("input",sandbox);
+
+/* ================= SANDBOX: the live call ================= */
+const DEVA_DIG={"शून्य":0,"ज़ीरो":0,"जीरो":0,"एक":1,"वन":1,"दो":2,"टू":2,"तीन":3,"थ्री":3,"चार":4,
+  "फोर":4,"पाँच":5,"पांच":5,"फाइव":5,"छह":6,"छे":6,"सिक्स":6,"सात":7,"सेवन":7,"आठ":8,"एट":8,"नौ":9,"नाइन":9,
+  zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9};
+const DEVA_MUL={"डबल":2,"ट्रिपल":3,double:2,triple:3};
+function digitsOf(text){
+  const t=(text||"").toLowerCase().replace(/[०-९]/g,d=>"०१२३४५६७८९".indexOf(d));
+  let out="",pend=1;
+  for(const tok of t.match(/[a-z]+|[ऀ-ॿ]+|\d/g)||[]){
+    if(DEVA_MUL[tok]!==undefined) pend=DEVA_MUL[tok];
+    else if(/^\d$/.test(tok)){ out+=tok.repeat(pend); pend=1; }
+    else if(DEVA_DIG[tok]!==undefined){ out+=String(DEVA_DIG[tok]).repeat(pend); pend=1; }
+  }
+  return out;
+}
+const logEl=document.querySelector("#sbLog");
+function slog(msg,cls){ const s=document.createElement("span"); if(cls) s.className=cls;
+  s.textContent=msg; logEl.appendChild(s); logEl.scrollTop=logEl.scrollHeight; }
+
+async function buildPcm(hesMs, gateMs){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  const ac=new AC();
+  const bin=atob(D.audio[0].mp3), bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  const buf=await ac.decodeAudioData(bytes.buffer);
+  const sr=buf.sampleRate, ch=buf.getChannelData(0);
+  // re-splice: keep the speech either side, swap the pause for the chosen hesitation
+  const headEnd=Math.floor(PAUSE[0]/1000*sr), tailStart=Math.floor(PAUSE[1]/1000*sr);
+  const gap=Math.floor(hesMs/1000*sr);
+  // trailing silence so the endpointer can close the final turn the way it would on a
+  // real call. Without it the last utterance never satisfies the gate and no
+  // transcript.final is ever emitted — the turn simply hangs open until the socket dies.
+  const tailPad=Math.floor((gateMs+500)/1000*sr);
+  const merged=new Float32Array(headEnd+gap+(ch.length-tailStart)+tailPad);
+  merged.set(ch.subarray(0,headEnd),0);
+  merged.set(ch.subarray(tailStart),headEnd+gap);
+  ac.close();
+  const ratio=16000/sr, n=Math.floor(merged.length*ratio), pcm=new Int16Array(n);
+  for(let i=0;i<n;i++){
+    const src=i/ratio, i0=Math.floor(src), f=src-i0;
+    const v=(merged[i0]||0)*(1-f)+(merged[i0+1]||0)*f;
+    pcm[i]=Math.max(-32768,Math.min(32767,Math.round(v*32767)));
+  }
+  return {pcm, trueEnd: Math.round((headEnd/sr)*1000)+hesMs+Math.round(((ch.length-tailStart)/sr)*1000),
+          cutWindow:[Math.round((headEnd/sr)*1000), Math.round((headEnd/sr)*1000)+hesMs]};
+}
+function b64(int16){
+  const b=new Uint8Array(int16.buffer,int16.byteOffset,int16.byteLength);
+  let s=""; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));
+  return btoa(s);
+}
+let liveBusy=false;
+document.querySelector("#sbRun").addEventListener("click",async()=>{
+  if(liveBusy) return;
+  const key=document.querySelector("#sbKey").value.trim();
+  if(!key){ logEl.innerHTML=""; slog("no key entered — nothing was sent.","hot"); return; }
+  const hes=+document.querySelector("#sbHes").value, gateMs=+document.querySelector("#sbGate").value;
+  liveBusy=true; document.querySelector("#sbRun").disabled=true;
+  logEl.innerHTML="";
+  if(document.hidden) slog("keep this tab in front — background tabs throttle timers and the audio will not be paced in real time","hot");
+  slog(`splicing a ${hes}ms hesitation…`);
+  let built;
+  try{ built=await buildPcm(hes, gateMs); }
+  catch(e){ slog("could not decode the audio: "+e.name,"hot"); liveBusy=false;
+    document.querySelector("#sbRun").disabled=false; return; }
+  const {pcm,trueEnd,cutWindow}=built;
+  slog(`${(pcm.length/16000).toFixed(2)}s ready (incl. trailing silence) · she stops at ${trueEnd}ms · gate ${gateMs}ms`);
+
+  const qs=new URLSearchParams({language_code:"hi-IN",model:"saaras:v3-realtime",sample_rate:"16000",
+    encoding:"linear16",endpointing:"vad",return_timestamps:"true",mode:"translit",
+    silence_duration_ms:String(gateMs)});
+  let ws;
+  try{ ws=new WebSocket("wss://api.sarvam.ai/speech-to-text-realtime/ws?"+qs,
+        ["api-subscription-key."+key]); }
+  catch(e){ slog("could not open the socket: "+e.name,"hot"); liveBusy=false;
+    document.querySelector("#sbRun").disabled=false; return; }
+
+  let sent=0, finals=[], ended=false, cutEarly=false, cutAtMs=0;
+  const done=()=>{ if(ended) return; ended=true; liveBusy=false;
+    document.querySelector("#sbRun").disabled=false;
+    const text=finals.join(" ").trim();
+    const got=digitsOf(text);
+    finals.forEach((f,i)=>slog(`final ${i+1}/${finals.length}: `+(f||"(empty)")));
+    // Two separate outcomes, and conflating them would overstate the finding:
+    // whether her turn was ended early, and whether the number ever arrived.
+    if(cutEarly) slog("✗ her turn was ended mid-number at ~"+cutAtMs+"ms","hot");
+    else slog("✓ she was allowed to finish","ok");
+    if(got.includes("9877111")){
+      if(finals.length>1) slog("… the number did arrive, but in turn "+finals.length+
+        " — an agent replying at the first end-of-turn answers before hearing it","hot");
+      else slog("✓ all seven digits in one turn — "+got,"ok");
+    } else slog("✗ number damaged — got "+(got||"nothing")+", truth 9877111","hot");
+    try{ ws.close(); }catch(e){} };
+  const guard=setTimeout(done,45000);
+
+  ws.onopen=async()=>{
+    slog("socket open, streaming in real time…");
+    const step=1600;
+    // Endpointing is a wall-clock behaviour, so pacing has to track real time rather
+    // than assume every tick lands at 100ms. Drift is measured and reported: a
+    // throttled tab silently invalidates the result otherwise.
+    const t0=performance.now();
+    for(let i=0;i<pcm.length;i+=step){
+      if(ws.readyState!==1) break;
+      ws.send(JSON.stringify({event:"audio_input",audio:b64(pcm.subarray(i,i+step))}));
+      sent+=Math.round(step/16);
+      const due=t0+sent, wait=due-performance.now();
+      if(wait>0) await new Promise(r=>setTimeout(r,wait));
+    }
+    const real=performance.now()-t0, drift=real/Math.max(1,sent);
+    if(drift>1.25) slog(`⚠ audio took ${(real/1000).toFixed(1)}s to send ${(sent/1000).toFixed(1)}s of speech — the tab was throttled, so these timings are not trustworthy`,"hot");
+    if(ws.readyState===1) ws.send(JSON.stringify({event:"end"}));
+  };
+  ws.onmessage=ev=>{
+    let m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
+    if(m.event==="vad.speech_end"){
+      const inPause=sent>=cutWindow[0]&&sent<=cutWindow[1]+400;
+      slog(`vad.speech_end @ ~${sent}ms`+(sent<trueEnd-200?" — before she finished":""),
+           sent<trueEnd-200?"hot":null);
+      if(inPause){ cutEarly=true; cutAtMs=sent;
+        slog("→ the turn was ended inside the hesitation","hot"); }
+    }
+    else if(m.event==="transcript.final"){ finals.push(m.text||""); }
+    else if(m.event==="error"){ slog("error: "+(m.message||m.code),"hot"); clearTimeout(guard); done(); }
+    else if(m.event==="session.end"){ clearTimeout(guard); done(); }
+  };
+  ws.onerror=()=>slog("socket error — check the key and that your network allows wss to api.sarvam.ai","hot");
+  ws.onclose=e=>{ clearTimeout(guard);
+    if(!ended&&e.code===1006) slog("socket closed before any result (1006) — usually a rejected key","hot");
+    done(); };
+});
+sandbox(); drawSky(); animSky();
+// requestAnimationFrame is throttled in background tabs, so paint the sky on the
+// events that matter too rather than relying on the loop alone
+addEventListener("load",drawSky);
+new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) drawSky(); }))
+  .observe(document.querySelector("#sky"));
+
+function redraw(){ drawLed(); drawCells(); sweep(); drawField(); drawSky(); dotMark($("#bootmark"),"ASLI"); }
+addEventListener("resize",()=>{redraw();drawSky();});
 addEventListener("scroll",()=>{ if(REDUCE) drawField(); },{passive:true});
 document.querySelectorAll(".rev").forEach(el=>
   new IntersectionObserver((es,o)=>es.forEach(e=>{ if(e.isIntersecting){e.target.classList.add("in");o.unobserve(e.target);} }),{threshold:.1}).observe(el));
