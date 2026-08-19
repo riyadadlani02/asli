@@ -99,7 +99,8 @@ def _text_lane() -> dict:
 # turn-detection setting, which are what the rows are compared on.
 LANES = {"sarvam": "Sarvam &middot; saaras:v3-realtime",
          "deepgram": "Deepgram &middot; nova-2",
-         "openai": "OpenAI &middot; gpt-4o-transcribe"}
+         "openai": "OpenAI &middot; gpt-4o-transcribe",
+         "gemini": "Gemini &middot; 3.1-flash-live"}
 
 
 def _vendor_lane() -> list[dict]:
@@ -115,7 +116,10 @@ def _vendor_lane() -> list[dict]:
     # what the matrix stored, and they are what the row states.
     return [{"label": LANES.get(r["adapter"], r["adapter"]), "detection": r["detection"],
              "end_ms": r["ends"][0] if r["ends"] else None, "first": r["first_turn"],
-             "kept": r["number_in_first_turn"]} for r in rows]
+             "kept": r["number_in_first_turn"],
+             # marks the row whose timestamp is inferred rather than reported, so the
+             # column is never read as four equal measurements
+             "inferred": not r.get("end_source", "vad").startswith("vad")} for r in rows]
 
 
 def pct(x: float | None) -> str:

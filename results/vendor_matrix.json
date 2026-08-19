@@ -2,9 +2,10 @@
  {
   "adapter": "sarvam",
   "detection": "silence 500ms",
+  "end_source": "vad",
   "turns": 2,
   "ends": [
-   2400,
+   2500,
    4355
   ],
   "first_turn": "मेरा मोबाइल नंबर है मतलब",
@@ -14,6 +15,7 @@
  {
   "adapter": "deepgram",
   "detection": "silence 500ms",
+  "end_source": "vad",
   "turns": 2,
   "ends": [
    2600,
@@ -26,12 +28,25 @@
  {
   "adapter": "openai",
   "detection": "server_vad 500ms",
+  "end_source": "vad",
   "turns": 1,
   "ends": [
    2500
   ],
   "first_turn": "मेरा मोबाइल नंबर है मतलब",
   "number_in_first_turn": false,
+  "error": ""
+ },
+ {
+  "adapter": "gemini",
+  "detection": "activity detection 500ms",
+  "end_source": "inferred: first model reply",
+  "turns": 1,
+  "ends": [
+   5700
+  ],
+  "first_turn": "मेरा मोबाइल नंबर है मतलब 9877111",
+  "number_in_first_turn": true,
   "error": ""
  }
 ]
