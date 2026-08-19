@@ -912,12 +912,11 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
   catch(e){ slog("could not open the socket: "+e.name,"hot"); liveBusy=false;
     document.querySelector("#sbRun").disabled=false; return; }
 
-  let sent=0, finals=[], ended=false, cutEarly=false, cutAtMs=0;
+  let sent=0, finals=[], ended=false, cutEarly=false, cutAtMs=0, lastPartial="";
   const done=()=>{ if(ended) return; ended=true; liveBusy=false;
     document.querySelector("#sbRun").disabled=false;
     const text=finals.join(" ").trim();
     const got=digitsOf(text);
-    finals.forEach((f,i)=>slog(`final ${i+1}/${finals.length}: `+(f||"(empty)")));
     // Two separate outcomes, and conflating them would overstate the finding:
     // whether her turn was ended early, and whether the number ever arrived.
     if(cutEarly) slog("\u2717 her turn was ended mid-number at ~"+cutAtMs+"ms","hot");
@@ -957,7 +956,17 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
       if(inPause){ cutEarly=true; cutAtMs=sent;
         slog("\u2192 the turn was ended inside the hesitation","hot"); }
     }
-    else if(m.event==="transcript.final"){ finals.push(m.text||""); }
+    else if(m.event==="transcript.partial"){ if(m.text) lastPartial=m.text; }
+    else if(m.event==="transcript.final"){
+      finals.push(m.text||"");
+      // the whole finding is partial-vs-final, so show them adjacent rather than
+      // dumping the finals at the end with the partials already discarded
+      if(lastPartial) slog(`partial @ ~${sent}ms: ${lastPartial}`);
+      const d=digitsOf(m.text||"");
+      slog(`final ${finals.length} @ ~${sent}ms: `+(m.text||"(empty)")+
+           (d?`   [digits: ${d}]`:"   [no digits]"), d.includes("9877111")?"ok":"hot");
+      lastPartial="";
+    }
     else if(m.event==="error"){ slog("error: "+(m.message||m.code),"hot"); clearTimeout(guard); done(); }
     else if(m.event==="session.end"){ clearTimeout(guard); done(); }
   };
