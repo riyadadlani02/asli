@@ -388,6 +388,7 @@ footer b{color:var(--orange)}
           <div class="fillers modes" id="sbModes"></div></div>
         <div class="talkrow">
           <button class="btn-sky alt" id="sbTalk" type="button">speak into the mic</button>
+          <button class="btn-sky alt" id="sbSample" type="button">see a sample &mdash; no key</button>
           <span class="talkhint" id="sbTalkHint">a real call, your voice &mdash; hesitate mid-sentence and watch where the turn ends</span>
         </div>
         <div class="livelog" id="sbLog"><span>idle &mdash; enter a key, then replay the embedded call or speak your own.</span></div>
@@ -1035,7 +1036,7 @@ function reportMarkdown(d){
 
 function downloadReport(){
   if(!lastReport) return;
-  const md=reportMarkdown(lastReport);
+  const md=lastReport.sample?sampleMarkdown(lastReport):reportMarkdown(lastReport);
   const blob=new Blob([md],{type:"text/markdown;charset=utf-8"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
@@ -1207,6 +1208,90 @@ function renderPrivacy(){
 }
 document.querySelector("#sbProvV").textContent=PROVIDERS.sarvam.label;
 renderPrivacy();
+/* A worked example, so the panel shows something without a key. Captured from a real
+   call on the date shown — not written by hand, which is why the third exchange has a
+   recognition error nobody would have invented. */
+function renderSample(){
+  const S=D.sample; if(!S) return;
+  logEl.innerHTML=""; document.querySelector("#sbReport").hidden=true;
+  slog(`sample · ${S.provider} · gate ${S.gateMs}ms · mode ${S.mode} · captured ${S.captured}`);
+  slog("");
+  const rows=[];
+  S.exchanges.forEach((ex,i)=>{
+    slog(`agent:  ${ex.agent}`);
+    slog(`caller: ${ex.said}`,"ok");
+    const turns=ex.turns.map(t=>({...t,dangling:danglingOf(t.text)}));
+    turns.forEach((t,n)=>slog(
+      `   turn ${n+1}  [${(t.from/1000).toFixed(1)}–${(t.to/1000).toFixed(1)}s]  ${t.text}`+
+      (DANGLING_REAL(t.dangling)?`   ← ${DANGLING_NOTE[t.dangling]}`:""),
+      DANGLING_REAL(t.dangling)?"hot":null));
+    const d=policyDiff(turns,{});
+    if(turns.length>1)
+      slog(`   the agent replies after turn 1 — it does not have the answer yet`,"hot");
+    rows.push({truth:ex.truth, said:ex.said, baseline:turns, fixed:d.fixed, merged:d.merged});
+    slog("");
+  });
+  renderSampleTable(S,rows);
+}
+
+function renderSampleTable(S,rows){
+  const el=document.querySelector("#sbDiff");
+  const yes=t=>`<b style="color:#0F6B45">${t}</b>`, no=t=>`<b style="color:#B32B06">${t}</b>`;
+  const body=rows.map((r,i)=>{
+    const ex=S.exchanges[i];
+    return `<tr><td>${ex.truth}</td><td>${r.baseline.length}</td><td>${r.fixed.length}</td>`+
+      `<td>${ex.ok_first?yes("yes"):no("no")}</td>`+
+      `<td>${ex.ok_whole?yes("yes"):no("no — heard "+(ex.value_whole||"nothing"))}</td></tr>`;
+  }).join("");
+  el.hidden=false;
+  el.innerHTML=
+    `<div class="head">sample &middot; ${S.provider} &middot; gate ${S.gateMs}ms &middot; `+
+    `${rows.length} caller turns, every one split at the filler</div>`+
+    `<table><thead><tr><th>truth</th><th>turns<br>baseline</th><th>turns<br>+ policy</th>`+
+    `<th>answer in hand<br>at first reply</th><th>answer correct<br>once complete</th></tr></thead>`+
+    `<tbody>${body}</tbody></table>`+
+    `<div class="head" style="border-top:1px solid rgba(10,26,42,.14);border-bottom:none">`+
+    `Every caller turn was cut at <b>मतलब</b> and the policy rejoins all three. The last `+
+    `row fails for a different reason: she said <b>पचास</b> (50) and it came back `+
+    `<b>पच्चीस</b> (25) &mdash; \u20b9225,000 instead of \u20b9250,000. Turn-taking does not fix a `+
+    `mis-recognised number, and nothing in the transcript marks it as wrong. That is `+
+    `the silent failure the rest of this page is about.</div>`;
+  lastReport={sample:S,rows};
+  document.querySelector("#sbDl").hidden=false;
+}
+
+function sampleMarkdown(r){
+  const S=r.sample, L=[];
+  L.push("# asli — sample call","",
+    `captured: ${S.captured}`, `provider: ${S.provider} · mode ${S.mode} · gate ${S.gateMs}ms`,
+    "","A real call, not a hand-written example.","",
+    "| truth | turns baseline | turns + policy | answer at first reply | answer once complete |",
+    "|---|---|---|---|---|");
+  r.rows.forEach((x,i)=>{
+    const ex=S.exchanges[i];
+    L.push(`| ${ex.truth} | ${x.baseline.length} | ${x.fixed.length} | `+
+      `${ex.ok_first?"yes":"no"} | `+
+      `${ex.ok_whole?"yes":"no — heard "+(ex.value_whole||"nothing")} |`);
+  });
+  L.push("","## transcript","");
+  S.exchanges.forEach(ex=>{
+    L.push(`agent:  ${ex.agent}`, `caller: ${ex.said}`);
+    ex.turns.forEach((t,n)=>{
+      const d=danglingOf(t.text);
+      L.push(`  turn ${n+1} [${(t.from/1000).toFixed(1)}-${(t.to/1000).toFixed(1)}s] ${t.text}`+
+             (DANGLING_REAL(d)?`   <- ${DANGLING_NOTE[d]}`:""));
+    });
+    L.push("");
+  });
+  L.push("## notes","",
+    "- Every caller turn was split at the filler; the policy rejoins all three.",
+    "- The third fails for a different reason: पचास (50) came back as पच्चीस (25),",
+    "  so \u20b9250,000 became \u20b9225,000. Turn-taking does not fix a mis-recognised",
+    "  number, and nothing in the transcript marks it as wrong.");
+  return L.join("\n");
+}
+
+document.querySelector("#sbSample").addEventListener("click",renderSample);
 document.querySelector("#sbDl").addEventListener("click",downloadReport);
 document.querySelector("#sbTalk").addEventListener("click",()=>{
   if(talkState&&!talkState.stopped) stopTalk(); else startTalk();

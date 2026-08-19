@@ -51,6 +51,32 @@ def mp3(path: Path) -> str:
     return base64.b64encode(out).decode()
 
 
+def _score_sample(sample: dict) -> dict:
+    """Score the sample here, not in the browser.
+
+    The page would otherwise need its own copy of the entity parsers, and a second
+    implementation is a second thing to be wrong — it already produced 540556 for an
+    account number and 2 for a lakh amount. Verdicts come from asli.score, the same
+    functions the harness is tested on, and the page just renders them.
+    """
+    from asli import score
+
+    for ex in sample["exchanges"]:
+        # authored in results/sample_call.json — never guessed from magnitude, which
+        # mistook a 7-digit phone number for a rupee amount
+        et = ex["entity_type"]
+        truth = score.normalise(et, ex["truth"])
+        first = ex["turns"][0]["text"] if ex["turns"] else ""
+        whole = " ".join(t["text"] for t in ex["turns"])
+        ex["value_first"] = score.normalise(et, first)
+        ex["value_whole"] = score.normalise(et, whole)
+        # containment, not equality: non-entity words legitimately contribute digits
+        # ("last five digits" yields a 5 that belongs to no account number)
+        ex["ok_first"] = bool(ex["value_first"]) and truth in ex["value_first"]
+        ex["ok_whole"] = bool(ex["value_whole"]) and truth in ex["value_whole"]
+    return sample
+
+
 def _text_lane() -> dict:
     """Aggregates for the text instantiation, recomputed from the stored rows so the
     page can never drift from what was actually run."""
@@ -179,6 +205,7 @@ def collect() -> dict:
     d["sweep"] = json.loads((ROOT / "results/pir_sweep_sarvam.json").read_text())
     d["fit"] = json.loads((ROOT / "results/pause_fit.json").read_text())
     d["text"] = _text_lane()
+    d["sample"] = _score_sample(json.loads((ROOT / "results/sample_call.json").read_text()))
     d["hero"] = {k: v for k, v in json.loads((ROOT / "results/hero_wave.json").read_text()).items()
                  if k != "env"}
 
