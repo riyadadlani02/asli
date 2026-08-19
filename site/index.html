@@ -377,11 +377,13 @@ footer b{color:var(--orange)}
 
       <div class="card">
         <h3>live &middot; your endpoint</h3>
-        <p class="privacy">Streams the embedded utterance to <b>api.sarvam.ai</b> over an encrypted socket, re-spliced to your hesitation length, paced in real time. Your key is held in memory for the length of the call and sent to nobody but Sarvam &mdash; this page is static and has no backend to send it to. Nothing is stored. <b>Use a scoped key you can rotate.</b> If you use the microphone, <b>your voice is streamed to Sarvam too</b>, and the mic is released the moment you stop.</p>
+        <p class="privacy" id="sbPriv"></p>
         <div class="keyrow">
           <input id="sbKey" type="password" placeholder="sarvam api key" autocomplete="off" spellcheck="false" aria-label="Sarvam API key">
           <button class="btn-sky" id="sbRun" type="button">run live</button>
         </div>
+        <div class="knob" style="margin-top:.6rem"><div class="row"><span>provider</span><b id="sbProvV">Sarvam</b></div>
+          <div class="fillers modes" id="sbProvs"></div></div>
         <div class="knob" style="margin-top:.6rem"><div class="row"><span>output mode</span><b id="sbModeV">translit</b></div>
           <div class="fillers modes" id="sbModes"></div></div>
         <div class="talkrow">
@@ -864,6 +866,61 @@ function sandbox(){
 document.querySelector("#sbHes").addEventListener("input",sandbox);
 document.querySelector("#sbGate").addEventListener("input",sandbox);
 
+/* ================= providers ================================================
+   The policy is the contribution, so it must not be tuned to one endpointer. Each
+   provider supplies only the wire details; everything downstream \u2014 turn records, the
+   marker test, the diff \u2014 is shared. If the fix only worked on one vendor it would be
+   a workaround, not a policy.
+
+   `text` at a turn end is the final when it carries one, else the last partial:
+   Deepgram emits speech_final with an empty transcript after a hesitation, and a live
+   system holding that turn has the partial in hand at the same instant. */
+const PROVIDERS={
+  sarvam:{
+    label:"Sarvam \u00b7 saaras:v3-realtime",
+    host:"api.sarvam.ai", vendor:"Sarvam",
+    gateName:"silence_duration_ms",
+    open(key,gate,mode){
+      const qs=new URLSearchParams({language_code:"hi-IN",model:"saaras:v3-realtime",
+        sample_rate:"16000",encoding:"linear16",endpointing:"vad",return_timestamps:"true",
+        mode:mode,silence_duration_ms:String(gate)});
+      return new WebSocket("wss://api.sarvam.ai/speech-to-text-realtime/ws?"+qs,
+                           ["api-subscription-key."+key]);
+    },
+    audio(ws,pcm){ ws.send(JSON.stringify({event:"audio_input",audio:b64(pcm)})); },
+    end(ws){ ws.send(JSON.stringify({event:"end"})); },
+    parse(m){
+      if(m.event==="transcript.partial") return {kind:"partial",text:m.text||""};
+      if(m.event==="transcript.final")   return {kind:"turn",text:m.text||""};
+      if(m.event==="vad.speech_end")     return {kind:"vad"};
+      if(m.event==="error")  return {kind:"error",text:m.message||m.code||"error"};
+      if(m.event==="session.end") return {kind:"done"};
+      return {kind:"other",name:m.event};
+    }},
+  deepgram:{
+    label:"Deepgram \u00b7 nova-2",
+    host:"api.deepgram.com", vendor:"Deepgram",
+    gateName:"endpointing",
+    open(key,gate){
+      const qs=new URLSearchParams({model:"nova-2",language:"hi",encoding:"linear16",
+        sample_rate:"16000",channels:"1",interim_results:"true",
+        endpointing:String(gate),utterance_end_ms:String(Math.max(1000,gate*2))});
+      return new WebSocket("wss://api.deepgram.com/v1/listen?"+qs,["token",key]);
+    },
+    audio(ws,pcm){ ws.send(pcm.buffer.slice(pcm.byteOffset,pcm.byteOffset+pcm.byteLength)); },
+    end(ws){ ws.send(JSON.stringify({type:"CloseStream"})); },
+    parse(m){
+      if(m.type==="Results"){
+        const t=((m.channel||{}).alternatives||[{}])[0].transcript||"";
+        return m.speech_final?{kind:"turn",text:t}:{kind:"partial",text:t};
+      }
+      if(m.type==="Metadata") return {kind:"done"};
+      if(m.type==="Error"||m.error) return {kind:"error",text:m.description||m.error||"error"};
+      return {kind:"other",name:m.type};
+    }},
+};
+let sbProv="sarvam";
+
 /* ================= turn-taking policy: the intervention =====================
    Baseline is what the endpointer does on its own: every vad.speech_end is a turn.
    The policy adds one rule \u2014 if the text at that end cannot (or would not) end a
@@ -905,7 +962,7 @@ function renderDiff(d){
   const cut=n=>n.filter(t=>DANGLING_REAL(t.dangling)).length;
   el.hidden=false;
   el.innerHTML=
-   `<div class="head">difference &middot; gate ${m.gateMs}ms &middot; mode ${m.mode} &middot; `+
+   `<div class="head">difference &middot; ${m.provider||"live"} &middot; gate ${m.gateMs}ms &middot; `+
    `same audio, same recogniser, same call &mdash; only the turn-taking policy differs</div>`+
    `<table><thead><tr><th></th><th>baseline<br>silence only</th><th>+ marker policy</th></tr></thead><tbody>`+
    `<tr><td>turns</td><td>${d.baseline.length}</td><td>${d.fixed.length}</td></tr>`+
@@ -917,6 +974,13 @@ function renderDiff(d){
      `<td>${yn(d.hasB)}</td><td>${yn(d.hasF)}</td></tr>`)+
    `</tbody></table>`+
    `<div class="head" style="border-top:1px solid rgba(10,26,42,.14);border-bottom:none">`+
+   (d.baseline.length>1&&d.merged===0
+     ? `<b>the policy did not fire.</b> The turn was split, but it ended on a word `+
+       `that can legally close a Hindi sentence &mdash; a copula like <b>\u0939\u0948</b>, for `+
+       `instance. Hindi is verb-final, so a genuine mid-sentence cut often looks `+
+       `well-formed. Adding those words to the list would delay every turn that had `+
+       `actually finished, so the method's recall stops here. `
+     : ``)+
    `the policy reads only the text present at that turn end, so it is implementable `+
    `live; here it is replayed over the recorded stream. It spends latency only on `+
    `turns that are demonstrably unfinished &mdash; unlike raising the gate, which `+
@@ -931,7 +995,7 @@ function reportMarkdown(d){
   L.push("# asli \u2014 turn-taking difference report","",
     `generated: ${new Date().toISOString()}`,
     `source: ${m.source||"live call"}`,
-    `endpoint: saaras:v3-realtime \u00b7 mode ${m.mode} \u00b7 silence_duration_ms ${m.gateMs}`,
+    `provider: ${m.provider||"unknown"} \u00b7 mode ${m.mode} \u00b7 gate ${m.gateMs}ms`,
     "",
     "Same audio, same recogniser, same call. Only the downstream turn-taking policy",
     "differs. The policy reads only the text available at each turn end, so it is",
@@ -950,12 +1014,21 @@ function reportMarkdown(d){
   L.push("","## turns \u2014 with the marker policy","");
   d.fixed.forEach((t,i)=>L.push(`${i+1}. ${t.text||"(empty)"}`+
     (DANGLING_REAL(t.dangling)?`   \u2190 ${DANGLING_NOTE[t.dangling]}`:"")));
+  if(d.baseline.length>1&&d.merged===0)
+    L.push("","**The policy did not fire on this call.** The turn was split, but it ended",
+      "on a word that can legally close a Hindi sentence \u2014 a copula like \u0939\u0948, for",
+      "instance. Hindi is verb-final, so a genuine mid-sentence cut often looks",
+      "well-formed. Adding such words to the list would delay every turn that had",
+      "actually finished. This is where the method's recall stops.");
   L.push("","## caveats","",
     "- A live call has no authored end, so PIR is not reported. The marker test is a",
     "  heuristic: strict and marginal tiers are grammatical, the filler tier only says",
     "  the speaker was mid-thought.",
     "- Romanised output (translit, codemix) is not checked \u2014 the marker lists are",
     "  Devanagari and romanised markers collide with English words.",
+    "- Recall is bounded. The marker test catches fillers and case markers. It does not",
+    "  catch verb-final constructions that end on a legal copula, which is a common way",
+    "  for a Hindi mid-sentence cut to look complete.",
     "","## raw turns","","```json",JSON.stringify(d.baseline,null,1),"```");
   return L.join("\n");
 }
@@ -1016,40 +1089,42 @@ async function startTalk(){
   const src=ac.createMediaStreamSource(stream);
   const node=ac.createScriptProcessor(4096,1,1);
 
-  const qs=new URLSearchParams({language_code:"hi-IN",model:"saaras:v3-realtime",
-    sample_rate:"16000",encoding:"linear16",endpointing:"vad",return_timestamps:"true",
-    mode:mode,silence_duration_ms:String(gateMs)});
+  const P=PROVIDERS[sbProv];
   let ws;
-  try{ ws=new WebSocket("wss://api.sarvam.ai/speech-to-text-realtime/ws?"+qs,
-        ["api-subscription-key."+key]); }
+  try{ ws=P.open(key,gateMs,mode); }
   catch(e){ slog("could not open the socket: "+e.name,"hot"); stopTracks(stream); return; }
 
   const turns=[]; let sent=0, lastEnd=0, partial="";
-  talkState={ws,ac,node,src,stream,turns,gateMs,mode,stopped:false};
+  talkState={ws,ac,node,src,stream,turns,gateMs,mode,provider:P.label,stopped:false};
 
   node.onaudioprocess=e=>{
     if(!talkState||ws.readyState!==1) return;
     const chunk=downsample(e.inputBuffer.getChannelData(0), ac.sampleRate, 16000);
-    ws.send(JSON.stringify({event:"audio_input",audio:b64(pcm16(chunk))}));
+    P.audio(ws,pcm16(chunk));
     sent+=Math.round(chunk.length/16);
   };
   src.connect(node); node.connect(ac.destination);
 
-  ws.onopen=()=>{ slog(`recording \u00b7 gate ${gateMs}ms \u00b7 mode ${mode} \u2014 speak, and pause mid-sentence on purpose`); };
+  ws.onopen=()=>{ slog(`recording \u00b7 ${P.label} \u00b7 ${P.gateName} ${gateMs}ms`+
+    (sbProv==="sarvam"?` \u00b7 mode ${mode}`:"")+` \u2014 speak, and pause mid-sentence on purpose`); };
   ws.onmessage=ev=>{
     let m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
-    if(m.event==="vad.speech_end"){ slog(`vad.speech_end @ ~${(sent/1000).toFixed(1)}s`); }
-    else if(m.event==="transcript.partial"){ if(m.text) partial=m.text; }
-    else if(m.event==="transcript.final"){
-      const text=m.text||"";
+    const pr=P.parse(m);
+    if(pr.kind==="partial"){ if(pr.text) partial=pr.text; return; }
+    if(pr.kind==="vad"){ slog(`turn end @ ~${(sent/1000).toFixed(1)}s`); return; }
+    if(pr.kind==="turn"){
+      // an empty final after a hesitation is itself the finding \u2014 fall back to the
+      // partial, which a live system holds at that same instant
+      const text=pr.text||partial||"";
       const dang=danglingOf(text);
       turns.push({from:lastEnd,to:sent,text,dangling:dang});
       lastEnd=sent;
       slog(`turn ${turns.length}: ${text||"(empty)"}`+(dang
         ? `   \u2190 ${DANGLING_NOTE[dang]}`:""), DANGLING_REAL(dang)?"hot":"ok");
       partial="";
+      return;
     }
-    else if(m.event==="error"){ slog("error: "+(m.message||m.code),"hot"); stopTalk(); }
+    if(pr.kind==="error"){ slog("error: "+pr.text,"hot"); stopTalk(); }
   };
   ws.onclose=()=>{ if(talkState&&!talkState.stopped) stopTalk(); };
 
@@ -1066,14 +1141,14 @@ async function stopTalk(){
   b.classList.remove("rec"); b.textContent="speak into the mic";
   try{ st.node.disconnect(); st.src.disconnect(); }catch(e){}
   stopTracks(st.stream);                       // release the mic immediately
-  try{ if(st.ws.readyState===1) st.ws.send(JSON.stringify({event:"end"})); }catch(e){}
+  try{ if(st.ws.readyState===1) PROVIDERS[sbProv].end(st.ws); }catch(e){}
   slog("stopped \u2014 waiting for the last transcript\u2026");
   await new Promise(r=>setTimeout(r,2500));    // let a trailing final arrive
   try{ st.ws.close(); }catch(e){}
   try{ st.ac.close(); }catch(e){}
   renderReport(st);
   if(st.turns.length) renderDiff(policyDiff(st.turns,
-      {gateMs:st.gateMs, mode:st.mode, source:"microphone"}));
+      {gateMs:st.gateMs, mode:st.mode, source:"microphone", provider:st.provider}));
   talkState=null;
 }
 
@@ -1107,6 +1182,31 @@ function renderReport(st){
     `says she was mid-thought.</div>`;
 }
 
+document.querySelector("#sbProvs").innerHTML=Object.keys(PROVIDERS).map((k,i)=>
+  `<button type="button" aria-pressed="${i===0}" data-p="${k}">${k}</button>`).join("");
+document.querySelector("#sbProvs").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  sbProv=b.dataset.p;
+  document.querySelectorAll("#sbProvs button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  document.querySelector("#sbProvV").textContent=PROVIDERS[sbProv].label;
+  // output mode is a Sarvam concept; hiding it beats showing a control that does nothing
+  document.querySelector("#sbModes").closest(".knob").style.display =
+    sbProv==="sarvam" ? "" : "none";
+  document.querySelector("#sbKey").placeholder = sbProv+" api key";
+  renderPrivacy();
+});
+function renderPrivacy(){
+  const P=PROVIDERS[sbProv];
+  document.querySelector("#sbPriv").innerHTML=
+    `Streams the audio to <b>${P.host}</b> over an encrypted socket, paced in real time. `+
+    `Your key is held in memory for the length of the call and sent to nobody but `+
+    `${P.vendor} &mdash; this page is static and has no backend to send it to. Nothing `+
+    `is stored. <b>Use a scoped key you can rotate.</b> If you use the microphone, `+
+    `<b>your voice is streamed to ${P.vendor} too</b>, and the mic is released the `+
+    `moment you stop.`;
+}
+document.querySelector("#sbProvV").textContent=PROVIDERS.sarvam.label;
+renderPrivacy();
 document.querySelector("#sbDl").addEventListener("click",downloadReport);
 document.querySelector("#sbTalk").addEventListener("click",()=>{
   if(talkState&&!talkState.stopped) stopTalk(); else startTalk();
@@ -1216,12 +1316,9 @@ document.querySelector("#sbModes").addEventListener("click",e=>{
 function runOne(key, pcm, trueEnd, windows, gateMs, mode, tagged){
   return new Promise(resolve=>{
     const tag=tagged?"  ":"";
-    const qs=new URLSearchParams({language_code:"hi-IN",model:"saaras:v3-realtime",
-      sample_rate:"16000",encoding:"linear16",endpointing:"vad",return_timestamps:"true",
-      mode:mode,silence_duration_ms:String(gateMs)});
+    const P=PROVIDERS[sbProv];
     let ws;
-    try{ ws=new WebSocket("wss://api.sarvam.ai/speech-to-text-realtime/ws?"+qs,
-          ["api-subscription-key."+key]); }
+    try{ ws=P.open(key,gateMs,mode); }
     catch(e){ slog(tag+"could not open the socket: "+e.name,"hot");
       return resolve({mode,error:e.name}); }
 
@@ -1267,45 +1364,46 @@ function runOne(key, pcm, trueEnd, windows, gateMs, mode, tagged){
       const t0=performance.now();
       for(let i=0;i<pcm.length;i+=step){
         if(ws.readyState!==1) break;
-        ws.send(JSON.stringify({event:"audio_input",audio:b64(pcm.subarray(i,i+step))}));
+        P.audio(ws,pcm.subarray(i,i+step));
         sent+=Math.round(step/16);
         const due=t0+sent, wait=due-performance.now();
         if(wait>0) await new Promise(r=>setTimeout(r,wait));
       }
       const real=performance.now()-t0, drift=real/Math.max(1,sent);
       if(drift>1.25) slog(tag+`\u26a0 audio took ${(real/1000).toFixed(1)}s to send ${(sent/1000).toFixed(1)}s of speech \u2014 the tab was throttled, so these timings are not trustworthy`,"hot");
-      if(ws.readyState===1) ws.send(JSON.stringify({event:"end"}));
+      if(ws.readyState===1) P.end(ws);
     };
     ws.onmessage=ev=>{
       let m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
-      if(m.event==="vad.speech_end"){
+      const pr=P.parse(m);
+      const noteEnd=()=>{
         const inPause=windows.some(w=>sent>=w[0]&&sent<=w[1]+TOL_MS);
-        slog(tag+`vad.speech_end @ ~${sent}ms`+(sent<trueEnd-200?" \u2014 before she finished":""),
+        slog(tag+`turn end @ ~${sent}ms`+(sent<trueEnd-200?" \u2014 before she finished":""),
              sent<trueEnd-200?"hot":null);
-        if(inPause){ cutEarly=true; cutAtMs=sent;
+        if(inPause&&!cutEarly){ cutEarly=true; cutAtMs=sent;
           slog(tag+"\u2192 the turn was ended inside the hesitation","hot"); }
-      }
-      else if(m.event==="transcript.partial"){ if(m.text) lastPartial=m.text; }
-      else if(m.event==="transcript.final"){
-        finals.push(m.text||"");
-        turnRecs.push({from:lastEnd,to:sent,text:m.text||"",dangling:danglingOf(m.text||"")});
+      };
+      if(pr.kind==="vad"){ noteEnd(); return; }
+      if(pr.kind==="partial"){ if(pr.text) lastPartial=pr.text; return; }
+      if(pr.kind==="turn"){
+        if(sbProv!=="sarvam") noteEnd();   // no separate vad event on this provider
+        const text=pr.text||lastPartial||"";
+        finals.push(text);
+        turnRecs.push({from:lastEnd,to:sent,text,dangling:danglingOf(text)});
         lastEnd=sent;
-        if(cutEarly&&!cutText) cutText=m.text||"";
-        // the whole finding is partial-vs-final, so show them adjacent rather than
-        // dumping the finals at the end with the partials already discarded
+        if(cutEarly&&!cutText) cutText=text;
         if(lastPartial) slog(tag+`partial @ ~${sent}ms: ${lastPartial}`);
-        const d=digitsOf(m.text||"");
-        slog(tag+`final ${finals.length} @ ~${sent}ms: `+(m.text||"(empty)")+
+        const d=digitsOf(text);
+        slog(tag+`final ${finals.length} @ ~${sent}ms: `+(text||"(empty)")+
              (d?`   [digits: ${d}]`:"   [no digits]"), d.includes("9877111")?"ok":"hot");
         lastPartial="";
+        return;
       }
-      else if(m.event==="error"){ slog(tag+"error: "+(m.message||m.code),"hot"); done(); }
-      else if(m.event==="session.end"){ done(); }
-      // name every event kind the socket emits, once. Without this an event under an
-      // unexpected name is indistinguishable from one that never arrived.
-      else if(m.event&&!kinds.has(m.event)){ kinds.add(m.event); slog(tag+`\u00b7 ${m.event}`); }
+      if(pr.kind==="error"){ slog(tag+"error: "+pr.text,"hot"); done(); return; }
+      if(pr.kind==="done"){ done(); return; }
+      if(pr.name&&!kinds.has(pr.name)){ kinds.add(pr.name); slog(tag+`\u00b7 ${pr.name}`); }
     };
-    ws.onerror=()=>slog(tag+"socket error \u2014 check the key and that your network allows wss to api.sarvam.ai","hot");
+    ws.onerror=()=>slog(tag+`socket error \u2014 check the key and that your network allows wss to ${P.host}`,"hot");
     ws.onclose=e=>{
       if(!ended&&e.code===1006) slog(tag+"socket closed before any result (1006) \u2014 usually a rejected key","hot");
       done(); };
@@ -1364,7 +1462,8 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
   if(multi) report(rows,gateMs,hes);
   const withTurns=rows.find(r=>r&&r.turnRecs&&r.turnRecs.length);
   if(withTurns) renderDiff(policyDiff(withTurns.turnRecs,
-      {gateMs, mode:withTurns.mode, source:"embedded utterance", target:"9877111"}));
+      {gateMs, mode:withTurns.mode, source:"embedded utterance", target:"9877111",
+       provider:PROVIDERS[sbProv].label}));
   liveBusy=false; document.querySelector("#sbRun").disabled=false;
 });
 sandbox(); drawSky(); animSky();
