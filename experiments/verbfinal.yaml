@@ -1,0 +1,88 @@
+# Experiment B — does semantic end-of-turn detection inherit an SVO blind spot?
+#
+# Hindi is verb-final. A caller can therefore stop mid-thought on a word that is a
+# perfectly legal sentence ending — a finite verb or copula — where English speakers
+# would stop on an obvious dangler like "the" or "because".
+#
+# Each item is a minimal pair. `head` ends on a finite verb; the hesitation is spliced
+# in the same place either way. The only difference is whether a filler stands between
+# the verb and the entity:
+#
+#   filler     : "<head> matlab … <entity>"   the lexical policy fires
+#   verb-final : "<head> … <entity>"          the lexical policy CANNOT fire
+#
+# If semantic detection holds both, it is not SVO-shaped. If it holds the filler and
+# splits the verb-final one, the blind spot is shared and unsolved.
+
+- id: vf-01
+  entity_type: digits
+  canonical: "9877111"
+  head: "Mera mobile number hai"
+  verb: "hai"
+  entity: "nine eight double seven, triple one"
+- id: vf-02
+  entity_type: digits
+  canonical: "40556"
+  head: "Account number ye hai"
+  verb: "hai"
+  entity: "char zero double five six"
+- id: vf-03
+  entity_type: amount
+  canonical: "250000"
+  head: "Mujhe transfer karna hai"
+  verb: "hai"
+  entity: "do lakh pachas hazaar rupaye"
+- id: vf-04
+  entity_type: amount
+  canonical: "350000"
+  head: "Maine bheja hai"
+  verb: "hai"
+  entity: "saade teen lakh"
+- id: vf-05
+  entity_type: amount
+  canonical: "7500"
+  head: "EMI hai"
+  verb: "hai"
+  entity: "saade sat hazaar"
+- id: vf-06
+  entity_type: digits
+  canonical: "8009"
+  head: "Reference number likhiye"
+  verb: "likhiye"
+  entity: "eight, double zero, nine"
+- id: vf-07
+  entity_type: amount
+  canonical: "125000"
+  head: "Balance tha"
+  verb: "tha"
+  entity: "one point two five lakh"
+- id: vf-08
+  entity_type: digits
+  canonical: "77712345"
+  head: "Registered number hai"
+  verb: "hai"
+  entity: "triple seven one two three four five"
+- id: vf-09
+  entity_type: amount
+  canonical: "15000000"
+  head: "Property ki value hai"
+  verb: "hai"
+  entity: "ek crore pachas lakh"
+- id: vf-10
+  entity_type: digits
+  canonical: "402556"
+  head: "Customer ID hai"
+  verb: "hai"
+  entity: "four zero two double five six"
+- id: vf-11
+  entity_type: amount
+  canonical: "45000"
+  head: "Total amount hoga"
+  verb: "hoga"
+  entity: "pachas hazaar"
+- id: vf-12
+  entity_type: digits
+  canonical: "600123"
+  head: "Pin code hai"
+  verb: "hai"
+  entity: "six double zero one two three"

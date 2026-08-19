@@ -1,0 +1,659 @@
+[
+ {
+  "id": "vf-01",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2500,
+   5200
+  ],
+  "first": "मेरा मोबाइल नंबर है मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-01",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "ends": [
+   5400
+  ],
+  "first": "मेरा मोबाइल नंबर है मतलब 9877111",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-01",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   1900,
+   4600
+  ],
+  "first": "मेरा मोबाइल नम्बर है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-01",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2000,
+   4900
+  ],
+  "first": "मेरा मोबाइल नंबर है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-02",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2600,
+   4800
+  ],
+  "first": "अकाउंट नंबर यह है मतलब?",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-02",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "ends": [
+   4900
+  ],
+  "first": "अकाउंट नंबर यह है, मतलब 60556",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-02",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2000,
+   4200
+  ],
+  "first": "अकाउंट नंबर यह है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-02",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "ends": [
+   4900
+  ],
+  "first": "अकाउंट नंबर यह है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-03",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2600,
+   4600
+  ],
+  "first": "मुझे ट्रांसफर करना है मतलब?",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-03",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2700,
+   4600
+  ],
+  "first": "मुझे ट्रांसफर करना है मतलब?",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-03",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2100,
+   3900
+  ],
+  "first": "मुझे ट्रांसफर करना है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-03",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2100,
+   4000
+  ],
+  "first": "मुझे ट्रांसफर करना है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-04",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2300,
+   4000
+  ],
+  "first": "मैंने भेजा है मतलब?",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-04",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2400,
+   5600
+  ],
+  "first": "मैंने भेजा है मतलब?",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-04",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   1800,
+   3400
+  ],
+  "first": "मैंने भेजा है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-04",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   1800,
+   3400
+  ],
+  "first": "मैंने भेजा है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-05",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2200,
+   3900
+  ],
+  "first": "ईएमआई हाई मतलब?",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-05",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "ends": [
+   4000
+  ],
+  "first": "ईएमआई है मतलब साढ़े सात हजार।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-05",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   1600,
+   3300
+  ],
+  "first": "ईएमआई हाई.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-05",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "ends": [
+   3400
+  ],
+  "first": "ईएमआई है साढ़े सात हजार",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "likhiye",
+  "turns": 2,
+  "ends": [
+   2500,
+   4600
+  ],
+  "first": "रिफरेंस नंबर लिखिए।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "likhiye",
+  "turns": 1,
+  "ends": [
+   2500
+  ],
+  "first": "रेफरेंस नंबर लिखी है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "likhiye",
+  "turns": 2,
+  "ends": [
+   1900,
+   4000
+  ],
+  "first": "रेफरेंस नंबर लिखी है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "likhiye",
+  "turns": 1,
+  "ends": [
+   1900
+  ],
+  "first": "रेफरेंस नंबर लिखी है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-07",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "tha",
+  "turns": 2,
+  "ends": [
+   2100,
+   4100
+  ],
+  "first": "बैलन्स था मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-07",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "tha",
+  "turns": 2,
+  "ends": [
+   2100,
+   4100
+  ],
+  "first": "बैलेंस था मतलब।",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-07",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "tha",
+  "turns": 2,
+  "ends": [
+   1600,
+   3500
+  ],
+  "first": "बैलन्स था।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-07",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "tha",
+  "turns": 1,
+  "ends": [
+   3500
+  ],
+  "first": "बैलेंस था।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-08",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2500,
+   5100
+  ],
+  "first": "रजिस्टरड नंबर है मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-08",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2500,
+   5100
+  ],
+  "first": "रजिस्टर्ड नंबर है मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-08",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   1900,
+   4500
+  ],
+  "first": "रजिस्टर्ड नंबर है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-08",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2000,
+   4600
+  ],
+  "first": "रजिस्टर्ड नंबर है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-09",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2600,
+   4400
+  ],
+  "first": "प्रॉपर्टी की वैल्यू है मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-09",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2900,
+   4800
+  ],
+  "first": "प्रॉपर्टी की वैल्यू है मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-09",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2000,
+   3700
+  ],
+  "first": "प्रॉपर्टी की वैल्यू है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-09",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2100,
+   3800
+  ],
+  "first": "प्रॉपर्टी की वैल्यू है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-10",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2300,
+   4600
+  ],
+  "first": "कस्टमर आईडी है मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-10",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 0,
+  "ends": [],
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-10",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   1700,
+   4300
+  ],
+  "first": "कस्टमर आईडी है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-10",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "ends": [
+   1900
+  ],
+  "first": "कस्टमर आईडी है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-11",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hoga",
+  "turns": 2,
+  "ends": [
+   2500,
+   4100
+  ],
+  "first": "टोटल अमाउंट होगा मतलब?",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-11",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hoga",
+  "turns": 1,
+  "ends": [
+   4100
+  ],
+  "first": "टोटल अमाउंट होगा मतलब पचास हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-11",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hoga",
+  "turns": 2,
+  "ends": [
+   1900,
+   3400
+  ],
+  "first": "टोटल अमाउंट होगा।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-11",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hoga",
+  "turns": 1,
+  "ends": [
+   3600
+  ],
+  "first": "टोटल अमाउंट होगा पचास हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-12",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2300,
+   4500
+  ],
+  "first": "पिंकोड है मतलब?",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-12",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   2400,
+   4500
+  ],
+  "first": "पेनकोड है मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-12",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "ends": [
+   1700,
+   3900
+  ],
+  "first": "पिंक कोट है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-12",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "ends": [
+   4400
+  ],
+  "first": "पिन कोड है 600123",
+  "has_answer": true,
+  "lexical_would_hold": false
+ }
+]
