@@ -646,6 +646,22 @@ reports what actually came back.
 
 ![The sandbox — hesitation and gate sliders, filler choice, and a live streaming panel](docs/img/sandbox.png)
 
+**No key? Press "see a sample".** A real three-exchange call, captured 2026-08-19,
+with the transcript, the turn split, and the report:
+
+![A sample call — every caller turn split at the filler, with one silent money error](docs/img/sample.png)
+
+| truth | turns baseline | turns + policy | answer at first reply | answer once complete |
+|---|---:|---:|---|---|
+| 9877111 | 2 | 1 | no | yes |
+| 40556 | 2 | 1 | no | yes |
+| 250000 | 2 | 1 | no | **no — heard 225000** |
+
+Every caller turn was cut at `मतलब` and the policy rejoins all three. The last row
+fails for a different reason: she said `पचास` (50), it came back `पच्चीस` (25) —
+₹225,000 instead of ₹250,000. **Turn-taking does not fix a mis-recognised number, and
+nothing in the transcript marks it as wrong.**
+
 *When your settings match a datapoint we actually measured, it says so —
 "measured on saaras:v3-realtime at this exact setting". Otherwise it is labelled
 as modelled.*

@@ -1,0 +1,119 @@
+{
+ "gateMs": 500,
+ "mode": "verbatim",
+ "provider": "Sarvam · saaras:v3-realtime",
+ "captured": "2026-08-19",
+ "exchanges": [
+  {
+   "agent": "And your registered mobile number?",
+   "said": "Mera mobile number hai matlab… nine eight double seven, triple one",
+   "truth": "9877111",
+   "turns": [
+    {
+     "from": 0,
+     "to": 2400,
+     "text": "मेरा मोबाइल नंबर है मतलब"
+    },
+    {
+     "from": 2400,
+     "to": 4355,
+     "text": "नाइन आठ डबल सेवन ट्रिपल वन"
+    }
+   ],
+   "events": [
+    {
+     "kind": "speech_start",
+     "t": 300
+    },
+    {
+     "kind": "speech_end",
+     "t": 2400
+    },
+    {
+     "kind": "speech_start",
+     "t": 2700
+    },
+    {
+     "kind": "speech_end",
+     "t": 4355
+    }
+   ],
+   "error": "",
+   "entity_type": "digits"
+  },
+  {
+   "agent": "Thanks. The last five digits of the account?",
+   "said": "Account ke last five digits matlab… char zero double five six",
+   "truth": "40556",
+   "turns": [
+    {
+     "from": 0,
+     "to": 2800,
+     "text": "अकाउंट का लास्ट फाइव डिजिट्स मतलब"
+    },
+    {
+     "from": 2800,
+     "to": 4387,
+     "text": "चार ज़ीरो डबल फाइव सिक्स"
+    }
+   ],
+   "events": [
+    {
+     "kind": "speech_start",
+     "t": 300
+    },
+    {
+     "kind": "speech_end",
+     "t": 2800
+    },
+    {
+     "kind": "speech_start",
+     "t": 3200
+    },
+    {
+     "kind": "speech_end",
+     "t": 4386
+    }
+   ],
+   "error": "",
+   "entity_type": "digits"
+  },
+  {
+   "agent": "How much would you like to transfer?",
+   "said": "Mujhe transfer karna hai matlab… do lakh pachas hazaar rupaye",
+   "truth": "250000",
+   "turns": [
+    {
+     "from": 0,
+     "to": 2400,
+     "text": "मुझे ट्रांसफ़र करना है, मतलब।"
+    },
+    {
+     "from": 2400,
+     "to": 3767,
+     "text": "दो लाख पच्चीस हज़ार रुपये"
+    }
+   ],
+   "events": [
+    {
+     "kind": "speech_start",
+     "t": 300
+    },
+    {
+     "kind": "speech_end",
+     "t": 2400
+    },
+    {
+     "kind": "speech_start",
+     "t": 2800
+    },
+    {
+     "kind": "speech_end",
+     "t": 3767
+    }
+   ],
+   "error": "",
+   "entity_type": "amount"
+  }
+ ]
+}
