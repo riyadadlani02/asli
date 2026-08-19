@@ -145,7 +145,8 @@ off mid-sentence.** Here's how to get that number yourself.
 | key | what it's for | where |
 |---|---|---|
 | `ELEVEN_API_KEY` | makes the caller's voice (text → speech) | elevenlabs.io |
-| `SARVAM_API_KEY` | the agent being measured | dashboard.sarvam.ai |
+| `SARVAM_API_KEY` | a provider to measure | dashboard.sarvam.ai |
+| `DEEPGRAM_API_KEY` | another one, optional | console.deepgram.com |
 
 Put them in a file called `.env` in the project folder:
 
@@ -456,6 +457,24 @@ Worth separating from the above, because they're different failures. At
 `silence_duration_ms=500` the utterance becomes **two turns** — the digits do
 arrive, in turn 2. The damage is that an agent replying at the first end-of-turn
 answers a question she hadn't finished asking.
+
+### The same failure on two unrelated vendors
+
+Same utterance, same 700 ms hesitation, each vendor at its own default gate:
+
+| vendor | turn ended | early by | turns |
+|---|---:|---:|---:|
+| Sarvam `saaras:v3-realtime` | 2400 ms | 1954 ms | 2 |
+| Deepgram `nova-2` | 2700 ms | 1654 ms | 2 |
+
+Both split the utterance at the filler, so this is not one supplier's tuning. Deepgram
+additionally returns its first `speech_final` with an **empty** transcript while the
+interim carried the text — the partial-vs-final loss, on an unrelated stack.
+
+```bash
+uv run asli sweep --suite pir --agent sarvam   --pause-ms 700
+uv run asli sweep --suite pir --agent deepgram --pause-ms 700
+```
 
 ### Grounded in real speech: how often does this actually happen?
 
@@ -822,11 +841,78 @@ lanes stay authored, and that is structural rather than a to-do.
 
 ## How it works
 
+```mermaid
+flowchart LR
+  Y["entities.yaml<br/>the truth, authored"] --> S["synth.py<br/>segment-wise TTS<br/>+ spliced silence"]
+  S --> D["degrade.py<br/>8k μ-law · noise · loss"]
+  D --> A{"drive.py<br/>adapter"}
+  A -->|MockASR| E
+  A -->|SarvamWS| E
+  A -->|DeepgramWS| E
+  A -.->|yours| E
+  E["timestamped events<br/>speech_start · speech_end · transcript"] --> C["score.py<br/>inepa · pir · sfr"]
+  C --> R["results/*.jsonl"]
+  F["fit.py<br/>real-speech pause fit"] -.->|--fitted| S
+```
+
+Ground truth enters on the left and never leaves: because the pauses are spliced in
+rather than found, the true end of every utterance is known by construction. The
+adapter is the only vendor-specific piece — everything downstream is shared, which is
+what lets numbers be compared across providers at all.
+
+## Writing an adapter
+
+One method and a return value. Anything that streams audio and reports when it thinks
+the turn ended can be measured — a hosted API, a local model, your own stack.
+
+```python
+class MyVendorWS:
+    name = "myvendor"
+
+    def __init__(self, *, language_code="hi-IN", rate=16000,
+                 silence_duration_ms=None, **params):
+        self.rate, self.gate = rate, silence_duration_ms or 500
+
+    async def run(self, pcm: np.ndarray, spec: CallSpec) -> Result:
+        events, finals, sent_ms = [], [], 0
+        # 1. stream `pcm` (int16 mono @ rate) in REAL TIME — endpointing is a
+        #    wall-clock behaviour, so pacing is the measurement. 100ms chunks.
+        # 2. timestamp events as audio-sent-so-far, not wall clock: latency then
+        #    makes PIR conservative instead of inventing cuts.
+        # 3. emit, in order:
+        events.append(Event("speech_start", sent_ms))
+        events.append(Event("speech_end",   sent_ms))   # the vendor's turn decision
+        events.append(Event("transcript",   sent_ms, "what it heard"))
+        return Result(spec_id=spec.id, adapter=self.name,
+                      events=events, transcript=" ".join(finals))
+```
+
+Register it in `asli/cli.py` and it works everywhere:
+
+```python
+ADAPTERS = {"sarvam": SarvamWS, "deepgram": DeepgramWS, "myvendor": MyVendorWS}
+```
+
+```bash
+uv run asli sweep --suite pir --agent myvendor --pause-ms 700
+```
+
+**Two things that are easy to get wrong, both of which we got wrong first:**
+
+- **Do not fire the audio in as fast as the socket accepts it.** Turn detection is a
+  wall-clock behaviour; an unpaced stream measures nothing. The harness reports pacing
+  drift and says when a run is untrustworthy.
+- **An empty final is a result, not an absence.** Deepgram returns `speech_final` with
+  an empty transcript after a hesitation while the interim carried the words. Credit
+  the turn with the last interim — that is what a live consumer holds at that moment.
+
+### The pieces
+
 Nine pieces. One JSONL row per call in `results/`.
 
 ```
 asli/
-  spec.py     ground-truth record        drive.py    adapters (MockASR, SarvamWS)
+  spec.py     ground-truth record        drive.py    adapters (Mock, Sarvam, Deepgram)
   synth.py    segment-wise TTS + splice  score.py    inepa() pir() sfr() recovery()
   degrade.py  8k μ-law, noise, loss      agent.py    reference agent (two stances)
   fit.py      pause distribution + gate  real.py     real recordings -> CallSpec
