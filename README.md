@@ -458,6 +458,42 @@ Worth separating from the above, because they're different failures. At
 arrive, in turn 2. The damage is that an agent replying at the first end-of-turn
 answers a question she hadn't finished asking.
 
+### Silence-based turn detection splits the hesitation. Semantic turn detection does not.
+
+Five configurations, three vendors, one utterance with a 700 ms hesitation before the
+number. The split falls exactly along how the turn end is decided:
+
+| provider | turn detection | split? | number in the first turn |
+|---|---|---|---|
+| Sarvam `saaras:v3-realtime` | silence, 500 ms | yes @2400 ms | **no** |
+| Deepgram `nova-2` | silence, 500 ms | yes @2600 ms | **no** |
+| OpenAI `gpt-4o-transcribe` | `server_vad`, 500 ms | yes @2500 ms | **no** |
+| OpenAI `gpt-4o-transcribe` | **`semantic_vad`** | no | **yes** |
+| AssemblyAI v3 | **semantic, built in** | no | **yes** |
+
+Same audio, same hesitation, one command each:
+
+```bash
+for a in sarvam deepgram openai openai-semantic assemblyai; do
+  uv run asli sweep --suite pir --agent $a --pause-ms 700
+done
+```
+
+Two things follow, and the second one matters more than the first.
+
+**The problem is a property of silence timing, not of a supplier.** Three unrelated
+stacks make the identical mistake when configured that way.
+
+**And it is already solved, twice, by people who are not us.** AssemblyAI scores how
+likely the turn ended rather than timing the gap — mid-hesitation its confidence
+reaches only 0.375–0.475 and it keeps listening. OpenAI ships `semantic_vad` alongside
+`server_vad`, so the same model on the same connection gets it right or wrong depending
+on one setting. Anyone claiming a novel fix here should read that table first.
+
+What is not solved is measurement: nobody publishes this comparison, the rate at which
+real Hindi callers trigger it, or what it costs when they do. That is what this harness
+is for.
+
 ### The same failure on two unrelated vendors
 
 Same utterance, same 700 ms hesitation, each vendor at its own default gate:

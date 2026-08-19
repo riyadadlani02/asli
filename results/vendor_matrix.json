@@ -1,0 +1,59 @@
+[
+ {
+  "adapter": "sarvam",
+  "detection": "silence 500ms",
+  "turns": 2,
+  "ends": [
+   2400,
+   4355
+  ],
+  "first_turn": "मेरा मोबाइल नंबर है मतलब",
+  "number_in_first_turn": false,
+  "error": ""
+ },
+ {
+  "adapter": "deepgram",
+  "detection": "silence 500ms",
+  "turns": 2,
+  "ends": [
+   2600,
+   4400
+  ],
+  "first_turn": "मेरा mobile number है",
+  "number_in_first_turn": false,
+  "error": ""
+ },
+ {
+  "adapter": "openai",
+  "detection": "server_vad 500ms",
+  "turns": 1,
+  "ends": [
+   2500
+  ],
+  "first_turn": "मेरा मोबाइल नंबर है मतलब",
+  "number_in_first_turn": false,
+  "error": ""
+ },
+ {
+  "adapter": "openai-semantic",
+  "detection": "semantic",
+  "turns": 1,
+  "ends": [
+   5300
+  ],
+  "first_turn": "मेरा मोबाइल नंबर है मतलब 9877111.",
+  "number_in_first_turn": true,
+  "error": ""
+ },
+ {
+  "adapter": "assemblyai",
+  "detection": "semantic",
+  "turns": 1,
+  "ends": [
+   6000
+  ],
+  "first_turn": "मेरा मोबाइल नंबर है मतलब नाइन एट डबल सेवन ट्रिपल वन",
+  "number_in_first_turn": true,
+  "error": ""
+ }
+]

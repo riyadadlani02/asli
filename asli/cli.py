@@ -24,7 +24,7 @@ import numpy as np
 import yaml
 
 from . import degrade, fit as fitmod, score, synth
-from .drive import DeepgramWS, MockASR, SarvamWS
+from .drive import AssemblyAIWS, DeepgramWS, MockASR, OpenAIWS, SarvamWS
 from .spec import CallSpec, Result, Segment, to_jsonl
 
 ROOT = Path(__file__).parent.parent
@@ -95,14 +95,16 @@ def call(adapter, pcm: np.ndarray, spec: CallSpec) -> Result:
     return asyncio.run(out) if inspect.isawaitable(out) else out
 
 
-ADAPTERS = {"sarvam": SarvamWS, "deepgram": DeepgramWS}
+ADAPTERS = {"sarvam": SarvamWS, "deepgram": DeepgramWS,
+            "assemblyai": AssemblyAIWS, "openai": OpenAIWS,
+            "openai-semantic": lambda **kw: OpenAIWS(vad="semantic", **kw)}
 
 
 def make_adapter(name: str, *, gate: int, lang: str, rate: int, mode: str = "verbatim"):
     if name == "mock":
         return MockASR(negative_frames_count=gate, rate=rate)
-    if name == "deepgram":
-        return DeepgramWS(language_code=lang, rate=rate, silence_duration_ms=gate)
+    if name in ADAPTERS and name != "sarvam":
+        return ADAPTERS[name](language_code=lang, rate=rate, silence_duration_ms=gate)
     # verbatim keeps the spoken form ("triple one"), so INEPA measures the agent's
     # parsing. translit/codemix apply the vendor's own numeral normaliser first,
     # which is a different measurement — see the README.
@@ -174,7 +176,8 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("--frames", type=int, default=18, help="negative_frames_count")
         s.add_argument("--stance", default="careful", choices=["careful", "eager"],
                        help="reference-agent stance; SFR should separate the two")
-        s.add_argument("--agent", default="mock", choices=["mock", "sarvam", "deepgram"],
+        s.add_argument("--agent", default="mock", choices=["mock", "sarvam", "deepgram", "assemblyai",
+                                "openai", "openai-semantic"],
                        help="system under test; the real lanes need SARVAM_API_KEY / "
                             "DEEPGRAM_API_KEY")
         s.add_argument("--lang", default="hi-IN")
