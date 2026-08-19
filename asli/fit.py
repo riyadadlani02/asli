@@ -24,6 +24,9 @@ import numpy as np
 from .spec import SAMPLE_RATE
 
 
+GATES = (300, 400, 500, 700, 900, 1200)
+DEFAULT_GATE_MS = 500      # Sarvam's documented silence_duration_ms default
+
 ANALYSIS_FRAME_MS = 20  # pause lengths are the measurement here, so resolve them
                         # finely — the recogniser's 512-sample frame is 64ms at 8kHz,
                         # which would quantise a 700ms pause by ±9%.
@@ -145,7 +148,8 @@ def fit_corpus(wavs: list[Path], out: Path | None = None, cutoff_ms: int = 200,
     synthesis, since the true end is then measured by the same VAD rather than built.
     """
     pauses: list[int] = []
-    used = skipped = long_ = 0
+    file_max: list[int] = []  # longest pause per recording -> call-level rates
+    used = skipped = 0
     secs = 0.0
     for w in wavs:
         try:
@@ -158,7 +162,7 @@ def fit_corpus(wavs: list[Path], out: Path | None = None, cutoff_ms: int = 200,
         if found:
             used += 1
             pauses += found
-            long_ += max(found) >= long_pause_ms
+            file_max.append(max(found))
         else:
             skipped += 1
     if len(pauses) < 20:
@@ -167,7 +171,8 @@ def fit_corpus(wavs: list[Path], out: Path | None = None, cutoff_ms: int = 200,
     mu, sigma = fit_lognormal(pauses)
     fit = {"cutoff_ms": cutoff_ms, "n_pauses": len(pauses), "n_files": len(wavs),
            "files_used": used, "files_skipped": skipped,
-           "long_pause_ms": long_pause_ms, "files_with_long_pause": long_,
+           "long_pause_ms": long_pause_ms,
+           "files_with_long_pause": sum(m >= long_pause_ms for m in file_max),
            "audio_hours": round(secs / 3600, 2), "mu": mu, "sigma": sigma,
            "ks": ks_statistic(pauses, mu, sigma),
            "median_ms": int(np.median(pauses)),
@@ -176,10 +181,55 @@ def fit_corpus(wavs: list[Path], out: Path | None = None, cutoff_ms: int = 200,
            "p90_ms": int(np.percentile(pauses, 90)),
            "p99_ms": int(np.percentile(pauses, 99)),
            "exceed": {str(g): round(float(np.mean(np.asarray(pauses) > g)), 4)
-                      for g in (300, 400, 500, 700, 900, 1200)}}
+                      for g in GATES},
+           # the number a deployment actually feels: share of *recordings* carrying at
+           # least one pause long enough to end the turn early. A caller only has to
+           # hesitate once for the call to go wrong.
+           "calls_exceed": {str(g): round(float(np.mean(np.asarray(file_max) > g)), 4)
+                            for g in GATES},
+           "file_max_median_ms": int(np.median(file_max))}
     if out:
         out.parent.mkdir(parents=True, exist_ok=True)
         if out.exists():  # keep hand-added provenance (`source`) across a re-fit
             fit = {**json.loads(out.read_text()), **fit}
         out.write_text(json.dumps(fit, indent=2))
     return fit
+
+
+def gate_advice(fit: dict, default_ms: int = DEFAULT_GATE_MS) -> list[dict]:
+    """What to actually set the endpointing gate to, and what it costs.
+
+    The cliff on its own only says "raise the gate", which anyone can read off the
+    docs. The decision needs both columns: raising it cuts fewer callers off, and
+    charges the delay to *every* turn in *every* call — the gate elapses before the
+    agent may answer, so `gate - default` is added latency the caller feels each time
+    they stop speaking. One column is a tuning curve; two is a recommendation.
+    """
+    per_pause = fit.get("exceed", {})
+    per_call = fit.get("calls_exceed", {})
+    return [{"gate_ms": g,
+             "pauses_tripped": per_pause.get(str(g)),
+             "calls_affected": per_call.get(str(g)),
+             "added_latency_ms": g - default_ms}
+            for g in GATES]
+
+
+def recommended_gate(fit: dict, budget_ms: int = 400,
+                     default_ms: int = DEFAULT_GATE_MS) -> dict:
+    """The lowest gate whose call-level rate is the best available within a latency budget.
+
+    `budget_ms` is how much extra turn-end delay the deployment will accept. Stated as
+    an input rather than assumed, because it is a product decision and not a
+    measurement — a booking bot can afford 400ms, a barge-in-heavy assistant cannot.
+    """
+    rows = [r for r in gate_advice(fit, default_ms)
+            if r["added_latency_ms"] <= budget_ms and r["calls_affected"] is not None]
+    if not rows:
+        return {}
+    best = min(rows, key=lambda r: (r["calls_affected"], r["added_latency_ms"]))
+    base = next((r for r in gate_advice(fit, default_ms) if r["gate_ms"] == default_ms), {})
+    return {**best, "budget_ms": budget_ms,
+            "calls_affected_at_default": base.get("calls_affected"),
+            "removes_share_of_affected_calls":
+                None if not base.get("calls_affected") else
+                round(1 - best["calls_affected"] / base["calls_affected"], 4)}
