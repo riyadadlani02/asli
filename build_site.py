@@ -95,6 +95,29 @@ def _text_lane() -> dict:
     return out
 
 
+# Model names are labels, not measurements — the matrix stores the adapter key and the
+# turn-detection setting, which are what the rows are compared on.
+LANES = {"sarvam": "Sarvam &middot; saaras:v3-realtime",
+         "deepgram": "Deepgram &middot; nova-2",
+         "openai": "OpenAI &middot; gpt-4o-transcribe"}
+
+
+def _vendor_lane() -> list[dict]:
+    """Every reproducible row, so a lane cannot be quietly dropped from the page.
+
+    The page carried two of the three for a while because the comparison lived in prose.
+    Reading the file is what stops that recurring.
+    """
+    rows = json.loads((ROOT / "results/vendor_matrix.json").read_text())
+    # No derived verdict here. `turns > 1` would have called the OpenAI lane a hold: it
+    # ended the turn at 2500 ms with the number still unsaid, and only one final was
+    # captured before the socket closed. The turn-end timestamp and the entity check are
+    # what the matrix stored, and they are what the row states.
+    return [{"label": LANES.get(r["adapter"], r["adapter"]), "detection": r["detection"],
+             "end_ms": r["ends"][0] if r["ends"] else None, "first": r["first_turn"],
+             "kept": r["number_in_first_turn"]} for r in rows]
+
+
 def pct(x: float | None) -> str:
     return "-" if x is None else f"{x * 100:.1f}%".replace(".0%", "%")
 
@@ -107,6 +130,7 @@ def subs() -> dict[str, str]:
     """
     fit = json.loads((ROOT / "results/pause_fit.json").read_text())
     conv = json.loads((ROOT / "results/conv.json").read_text())
+    eng = json.loads((ROOT / "results/pause_fit_english.json").read_text())
     rec = fitmod.recommended_gate(fit)
     advice = "".join(
         f"<tr><td>{r['gate_ms']}{' (default)' if r['gate_ms'] == 500 else ''}</td>"
@@ -125,6 +149,17 @@ def subs() -> dict[str, str]:
                       f"{pct(rec['removes_share_of_affected_calls'])} of them removed. "
                       f"That budget is a product decision, so it is an input here, "
                       f"not an assumption."),
+        "__T_ENG__": (
+            f"A first attempt says <b>{pct(eng['exceed']['500'])} of English gaps exceed "
+            f"500&nbsp;ms</b> against {pct(fit['exceed']['500'])} of Hindi ones &mdash; which "
+            f"would mean this is not Indic at all. <b>The comparison does not hold.</b> The "
+            f"English figure is {eng['source']}: one headset per speaker in a meeting, so each "
+            f"channel mixes that speaker's own hesitations with every silence while other "
+            f"people are talking. {pct(eng['exceed']['1200'])} of the English gaps exceed "
+            f"1.2&nbsp;s against {pct(fit['exceed']['1200'])} of the Hindi ones &mdash; that is "
+            f"the other participants, not a speaking style. Settling it needs single-speaker "
+            f"spontaneous English telephony, or diarisation applied to AMI first. Until then "
+            f"the rate above is measured on Hindi and claimed only for Hindi."),
         "__T_CONV_PIR__": f"{conv['n_cut']}/{conv['n']}",
         "__T_FIRSTTURN__": pct(conv["entity_first_turn"]),
         "__T_SESSION__": pct(conv["entity_full_session"]),
@@ -205,6 +240,7 @@ def collect() -> dict:
     d["sweep"] = json.loads((ROOT / "results/pir_sweep_sarvam.json").read_text())
     d["fit"] = json.loads((ROOT / "results/pause_fit.json").read_text())
     d["text"] = _text_lane()
+    d["vendors"] = _vendor_lane()
     d["sample"] = _score_sample(json.loads((ROOT / "results/sample_call.json").read_text()))
     d["hero"] = {k: v for k, v in json.loads((ROOT / "results/hero_wave.json").read_text()).items()
                  if k != "env"}

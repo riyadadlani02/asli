@@ -532,6 +532,22 @@ footer b{color:var(--orange)}
     </table>
   </div>
   <p class="lede" style="margin-top:1.2rem"><b>__T_REC__</b></p>
+
+  <p class="lede" style="margin-top:1.8rem">Is this one supplier&rsquo;s tuning? The same
+  utterance, the same 700&nbsp;ms hesitation, three independent stacks, each on its own
+  silence timer at the documented default. <b>None of them has the number in the turn an
+  agent would reply to.</b></p>
+  <div class="scroll">
+    <table class="tbl" id="vendTbl">
+      <thead><tr><th>stack</th><th>turn detection</th><th>turn ended</th><th>first turn the agent holds</th><th>number in it</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="sub" style="margin-top:1rem">Three reproducible rows, read from
+  <code>results/vendor_matrix.json</code> rather than typed here. Two lanes that could not be
+  put on the same axis were removed rather than shown with an asterisk. This is a
+  characterisation of a documented setting on three stacks, not a ranking.</p>
+
   <div class="tags"><span>silence_duration_ms</span><span class="hot">default 500</span><span>__T_PAUSES500__ of real pauses</span><span>__T_CALLS500__ of real callers</span><span>n = 6,514 pauses</span><span>5.02h hindi telephony</span><span>openslr slr118</span></div>
 </section>
 
@@ -882,6 +898,13 @@ function sweep(){
     '<div><span>clean accuracy, both stances</span><b>'+T.careful.clean_accuracy.toFixed(2)+"</b></div>";
 })();
 
+/* vendor matrix */
+document.querySelector("#vendTbl tbody").innerHTML=D.vendors.map(v=>
+  `<tr><td>${v.label}</td><td><code>${v.detection}</code></td>`+
+  `<td>${v.end_ms===null?"&mdash;":v.end_ms+"&nbsp;ms"}</td>`+
+  `<td><span class="deva">${v.first}</span></td>`+
+  `<td class="${v.kept?"":"no"}"><b>${v.kept?"yes":"no"}</b></td></tr>`).join("");
+
 /* trace + caveats */
 $("#tr").innerHTML=[
   [248,"vad.speech_start","",""],
@@ -904,6 +927,7 @@ $("#cav").innerHTML=[
   ["The collision row is parameterised.","800&nbsp;ms of agent lag is an <em>input</em> (<code>--reply-latency-ms</code>), not a measurement. What the harness measures is the <em>budget</em>: how long the agent would have to stay silent to avoid talking over the entity. The result is insensitive to the input: the smallest budget in the set is 1,249&nbsp;ms, so every lag under 1.25&nbsp;s gives the same 12/12, and collision reaches zero only past 2.9&nbsp;s. A slower stack collides <em>less</em>, and holds dead air instead."],
   ["Three sessions abstain rather than fail.","In the conversation lane, three of twelve session transcripts are spoken dates in Devanagari digit words, which this scorer cannot parse. Calling that a vendor failure would be inventing a result, so the session row is a rate over what is readable and the abstention is printed beside it."],
   ["A cut is attributed with a 100&nbsp;ms tolerance.","Event times are quantised to the 100&nbsp;ms chunk they arrive on, and every overshoot observed on real audio was 40&ndash;100&nbsp;ms. The tolerance decides which pause a cut belongs to &mdash; never whether a cut happened, which stays a strict comparison. The <code>in_pause</code> column of the stored sweep predates it and is the stricter figure."],
+  ["Is this Indic, or just human?","__T_ENG__"],
   ["No vendor is ranked.","One system was characterised, generously and in public. The bundled mock VAD is an instrument for calibrating scorers offline, never a comparison."]
 ].map(([h,b])=>`<div><h3>${h}</h3><p>${b}</p></div>`).join("");
 
