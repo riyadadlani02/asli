@@ -287,9 +287,87 @@ footer b{color:var(--orange)}
 .rev.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
   .rev{opacity:1;transform:none}html{scroll-behavior:auto}}
+
+/* ---------- the client report, printed ----------
+   Print-to-PDF rather than a bundled PDF library: Devanagari needs an embedded
+   Unicode font in jsPDF (about a megabyte) whereas the print path uses the system
+   font and renders it correctly for nothing. */
+#printdoc{display:none}
+@media print{
+  body > *{display:none !important}
+  body{background:#fff !important}
+  #printdoc{display:block !important;background:#fff;color:#111;
+    font-family:Georgia,"Times New Roman",serif;font-size:11pt;line-height:1.55;
+    max-width:none;padding:0}
+  #printdoc .pd-mono,#printdoc table{font-family:ui-monospace,Menlo,Consolas,monospace}
+  /* the screen styles cap headings at 15ch, which on paper broke every heading
+     across three or four lines with the rule underlining only part of it */
+  #printdoc h1,#printdoc h2{max-width:none;letter-spacing:0;text-transform:none;
+    font-family:Georgia,"Times New Roman",serif;color:#111}
+  #printdoc h1{font-size:19pt;line-height:1.18;margin:0 0 .25em;font-weight:700}
+  #printdoc h2{font-size:12.5pt;margin:1.5em 0 .45em;border-bottom:1px solid #bbb;
+    padding-bottom:.2em;font-weight:700}
+  #printdoc p,#printdoc li{max-width:none;color:#111}
+  #printdoc .sub{color:#555;font-size:9.5pt;margin-bottom:1.4em}
+  #printdoc table{width:100%;border-collapse:collapse;font-size:9.5pt;margin:.6em 0}
+  #printdoc th{text-align:left;border-bottom:1.5px solid #333;padding:.35em .4em;
+    font-size:8.5pt;text-transform:uppercase;letter-spacing:.05em;color:#333;
+    background:none;font-weight:700}
+  #printdoc td{border-bottom:1px solid #ddd;padding:.35em .4em;vertical-align:top;
+    color:#111}
+  #printdoc .bad{color:#B3300A;font-weight:700}
+  #printdoc .good{color:#186B44;font-weight:700}
+  #printdoc .deva{font-family:"Kohinoor Devanagari","Noto Sans Devanagari","Nirmala UI",serif}
+  #printdoc .box{border:1px solid #bbb;padding:.7em .9em;margin:.8em 0;background:#faf9f7}
+  #printdoc .box b{display:block;margin-bottom:.25em}
+  #printdoc ul{margin:.4em 0 .4em 1.1em;padding:0}
+  #printdoc li{margin:.25em 0}
+  #printdoc .foot{margin-top:2em;padding-top:.6em;border-top:1px solid #bbb;
+    font-size:8.5pt;color:#555}
+  @page{margin:18mm 16mm}
+}
 </style>
 
-<noscript><style>#boot{display:none!important}</style></noscript>
+<noscript><style>#boot{display:none!important}
+/* ---------- the client report, printed ----------
+   Print-to-PDF rather than a bundled PDF library: Devanagari needs an embedded
+   Unicode font in jsPDF (about a megabyte) whereas the print path uses the system
+   font and renders it correctly for nothing. */
+#printdoc{display:none}
+@media print{
+  body > *{display:none !important}
+  body{background:#fff !important}
+  #printdoc{display:block !important;background:#fff;color:#111;
+    font-family:Georgia,"Times New Roman",serif;font-size:11pt;line-height:1.55;
+    max-width:none;padding:0}
+  #printdoc .pd-mono,#printdoc table{font-family:ui-monospace,Menlo,Consolas,monospace}
+  /* the screen styles cap headings at 15ch, which on paper broke every heading
+     across three or four lines with the rule underlining only part of it */
+  #printdoc h1,#printdoc h2{max-width:none;letter-spacing:0;text-transform:none;
+    font-family:Georgia,"Times New Roman",serif;color:#111}
+  #printdoc h1{font-size:19pt;line-height:1.18;margin:0 0 .25em;font-weight:700}
+  #printdoc h2{font-size:12.5pt;margin:1.5em 0 .45em;border-bottom:1px solid #bbb;
+    padding-bottom:.2em;font-weight:700}
+  #printdoc p,#printdoc li{max-width:none;color:#111}
+  #printdoc .sub{color:#555;font-size:9.5pt;margin-bottom:1.4em}
+  #printdoc table{width:100%;border-collapse:collapse;font-size:9.5pt;margin:.6em 0}
+  #printdoc th{text-align:left;border-bottom:1.5px solid #333;padding:.35em .4em;
+    font-size:8.5pt;text-transform:uppercase;letter-spacing:.05em;color:#333;
+    background:none;font-weight:700}
+  #printdoc td{border-bottom:1px solid #ddd;padding:.35em .4em;vertical-align:top;
+    color:#111}
+  #printdoc .bad{color:#B3300A;font-weight:700}
+  #printdoc .good{color:#186B44;font-weight:700}
+  #printdoc .deva{font-family:"Kohinoor Devanagari","Noto Sans Devanagari","Nirmala UI",serif}
+  #printdoc .box{border:1px solid #bbb;padding:.7em .9em;margin:.8em 0;background:#faf9f7}
+  #printdoc .box b{display:block;margin-bottom:.25em}
+  #printdoc ul{margin:.4em 0 .4em 1.1em;padding:0}
+  #printdoc li{margin:.25em 0}
+  #printdoc .foot{margin-top:2em;padding-top:.6em;border-top:1px solid #bbb;
+    font-size:8.5pt;color:#555}
+  @page{margin:18mm 16mm}
+}
+</style></noscript>
 <div id="boot"><div class="bootin">
   <canvas id="bootmark" width="1320" height="270" role="img" aria-label="ASLI"></canvas>
   <div class="bootbar"><span>booting</span><span class="bars" id="bars"></span><span id="pct">0%</span></div>
@@ -300,6 +378,7 @@ footer b{color:var(--orange)}
 <div class="scan" aria-hidden="true"></div>
 <div class="vig" aria-hidden="true"></div>
 
+<div id="printdoc"></div>
 <div class="pill" id="navpill"><b>asli</b><a href="#cliff">measure</a><a href="#run">run it</a><a href="https://github.com/riyadadlani02/asli" rel="noopener">code</a></div>
 <div class="pill" id="statepill" data-ok="0"><span id="stateTxt">cut off</span></div>
 <div class="pill" id="gatepill"><label for="gate">gate</label>
@@ -394,7 +473,8 @@ footer b{color:var(--orange)}
         <div class="livelog" id="sbLog"><span>idle &mdash; enter a key, then replay the embedded call or speak your own.</span></div>
         <div class="report" id="sbReport" hidden></div>
         <div class="report" id="sbDiff" hidden></div>
-        <button class="btn-sky alt dl" id="sbDl" type="button" hidden>download report (.md)</button>
+        <button class="btn-sky alt dl" id="sbDl" type="button" hidden
+          title="Opens your browser's print dialog &#x2014; choose Save as PDF">download client report (PDF)</button>
       </div>
     </div>
 
@@ -991,58 +1071,132 @@ function renderDiff(d){
 }
 
 let lastReport=null;
-function reportMarkdown(d){
-  const m=d.meta||{}, L=[];
-  L.push("# asli \u2014 turn-taking difference report","",
-    `generated: ${new Date().toISOString()}`,
-    `source: ${m.source||"live call"}`,
-    `provider: ${m.provider||"unknown"} \u00b7 mode ${m.mode} \u00b7 gate ${m.gateMs}ms`,
-    "",
-    "Same audio, same recogniser, same call. Only the downstream turn-taking policy",
-    "differs. The policy reads only the text available at each turn end, so it is",
-    "implementable in real time; here it is replayed over the recorded event stream.",
-    "",
-    "| | baseline (silence only) | + marker policy |",
-    "|---|---|---|",
-    `| turns | ${d.baseline.length} | ${d.fixed.length} |`,
-    `| ends on an unfinished word | ${d.baseline.filter(t=>DANGLING_REAL(t.dangling)).length} | ${d.fixed.filter(t=>DANGLING_REAL(t.dangling)).length} |`,
-    `| ends suppressed | \u2014 | ${d.merged} |`,
-    `| text at first end-of-turn | ${d.firstB||"(empty)"} | ${d.firstF||"(empty)"} |`);
-  if(d.hasB!==null) L.push(`| number present at first reply | ${d.hasB?"yes":"no"} | ${d.hasF?"yes":"no"} |`);
-  L.push("","## turns \u2014 baseline","");
-  d.baseline.forEach((t,i)=>L.push(`${i+1}. [${(t.from/1000).toFixed(1)}\u2013${(t.to/1000).toFixed(1)}s] ${t.text||"(empty)"}`+
-    (DANGLING_REAL(t.dangling)?`   \u2190 ${DANGLING_NOTE[t.dangling]}`:"")));
-  L.push("","## turns \u2014 with the marker policy","");
-  d.fixed.forEach((t,i)=>L.push(`${i+1}. ${t.text||"(empty)"}`+
-    (DANGLING_REAL(t.dangling)?`   \u2190 ${DANGLING_NOTE[t.dangling]}`:"")));
-  if(d.baseline.length>1&&d.merged===0)
-    L.push("","**The policy did not fire on this call.** The turn was split, but it ended",
-      "on a word that can legally close a Hindi sentence \u2014 a copula like \u0939\u0948, for",
-      "instance. Hindi is verb-final, so a genuine mid-sentence cut often looks",
-      "well-formed. Adding such words to the list would delay every turn that had",
-      "actually finished. This is where the method's recall stops.");
-  L.push("","## caveats","",
-    "- A live call has no authored end, so PIR is not reported. The marker test is a",
-    "  heuristic: strict and marginal tiers are grammatical, the filler tier only says",
-    "  the speaker was mid-thought.",
-    "- Romanised output (translit, codemix) is not checked \u2014 the marker lists are",
-    "  Devanagari and romanised markers collide with English words.",
-    "- Recall is bounded. The marker test catches fillers and case markers. It does not",
-    "  catch verb-final constructions that end on a legal copula, which is a common way",
-    "  for a Hindi mid-sentence cut to look complete.",
-    "","## raw turns","","```json",JSON.stringify(d.baseline,null,1),"```");
-  return L.join("\n");
+
+/* ---------- the client report -------------------------------------------------
+   Written for someone who does not know what an endpointer is. No jargon, and the
+   limits are in it: a client report that overclaims is worse than none, because the
+   first call that behaves differently destroys the rest of it. */
+function esc(t){ return (t||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+function buildPrintDoc(rep){
+  const S=rep.sample, live=!S;
+  const meta=live?(rep.meta||{}):S;
+  const prov=meta.provider||"the speech provider";
+  const when=S?S.captured:new Date().toISOString().slice(0,10);
+  const gate=meta.gateMs;
+
+  // rows: sample has several exchanges; a live call is one
+  const rows = S
+    ? S.exchanges.map((ex,i)=>({truth:ex.truth, said:ex.said,
+        turns:ex.turns, base:rep.rows[i].baseline.length, fixed:rep.rows[i].fixed.length,
+        okFirst:ex.ok_first, okWhole:ex.ok_whole, heard:ex.value_whole}))
+    : [{truth:null, said:null, turns:rep.baseline, base:rep.baseline.length,
+        fixed:rep.fixed.length, okFirst:rep.hasB, okWhole:rep.hasF, heard:null}];
+
+  const splits=rows.filter(r=>r.base>1).length;
+  const rejoined=rows.filter(r=>r.base>1&&r.fixed<r.base).length;
+  const misheard=rows.filter(r=>r.okWhole===false).length;
+
+  const tbl = S ? `
+    <table><thead><tr><th>what she was asked for</th><th>turns the system made</th>
+    <th>after our rule</th><th>agent had the answer<br>when it replied</th>
+    <th>answer finally correct</th></tr></thead><tbody>`+
+    rows.map(r=>`<tr><td class="pd-mono">${esc(r.truth)}</td><td>${r.base}</td><td>${r.fixed}</td>`+
+      `<td class="${r.okFirst?"good":"bad"}">${r.okFirst?"yes":"no"}</td>`+
+      `<td class="${r.okWhole?"good":"bad"}">${r.okWhole?"yes":"no \u2014 heard "+esc(r.heard||"nothing")}</td></tr>`).join("")+
+    `</tbody></table>` : `
+    <table><thead><tr><th></th><th>as the system behaves now</th><th>with our rule</th></tr></thead><tbody>
+    <tr><td>turns the system made</td><td>${rows[0].base}</td><td>${rows[0].fixed}</td></tr>
+    <tr><td>ends that were premature</td><td>${rep.baseline.filter(t=>DANGLING_REAL(t.dangling)).length}</td><td>${rep.fixed.filter(t=>DANGLING_REAL(t.dangling)).length}</td></tr>
+    <tr><td>what the agent had<br>when it first replied</td><td class="deva">${esc(rep.firstB)||"(nothing)"}</td><td class="deva">${esc(rep.firstF)||"(nothing)"}</td></tr>
+    </tbody></table>`;
+
+  const transcript = (S?S.exchanges:[{said:null,turns:rep.baseline,agent:null}]).map(ex=>{
+    const head = ex.agent?`<div><b>Agent:</b> ${esc(ex.agent)}</div><div><b>Customer:</b> ${esc(ex.said)}</div>`:"";
+    const t = ex.turns.map((x,n)=>{
+      const d=danglingOf(x.text);
+      return `<div class="pd-mono" style="margin-left:1.2em">turn ${n+1}`+
+        (x.from!==undefined?` [${(x.from/1000).toFixed(1)}\u2013${(x.to/1000).toFixed(1)}s]`:"")+
+        ` <span class="deva">${esc(x.text)||"(nothing)"}</span>`+
+        (DANGLING_REAL(d)?` <span class="bad">\u2190 cut here, mid-sentence</span>`:"")+`</div>`;
+    }).join("");
+    return `<div style="margin:.7em 0">${head}${t}</div>`;
+  }).join("");
+
+  document.querySelector("#printdoc").innerHTML = `
+  <h1>Why the agent answered before your customer finished</h1>
+  <div class="sub">Call ${S?"recorded":"measured"} ${when} &middot; speech provider: ${esc(prov)}
+    &middot; the system was set to treat ${gate} milliseconds of silence as the end of a turn.</div>
+
+  <h2>What happened</h2>
+  <p>Your customer paused in the middle of a sentence &mdash; the way people naturally do
+  just before reading out a number. The system read that pause as &ldquo;she has finished
+  speaking&rdquo; and the agent replied. She had not finished. The number arrived afterwards,
+  as if it were a new sentence.</p>
+  ${splits?`<p>On this call that happened <b>${splits} time${splits===1?"":"s"}</b>.
+   Each time, the agent began answering a question the customer was still asking.</p>`:""}
+
+  ${tbl}
+
+  <h2>Why this happens with any speech system</h2>
+  <p>Systems decide you have stopped talking by timing the silence. Silence is all they
+  measure. But a silence cannot tell the difference between <i>&ldquo;I have finished&rdquo;</i>
+  and <i>&ldquo;I am thinking&rdquo;</i> &mdash; they sound identical.</p>
+  <p>In Hindi this matters more than in English, because the natural pause words &mdash;
+  <span class="deva">\u092e\u0924\u0932\u092c</span>, <span class="deva">\u0939\u093e\u0901 \u0924\u094b</span> &mdash; come exactly
+  where a number or a name is about to follow. We measured five hours of real Hindi
+  phone calls: the typical pause is about a third of a second, but roughly
+  <b>one pause in six runs longer than the usual setting allows</b>.</p>
+  <p>This is not a fault of one supplier. We saw the same behaviour on two unrelated
+  speech providers, because both decide the same way.</p>
+
+  <h2>What we do differently</h2>
+  <div class="box"><b>We read the words, not only the silence.</b>
+  Some words simply cannot end a sentence in Hindi &mdash; in English, no one stops
+  speaking after &ldquo;the&rdquo; or &ldquo;because&rdquo;. When the customer stops on
+  a word like that, we know she is still mid-sentence, so we keep listening instead of
+  replying.</div>
+  ${rejoined?`<p>On this call that rule would have kept <b>${rejoined} of ${splits}</b>
+   interrupted turns together, so the agent would have had the full answer before it
+   spoke.</p>`:""}
+
+  <h2>Why not simply wait longer?</h2>
+  <p>You could tell the system to wait, say, a second before replying. That works &mdash;
+  and it slows down <i>every</i> call, including the ones where the customer had clearly
+  finished. Every customer waits longer so that the occasional hesitant one is heard.</p>
+  <p>Our rule only waits when the words show the sentence is unfinished. Callers who
+  finished normally are answered just as quickly as before.</p>
+
+  <h2>What this does not fix</h2>
+  <ul>
+  ${misheard?`<li><b>A misheard number stays misheard.</b> On this call the customer said
+    <span class="deva">\u092a\u091a\u093e\u0938</span> (fifty) and the system recorded
+    <span class="deva">\u092a\u091a\u094d\u091a\u0940\u0938</span> (twenty-five) &mdash; \u20b92,25,000 instead of
+    \u20b92,50,000. Keeping the sentence together does not correct that. Nothing in the
+    text marks it as wrong, which is why an agent would act on it.</li>`:""}
+  <li>Our rule catches pauses on words that cannot end a sentence. Hindi puts its verb
+    last, so a customer can also stop mid-thought on a word that <i>looks</i> like a
+    proper ending. Those we do not catch yet.</li>
+  <li>These figures are from this call. They show the behaviour clearly; they are not a
+    service-wide average.</li>
+  </ul>
+
+  <h2>Appendix &mdash; the call as the system recorded it</h2>
+  ${transcript}
+
+  <div class="foot">Produced by asli, an open harness for measuring what Indic voice
+  agents do when a caller hesitates. Every figure here was measured on a real call,
+  not modelled. github.com/riyadadlani02/asli</div>`;
 }
 
 function downloadReport(){
   if(!lastReport) return;
-  const md=lastReport.sample?sampleMarkdown(lastReport):reportMarkdown(lastReport);
-  const blob=new Blob([md],{type:"text/markdown;charset=utf-8"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=`asli-report-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.md`;
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },0);
+  buildPrintDoc(lastReport);
+  const t=document.title;
+  document.title=`asli-report-${new Date().toISOString().slice(0,10)}`;
+  const restore=()=>{ document.title=t; window.removeEventListener("afterprint",restore); };
+  window.addEventListener("afterprint",restore);
+  window.print();          // the browser's own Save-as-PDF
 }
 
 /* ================= SANDBOX: speak into the mic ================= */
@@ -1260,36 +1414,6 @@ function renderSampleTable(S,rows){
   document.querySelector("#sbDl").hidden=false;
 }
 
-function sampleMarkdown(r){
-  const S=r.sample, L=[];
-  L.push("# asli \u2014 sample call","",
-    `captured: ${S.captured}`, `provider: ${S.provider} \u00b7 mode ${S.mode} \u00b7 gate ${S.gateMs}ms`,
-    "","A real call, not a hand-written example.","",
-    "| truth | turns baseline | turns + policy | answer at first reply | answer once complete |",
-    "|---|---|---|---|---|");
-  r.rows.forEach((x,i)=>{
-    const ex=S.exchanges[i];
-    L.push(`| ${ex.truth} | ${x.baseline.length} | ${x.fixed.length} | `+
-      `${ex.ok_first?"yes":"no"} | `+
-      `${ex.ok_whole?"yes":"no \u2014 heard "+(ex.value_whole||"nothing")} |`);
-  });
-  L.push("","## transcript","");
-  S.exchanges.forEach(ex=>{
-    L.push(`agent:  ${ex.agent}`, `caller: ${ex.said}`);
-    ex.turns.forEach((t,n)=>{
-      const d=danglingOf(t.text);
-      L.push(`  turn ${n+1} [${(t.from/1000).toFixed(1)}-${(t.to/1000).toFixed(1)}s] ${t.text}`+
-             (DANGLING_REAL(d)?`   <- ${DANGLING_NOTE[d]}`:""));
-    });
-    L.push("");
-  });
-  L.push("## notes","",
-    "- Every caller turn was split at the filler; the policy rejoins all three.",
-    "- The third fails for a different reason: \u092a\u091a\u093e\u0938 (50) came back as \u092a\u091a\u094d\u091a\u0940\u0938 (25),",
-    "  so \u20b9250,000 became \u20b9225,000. Turn-taking does not fix a mis-recognised",
-    "  number, and nothing in the transcript marks it as wrong.");
-  return L.join("\n");
-}
 
 document.querySelector("#sbSample").addEventListener("click",renderSample);
 document.querySelector("#sbDl").addEventListener("click",downloadReport);
