@@ -87,7 +87,13 @@ def main() -> None:
                                                        separators=(",", ":"))))
     assert all(ord(c) < 128 for c in html), "output must be ascii"
     (ROOT / "site/index.html").write_text(html, encoding="ascii")
-    print(f"site/index.html  {len(html)/1024:.0f} KB  "
+    # GitHub Pages serves from docs/ on the branch — Actions is not available on this
+    # account, so the published copy has to be committed rather than built in CI.
+    docs = ROOT / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "index.html").write_text(html, encoding="ascii")
+    (docs / ".nojekyll").touch()
+    print(f"site/index.html + docs/index.html  {len(html)/1024:.0f} KB  "
           f"({len(data['audio'])} clips, {len(data['sweep'])} sweep points)")
 
 
