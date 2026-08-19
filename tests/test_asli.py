@@ -159,6 +159,30 @@ def test_pause_detection_survives_a_real_noise_floor():
     assert pause_lengths_ms(padded, RATE) == [500]  # exact at 20ms frames
 
 
+def test_fit_counts_only_the_clips_usable_as_a_real_caller():
+    """`files_with_long_pause` is cited as a headline count, so pin it."""
+    import tempfile
+
+    from asli.fit import fit_corpus
+    from asli.synth import write_wav
+
+    def clip(gaps):
+        parts = []
+        for g in gaps:
+            parts += [tone(200), silence(g)]
+        return np.concatenate(parts + [tone(200)])
+
+    with tempfile.TemporaryDirectory() as d:
+        short, long_ = Path(d) / "short.wav", Path(d) / "long.wav"
+        write_wav(short, clip([300] * 12), RATE)         # nothing near the gate
+        write_wav(long_, clip([300] * 11 + [700]), RATE)  # one hesitation-length pause
+        f = fit_corpus([short, long_], long_pause_ms=500)
+
+    assert f["files_used"] == 2, f
+    assert f["files_with_long_pause"] == 1, f            # the 300ms clip is not a caller
+    assert f["long_pause_ms"] == 500
+
+
 def test_spoken_digits_binds_multipliers_to_the_following_digit():
     assert score.spoken_digits("nine eight double seven, triple one") == "9877111"
     assert score.spoken_digits("char zero double five six") == "40556"  # 4-0-55-6, not 4-0-5-5-6

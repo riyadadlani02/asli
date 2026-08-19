@@ -2,7 +2,7 @@
   "cutoff_ms": 200,
   "n_pauses": 6514,
   "n_all_silences": 48631,
-  "files_used": 1882,
+  "files_used": 1788,
   "audio_hours": 5.02,
   "mu": 5.8433853809595835,
   "sigma": 0.3927548595380956,
@@ -20,5 +20,9 @@
     "900": 0.0038,
     "1200": 0.0011
   },
-  "source": "Gram Vaani Hindi (OpenSLR SLR118) dev set, spontaneous 8kHz telephone speech"
+  "source": "Gram Vaani Hindi (OpenSLR SLR118) dev set, spontaneous 8kHz telephone speech",
+  "n_files": 1885,
+  "files_skipped": 97,
+  "long_pause_ms": 500,
+  "files_with_long_pause": 813
 }

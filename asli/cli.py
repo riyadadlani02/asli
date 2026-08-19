@@ -195,9 +195,11 @@ def main(argv: list[str] | None = None) -> int:
                   "then download the hindi/ split and point --corpus at the wavs.",
                   file=sys.stderr)
             return 2
-        wavs = sorted(Path(a.corpus).rglob("*.wav"))
+        # anything ffmpeg reads — corpora ship as mp3 or flac as often as wav
+        wavs = sorted(f for f in Path(a.corpus).rglob("*")
+                      if f.suffix.lower() in (".wav", ".mp3", ".flac", ".ogg", ".m4a"))
         if not wavs:
-            print(f"no .wav files under {a.corpus}", file=sys.stderr)
+            print(f"no audio files under {a.corpus}", file=sys.stderr)
             return 2
         f = fitmod.fit_corpus(wavs, out=FIT_PATH)
         print(table(f"pause distribution ({f['n_files']} files, {f['n_pauses']} pauses)", f))

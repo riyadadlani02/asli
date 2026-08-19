@@ -135,33 +135,51 @@ def sample_pauses(n: int, mu: float, sigma: float, seed: int = 0) -> list[int]:
     return [int(round(v)) for v in rng.lognormal(mu, sigma, n)]
 
 
-def fit_corpus(wavs: list[Path], out: Path | None = None) -> dict:
+def fit_corpus(wavs: list[Path], out: Path | None = None, cutoff_ms: int = 200,
+               long_pause_ms: int = 500) -> dict:
+    """`cutoff_ms` is the shortest silence counted as a pause: below ~200ms these are
+    articulatory gaps between words, not hesitations, and they drag the fit down.
+
+    `files_with_long_pause` counts recordings carrying a pause at least
+    `long_pause_ms` long — the ones usable as a real caller for PIR without any
+    synthesis, since the true end is then measured by the same VAD rather than built.
+    """
     pauses: list[int] = []
-    used = skipped = 0
+    used = skipped = long_ = 0
+    secs = 0.0
     for w in wavs:
         try:
             pcm, rate = read_audio(w)
         except Exception:
             skipped += 1
             continue
-        found = pause_lengths_ms(pcm, rate)
+        secs += len(pcm) / rate
+        found = pause_lengths_ms(pcm, rate, min_ms=cutoff_ms)
         if found:
             used += 1
             pauses += found
+            long_ += max(found) >= long_pause_ms
         else:
             skipped += 1
     if len(pauses) < 20:
         raise SystemExit(f"only {len(pauses)} pauses found — need a real corpus, not a sample")
 
     mu, sigma = fit_lognormal(pauses)
-    fit = {"n_pauses": len(pauses), "n_files": len(wavs), "files_used": used,
-           "files_skipped": skipped, "mu": mu, "sigma": sigma,
+    fit = {"cutoff_ms": cutoff_ms, "n_pauses": len(pauses), "n_files": len(wavs),
+           "files_used": used, "files_skipped": skipped,
+           "long_pause_ms": long_pause_ms, "files_with_long_pause": long_,
+           "audio_hours": round(secs / 3600, 2), "mu": mu, "sigma": sigma,
            "ks": ks_statistic(pauses, mu, sigma),
            "median_ms": int(np.median(pauses)),
            "p25_ms": int(np.percentile(pauses, 25)),
            "p75_ms": int(np.percentile(pauses, 75)),
-           "p90_ms": int(np.percentile(pauses, 90))}
+           "p90_ms": int(np.percentile(pauses, 90)),
+           "p99_ms": int(np.percentile(pauses, 99)),
+           "exceed": {str(g): round(float(np.mean(np.asarray(pauses) > g)), 4)
+                      for g in (300, 400, 500, 700, 900, 1200)}}
     if out:
         out.parent.mkdir(parents=True, exist_ok=True)
+        if out.exists():  # keep hand-added provenance (`source`) across a re-fit
+            fit = {**json.loads(out.read_text()), **fit}
         out.write_text(json.dumps(fit, indent=2))
     return fit
