@@ -78,6 +78,7 @@ body{margin:0;background:var(--ground);color:var(--bone);font-family:var(--sans)
 .btn-sky.alt.rec::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff;
   display:inline-block;margin-right:.5rem;animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.25}}
+.btn-sky.alt#sbUpLabel{display:inline-flex;align-items:center;cursor:pointer}
 .talkhint{font-size:.72rem;color:#3A5470;flex:1 1 12rem;line-height:1.4}
 .btn-sky.alt.dl{margin-top:.7rem;width:100%;justify-content:center}
 .report{margin-top:.8rem;border:1px solid rgba(10,26,42,.22);border-radius:8px;overflow:hidden}
@@ -498,6 +499,8 @@ footer b{color:var(--orange)}
         <div class="talkrow">
           <button class="btn-sky alt" id="sbTalk" type="button">speak into the mic</button>
           <button class="btn-sky alt" id="sbSample" type="button">see a sample &mdash; no key</button>
+          <label class="btn-sky alt" id="sbUpLabel" for="sbUp">upload a recording</label>
+          <input id="sbUp" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.webm" hidden>
           <span class="talkhint" id="sbTalkHint">a real call, your voice &mdash; hesitate mid-sentence and watch where the turn ends</span>
         </div>
         <div class="livelog" id="sbLog"><span>idle &mdash; enter a key, then replay the embedded call or speak your own.</span></div>
@@ -1461,6 +1464,79 @@ function renderSampleTable(S,rows){
 }
 
 
+/* Upload a real recording. Same socket, same turn collection and same report as the
+   microphone — the only difference is where the samples come from, so a call centre
+   recording is measured by exactly the path a live call is. */
+async function runUpload(file){
+  const key=document.querySelector("#sbKey").value.trim();
+  if(!key){ logEl.innerHTML=""; slog("no key entered — nothing was sent.","hot"); return; }
+  const gateMs=+document.querySelector("#sbGate").value;
+  const mode=sbModes.length>1?"translit":sbModes[0];
+  const P=PROVIDERS[sbProv];
+  logEl.innerHTML=""; document.querySelector("#sbReport").hidden=true;
+  document.querySelector("#sbDiff").hidden=true;
+  slog(`decoding ${file.name} (${Math.round(file.size/1024)} KB)…`);
+
+  let pcm;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    const ac=new AC();
+    const buf=await ac.decodeAudioData(await file.arrayBuffer());
+    const ch=buf.getChannelData(0);
+    const f=downsample(ch, buf.sampleRate, 16000);
+    pcm=pcm16(f); ac.close();
+    slog(`${(pcm.length/16000).toFixed(1)}s of audio · ${P.label} · ${P.gateName} ${gateMs}ms`);
+  }catch(e){ slog("could not decode that file: "+e.name,"hot"); return; }
+
+  let ws;
+  try{ ws=P.open(key,gateMs,mode); }
+  catch(e){ slog("could not open the socket: "+e.name,"hot"); return; }
+
+  const turns=[]; let sent=0, lastEnd=0, partial="", ended=false;
+  const finish=()=>{
+    if(ended) return; ended=true;
+    try{ ws.close(); }catch(e){}
+    if(!turns.length){ slog("no turns came back","hot"); return; }
+    renderReport({turns,gateMs,mode,provider:P.label});
+    renderDiff(policyDiff(turns,{gateMs,mode,source:"uploaded recording",provider:P.label}));
+  };
+  const guard=setTimeout(finish, (pcm.length/16000)*1000 + 20000);
+
+  ws.onopen=async()=>{
+    slog("streaming in real time…");
+    const step=1600, t0=performance.now();
+    for(let i=0;i<pcm.length;i+=step){
+      if(ws.readyState!==1) break;
+      P.audio(ws,pcm.subarray(i,i+step));
+      sent+=100;
+      const wait=t0+sent-performance.now();
+      if(wait>0) await new Promise(r=>setTimeout(r,wait));
+    }
+    if(ws.readyState===1) P.end(ws);
+  };
+  ws.onmessage=ev=>{
+    let m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
+    const pr=P.parse(m);
+    if(pr.kind==="partial"){ if(pr.text) partial=pr.text; return; }
+    if(pr.kind==="turn"){
+      const text=pr.text||partial||"";
+      const dang=danglingOf(text);
+      turns.push({from:lastEnd,to:sent,text,dangling:dang});
+      lastEnd=sent; partial="";
+      slog(`turn ${turns.length}: ${text||"(empty)"}`+(dang?`   ← ${DANGLING_NOTE[dang]}`:""),
+           DANGLING_REAL(dang)?"hot":"ok");
+      return;
+    }
+    if(pr.kind==="error"){ slog("error: "+pr.text,"hot"); clearTimeout(guard); finish(); }
+    if(pr.kind==="done"){ clearTimeout(guard); finish(); }
+  };
+  ws.onclose=()=>{ clearTimeout(guard); finish(); };
+}
+document.querySelector("#sbUp").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0];
+  if(f) runUpload(f);
+  e.target.value="";                 // same file twice should re-run
+});
 document.querySelector("#sbSample").addEventListener("click",renderSample);
 document.querySelector("#sbDl").addEventListener("click",downloadReport);
 document.querySelector("#sbTalk").addEventListener("click",()=>{
