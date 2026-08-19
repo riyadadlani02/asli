@@ -458,22 +458,21 @@ Worth separating from the above, because they're different failures. At
 arrive, in turn 2. The damage is that an agent replying at the first end-of-turn
 answers a question she hadn't finished asking.
 
-### Silence-based turn detection splits the hesitation. Semantic turn detection does not.
+### Every silence-timed turn detector splits the hesitation
 
-Five configurations, three vendors, one utterance with a 700 ms hesitation before the
-number. The split falls exactly along how the turn end is decided:
+Three vendors, one utterance with a 700 ms hesitation before the number. All three
+decide the turn ended by timing the gap, and all three cut her off before it:
 
 | provider | turn detection | split? | number in the first turn |
 |---|---|---|---|
 | Sarvam `saaras:v3-realtime` | silence, 500 ms | yes @2400 ms | **no** |
 | Deepgram `nova-2` | silence, 500 ms | yes @2600 ms | **no** |
 | OpenAI `gpt-4o-transcribe` | `server_vad`, 500 ms | yes @2500 ms | **no** |
-| OpenAI `gpt-4o-transcribe` | **`semantic_vad`** | no | **yes** |
 
 Same audio, same hesitation, one command each:
 
 ```bash
-for a in sarvam deepgram openai openai-semantic; do
+for a in sarvam deepgram openai; do
   uv run asli sweep --suite pir --agent $a --pause-ms 700
 done
 ```
@@ -483,12 +482,12 @@ Two things follow, and the second one matters more than the first.
 **The problem is a property of silence timing, not of a supplier.** Three unrelated
 stacks make the identical mistake when configured that way.
 
-**And it is already solved in shipping products.** OpenAI offers `semantic_vad`
-alongside `server_vad`, so the same model on the same connection gets this right or
-wrong depending on one setting — which is the cleanest possible demonstration that the
-fix is a turn-taking decision and not a transcription problem. At least one other
-vendor scores end-of-turn likelihood rather than timing the gap and behaves the same
-way on this utterance. Anyone claiming a novel fix here should read that table first.
+**It is a turn-taking decision, not a transcription problem.** Some providers offer a
+non-silence mode — OpenAI exposes `semantic_vad` beside `server_vad`, and other vendors
+score how likely the turn ended rather than timing the gap. On this utterance those
+modes keep the number in one turn. So the failure above is a property of *how the turn
+end is decided*, and it is not unsolved in the industry; what is unmeasured is how
+often real callers trigger it and what it costs when they do.
 
 What is not solved is measurement: nobody publishes this comparison, the rate at which
 real Hindi callers trigger it, or what it costs when they do. That is what this harness
