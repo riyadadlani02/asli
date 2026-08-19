@@ -43,6 +43,7 @@ No API keys, no accounts, no network. This proves the whole thing works on your 
 git clone https://github.com/riyadadlani02/asli && cd asli
 uv venv --python 3.12 && uv pip install -e .
 python tests/test_asli.py
+python tests/test_sfr_text.py
 ```
 
 You should see:
@@ -258,6 +259,29 @@ agent said: "I heard 5677111 — can you confirm?"   ← caught it
 
 Reported two ways: `SFR_asr` (needs the transcript) and `SFR_bb` (black-box — works
 against any agent, using only its final answer).
+
+#### The same measure with no audio at all
+
+SFR is a property of agents, not of speech pipelines: *when the input was corrupted,
+did the behaviour show the agent noticed?* That question survives the removal of the
+microphone. `asli text` asks it of a retrieval pipeline — authored records, an
+authored corruption, no audio anywhere — and scores it through `score.sfr`, the same
+function the voice side uses.
+
+```bash
+asli text --dry-run              # inspect the 113-item corpus, no API calls
+asli text --stance eager         # needs the Azure keys
+```
+
+The corpus splits corruptions into ones detectable from the records (truncation,
+contradiction, wrong scale, flipped date format, missing field) and one authored to be
+undetectable — a single digit changed, still well-formed. The undetectable class is the
+control: **if it scores the same as the detectable ones, SFR is reading confirm-rate
+rather than error sensitivity.** It does not (0.25 vs 0.55), which is what makes the
+rest of the number worth reading.
+
+Full method, results, and two things that came out negative:
+[docs/sfr-text.md](docs/sfr-text.md).
 
 ---
 
@@ -567,6 +591,10 @@ timing claim in the harness.
    timing, which needs word-aligned transcripts.
 4. ~~Run the live lane~~ — done. Owed: the mode/placement probe across the whole
    entity bank rather than four entities.
+5. ~~SFR outside speech~~ — done. The measure discriminates agent stances in a text
+   retrieval pipeline too, and the detectability control holds. Two negatives worth
+   the same billing: the stance gap is 0.137, not the ≥0.3 predicted before the run,
+   and the prompt-entanglement effect seen in voice did not replicate at all.
 
 ## The site
 

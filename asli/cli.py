@@ -4,6 +4,7 @@
     asli run  --suite inepa --llm # parsing accuracy on a clean transcript
     asli sweep --suite pir        # the endpointing curve: PIR vs negative_frames_count
     asli run  --suite sfr --llm   # silent-failure rate under injected ASR error
+    asli text --stance eager      # the same SFR in a text pipeline, no audio at all
 """
 
 from __future__ import annotations
@@ -154,7 +155,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="asli")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    for name in ("run", "sweep", "demo", "check", "fit"):
+    for name in ("run", "sweep", "demo", "check", "fit", "text"):
         s = sub.add_parser(name)
         s.add_argument("--suite", default="inepa", choices=["inepa", "pir", "sfr"])
         s.add_argument("--llm", action="store_true", help="run the reference agent (needs Azure keys)")
@@ -175,6 +176,8 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("--corpus", default=None, help="directory of real-speech wavs, for `fit`")
         s.add_argument("--fitted", action="store_true",
                        help="draw pause lengths from the fitted distribution")
+        s.add_argument("--dry-run", action="store_true",
+                       help="`text`: print the built corpus, make no API calls")
 
     a = p.parse_args(argv)
     dials = {k: v for k, v in (("telephony", a.telephony), ("snr_db", a.snr)) if v}
@@ -199,6 +202,36 @@ def main(argv: list[str] | None = None) -> int:
         f = fitmod.fit_corpus(wavs, out=FIT_PATH)
         print(table(f"pause distribution ({f['n_files']} files, {f['n_pauses']} pauses)", f))
         print(f"  wrote {FIT_PATH}\n  now: asli sweep --suite pir --agent sarvam --fitted")
+        return 0
+
+    if a.cmd == "text":
+        import os
+
+        from .text import run as textrun
+
+        items = textrun.build(textrun.load())
+        if a.dry_run:
+            for it in items:
+                print(f"\n--- {it.id}  ({it.corruption}, detectable={it.detectable})")
+                for r in it.records:
+                    print(f"      {r}")
+                print(f"    Q: {it.question}\n    truth: {it.canonical}")
+            print(f"\n{len(items)} items built. No API calls made.")
+            return 0
+        if "AZURE_OPENAI_API_KEY" not in os.environ:
+            print("AZURE_OPENAI_API_KEY is not set — `asli text` is agent-only, there is\n"
+                  "no recogniser to run without it. Add keys to .env, or inspect the\n"
+                  "corpus offline with:  asli text --dry-run", file=sys.stderr)
+            return 2
+        rows = textrun.run(items, a.stance)
+        dest = Path(a.out or ROOT / "results" / f"sfr_text_{a.stance}.jsonl")
+        agg = textrun.write(rows, dest)
+        by_class = agg.pop("by_class")
+        print(table(f"sfr text (stance={a.stance}, n={agg['n']})", agg))
+        print("  acted blind, by corruption class")
+        for k, v in by_class.items():
+            print(f"    {k:<14}  {v['acted_blind']:<8}  n={v['n']}")
+        print(f"\n  wrote {dest}")
         return 0
 
     if a.cmd == "check":

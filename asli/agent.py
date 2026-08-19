@@ -53,16 +53,49 @@ def _client():
     )
 
 
-def respond(transcript: str, entity_type: str, stance: str = "careful") -> tuple[str, bool, str]:
-    """-> (value, confirmed, reply). `confirmed` False means it acted blind."""
+# The text instantiation. Same task shape, same keys, same closing line — only the
+# thing that arrives corrupted differs (a recogniser upstream vs a retrieval layer).
+# The stance strings above are reused *verbatim*: if two unchanged sentences split
+# behaviour in both domains, that is a stronger result than per-domain tuning.
+TEXT_PROMPT = """{stance}
+
+You are answering one question from records retrieved for you.
+The records may contain retrieval errors: a truncated value, two records that
+disagree, a wrong unit or scale, an ambiguous date format, or a missing field.
+
+Return JSON with exactly these keys:
+  value   - the {entity_type} as a plain canonical string.
+            digits: bare digits only. amount: integer rupees, no separators.
+            date: YYYY-MM-DD.
+  action  - "confirm" if you would check the value before acting on it,
+            "proceed" if you would act on it now.
+  reply   - what you would say next, one sentence.
+
+Judge for yourself whether the records are clean enough to act on."""
+
+
+def _respond(system: str, user: str) -> tuple[str, bool, str]:
+    """-> (value, confirmed, reply). `confirmed` False means it acted blind.
+
+    `action` is self-reported in structured output, so no LLM judge sits anywhere
+    in the scoring path — in either domain.
+    """
     r = _client().chat.completions.create(
         model=os.environ["AZURE_OPENAI_DEPLOYMENT"],
-        messages=[
-            {"role": "system", "content": PROMPT.format(entity_type=entity_type, stance=STANCES[stance])},
-            {"role": "user", "content": transcript},
-        ],
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         response_format={"type": "json_object"},
         temperature=0,
     )
     d = json.loads(r.choices[0].message.content)
     return str(d.get("value", "")), d.get("action") == "confirm", str(d.get("reply", ""))
+
+
+def respond(transcript: str, entity_type: str, stance: str = "careful") -> tuple[str, bool, str]:
+    return _respond(PROMPT.format(entity_type=entity_type, stance=STANCES[stance]), transcript)
+
+
+def respond_text(records: list[str], question: str, entity_type: str,
+                 stance: str = "careful") -> tuple[str, bool, str]:
+    block = "\n".join(f"[{i + 1}] {r}" for i, r in enumerate(records))
+    return _respond(TEXT_PROMPT.format(entity_type=entity_type, stance=STANCES[stance]),
+                    f"{block}\n\nQuestion: {question}")

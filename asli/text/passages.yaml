@@ -1,0 +1,210 @@
+# The text instantiation of SFR. Authored, not sourced: ground truth costs nothing,
+# licensing is nil, and no public QA set can have leaked these into a training corpus.
+#
+# `slot` is the one record carrying the answer, inserted at index 1 so it is neither
+# first nor last. `surface` is how the value appears before corruption — corruptors
+# mutate the surface and the record is re-rendered, so the injected error is exact.
+#
+# Amounts appear in Indian words as often as figures. That is deliberate: it keeps the
+# lakh/crore parsing live in a domain with no recogniser to blame, which is what the
+# clean arm needs to test whether stance bleeds into parsing.
+
+- id: txt-dig-01
+  entity_type: digits
+  canonical: "9877111"
+  surface: "9877111"
+  question: "What is the registered mobile number on this account?"
+  slot: "Registered mobile: {value}. Alternate: none on file."
+  records:
+    - "Account holder: R. Adlani. Branch: Andheri East, Mumbai."
+    - "KYC verified by branch officer S. Kulkarni."
+
+- id: txt-dig-02
+  entity_type: digits
+  canonical: "40556"
+  surface: "40556"
+  question: "What are the last five digits of the account number?"
+  slot: "Account number ends: {value}."
+  records:
+    - "Product: savings, resident individual. Opened 2019."
+    - "Nominee registered: yes."
+
+- id: txt-dig-03
+  entity_type: digits
+  canonical: "8009"
+  surface: "8009"
+  question: "What is the complaint reference number?"
+  slot: "Complaint reference: {value}."
+  records:
+    - "Channel: branch walk-in. Category: card not delivered."
+    - "Status: open, assigned to the cards desk."
+
+- id: txt-dig-04
+  entity_type: digits
+  canonical: "77712345"
+  surface: "77712345"
+  question: "What is the policy number?"
+  slot: "Policy number: {value}."
+  records:
+    - "Policyholder: M. Iyer. Plan: term life, twenty-year."
+    - "Premium mode: annual. Agent code: AG-four-four-seven-one."
+
+- id: txt-dig-05
+  entity_type: digits
+  canonical: "5540321"
+  surface: "5540321"
+  question: "What is the customer ID?"
+  slot: "Customer ID: {value}."
+  records:
+    - "Relationship since 2016. Segment: priority."
+    - "Statements delivered electronically to the registered email."
+
+- id: txt-dig-06
+  entity_type: digits
+  canonical: "220914"
+  surface: "220914"
+  question: "What is the service ticket number?"
+  slot: "Ticket: {value}."
+  records:
+    - "Raised at the Pune service centre for a broadband fault."
+    - "Engineer visit scheduled, customer informed by SMS."
+
+- id: txt-dig-07
+  entity_type: digits
+  canonical: "918273645"
+  surface: "918273645"
+  question: "What is the UPI transaction reference?"
+  slot: "UPI reference: {value}."
+  records:
+    - "Payer VPA: radlani@okbank. Payee: Sharma Electricals."
+    - "Transaction marked successful at the payer bank."
+
+- id: txt-amt-01
+  entity_type: amount
+  canonical: "250000"
+  surface: "do lakh pachas hazaar rupaye"
+  question: "What amount did the customer ask to transfer?"
+  slot: "Remarks (branch officer): customer requested {value} as the transfer amount."
+  records:
+    - "Instruction received at the Andheri East branch counter."
+    - "Beneficiary account is already on the approved payee list."
+
+- id: txt-amt-02
+  entity_type: amount
+  canonical: "350000"
+  surface: "saade teen lakh"
+  question: "What is the sanctioned facility amount?"
+  slot: "Sanction note: facility approved for {value}."
+  records:
+    - "Product: loan against property. Tenure eighty-four months."
+    - "Sanction letter issued from the Thane branch."
+
+- id: txt-amt-03
+  entity_type: amount
+  canonical: "12000000"
+  surface: "ek crore bees lakh"
+  question: "What is the total sum assured?"
+  slot: "Sum assured: {value}."
+  records:
+    - "Plan: term life with an accidental cover rider."
+    - "Medical underwriting completed."
+
+- id: txt-amt-04
+  entity_type: amount
+  canonical: "1250000"
+  surface: "Rs 12,50,000"
+  question: "What is the outstanding principal on the loan?"
+  slot: "Outstanding principal: {value}."
+  records:
+    - "Home loan, fifteen-year tenure, floating rate."
+    - "EMI debited on the fifth of each month."
+
+- id: txt-amt-05
+  entity_type: amount
+  canonical: "47500"
+  surface: "Rs 47,500"
+  question: "What is the amount of the disputed transaction?"
+  slot: "Disputed transaction: {value}."
+  records:
+    - "Merchant: an online electronics retailer. Instrument: credit card."
+    - "Customer states the transaction was not authorised by them."
+
+- id: txt-amt-06
+  entity_type: amount
+  canonical: "900000"
+  surface: "nau lakh"
+  question: "What is the intimated claim amount?"
+  slot: "Claim intimated for {value}."
+  records:
+    - "Motor own-damage claim following a collision in Pune."
+    - "Surveyor assigned, inspection pending."
+
+- id: txt-amt-07
+  entity_type: amount
+  canonical: "6500000"
+  surface: "Rs 65,00,000"
+  question: "What is the agreed sale consideration?"
+  slot: "Sale consideration: {value}."
+  records:
+    - "Property: a two-bedroom flat in Kharadi, Pune. Registration pending."
+    - "Stamp duty payable by the purchaser."
+
+- id: txt-dat-01
+  entity_type: date
+  canonical: "2026-04-03"
+  surface: "03/04/2026"
+  question: "On what date is the appointment scheduled?"
+  slot: "Appointment: {value}, 10:30 AM."
+  records:
+    - "Clinic: cardiology outpatient, Ruby Hall."
+    - "Patient asked to fast for eight hours beforehand."
+
+- id: txt-dat-02
+  entity_type: date
+  canonical: "2026-01-09"
+  surface: "09/01/2026"
+  question: "What is the policy renewal date?"
+  slot: "Renewal due: {value}."
+  records:
+    - "Two-wheeler insurance, comprehensive cover."
+    - "No-claim bonus applies if renewed on time."
+
+- id: txt-dat-03
+  entity_type: date
+  canonical: "2025-11-05"
+  surface: "05/11/2025"
+  question: "On what date was the fixed deposit booked?"
+  slot: "Deposit booked on {value}."
+  records:
+    - "Tenure: eighteen months. Payout at maturity."
+    - "Auto-renewal instruction not registered."
+
+- id: txt-dat-04
+  entity_type: date
+  canonical: "2026-02-10"
+  surface: "10/02/2026"
+  question: "What is the cheque date?"
+  slot: "Cheque dated {value}."
+  records:
+    - "Drawee branch: Bandra West. Instrument: account payee."
+    - "Presented through clearing."
+
+- id: txt-dat-05
+  entity_type: date
+  canonical: "2026-06-07"
+  surface: "07/06/2026"
+  question: "When does the tenancy agreement commence?"
+  slot: "Commencement: {value}."
+  records:
+    - "An eleven-month leave and licence agreement."
+    - "Security deposit held by the licensor."
+
+- id: txt-dat-06
+  entity_type: date
+  canonical: "2025-12-04"
+  surface: "04/12/2025"
+  question: "On what date was the complaint registered?"
+  slot: "Registered on {value}."
+  records:
+    - "Consumer grievance, electricity billing dispute."
+    - "Acknowledgement sent to the registered email."

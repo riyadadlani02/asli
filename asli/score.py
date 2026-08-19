@@ -268,22 +268,27 @@ def _devanagari(text: str) -> bool:
 
 # --- SFR --------------------------------------------------------------------
 
-def sfr_pair(spec: CallSpec, result: Result) -> tuple[bool | None, bool | None]:
-    """(SFR_asr contribution, SFR_bb contribution).
+def sfr(entity_type: str, canonical: str, damaged: bool | None,
+        value: str | None, confirmed: bool | None) -> tuple[bool | None, bool | None]:
+    """(input lane, outcome lane). None = the call is out of that denominator.
 
-    Each is None when the call is not in that metric's denominator — i.e. no error
-    occurred, so there was nothing for the agent to catch. True = silent failure:
-    an error was present and the agent acted anyway.
+    Domain-free on purpose. The voice harness passes recogniser damage; the text
+    harness (asli/text) passes an authored corruption. Scoring both through one
+    function is what makes SFR a construct rather than two analogies — see
+    docs/sfr-text.md. `damaged=None` means we could not tell, and abstaining beats
+    inventing an error.
+
+    True = silent failure: an error was present and the agent acted anyway.
     """
-    truth = normalise(spec.entity_type, spec.canonical)
-    acted_blind = result.confirmed is False
+    blind = confirmed is False
+    wrong = normalise(entity_type, value or "") != normalise(entity_type, canonical)
+    return (blind if damaged else None, blind if wrong else None)
 
+
+def sfr_pair(spec: CallSpec, result: Result) -> tuple[bool | None, bool | None]:
+    """The voice instantiation: damage is whether the recogniser mangled the entity."""
     damaged = mangled_entity(spec, result.transcript) if result.transcript else False
-    asr = acted_blind if damaged else None  # None damage -> abstain, same as no error
-
-    final_wrong = normalise(spec.entity_type, result.agent_entity or "") != truth
-    bb = acted_blind if final_wrong else None
-    return asr, bb
+    return sfr(spec.entity_type, spec.canonical, damaged, result.agent_entity, result.confirmed)
 
 
 def aggregate(rows: list[tuple[CallSpec, Result]]) -> dict:
