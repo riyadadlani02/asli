@@ -4,6 +4,8 @@
 
 **Live demo:** https://riyadadlani02.github.io/asli/ · [mirror](https://asli-riya02.vercel.app)
 
+![The asli site — She hesitated. The turn ended without the number.](docs/img/hero.png)
+
 ---
 
 ## In plain terms
@@ -148,6 +150,11 @@ inside the pause after `matlab`. That single call is the whole finding.
 
 Do this before a sweep. It's one call and it tells you the key works.
 
+![PIR against silence_duration_ms — flat at 1.00 up to the 500 ms default, then straight to zero](docs/img/cliff.png)
+
+*The same curve as Step 4 below, on the live demo. The dashed line is Sarvam's
+documented default; everything left of it is "every caller cut off".*
+
 ### Step 4 — the sweep
 
 ```bash
@@ -186,6 +193,13 @@ for checking the harness before spending credits.
 ## The three metrics, with examples
 
 ### PIR — premature interruption
+
+![The instrument — the utterance as an LED level meter, with the turn-end decision marked](docs/img/instrument.png)
+
+*The hero panel on the demo site. The lit bars are her voice; the gap in the middle is
+the 700 ms hesitation; the vertical line is where the agent decided she had finished.
+The transcript underneath stops there.*
+
 
 The endpointer waits `silence_duration_ms` of quiet before deciding the turn ended.
 Set that shorter than the caller's hesitation and it fires mid-sentence.
@@ -326,6 +340,23 @@ agent prompt is moving both at once.
 The 8 kHz telephony codec alone changes PIR **not at all**. Babble at 5 dB SNR drives
 it to 0.00 at every gate — not an improvement: the noise fills the pause so the
 endpointer never fires and the turn never ends. The mirror failure.
+
+---
+
+## Try it in the browser
+
+The demo site has a sandbox: set how long she hesitates and how patient the
+endpointer is, and see whether she gets cut off. The left panel is a model and says
+so; the right panel streams the audio to a real endpoint with your own key and
+reports what actually came back.
+
+![The sandbox — hesitation and gate sliders, filler choice, and a live streaming panel](docs/img/sandbox.png)
+
+*When your settings match a datapoint we actually measured, it says so —
+"measured on saaras:v3-realtime at this exact setting". Otherwise it is labelled
+as modelled.*
+
+![Four output modes — only verbatim keeps all seven digits](docs/img/modes.png)
 
 ---
 
