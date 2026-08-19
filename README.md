@@ -306,6 +306,65 @@ Worth separating from the above, because they're different failures. At
 arrive, in turn 2. The damage is that an agent replying at the first end-of-turn
 answers a question she hadn't finished asking.
 
+### Grounded in real speech: how often does this actually happen?
+
+The 700 ms hesitation used above had to come from somewhere. It now does.
+
+**Source:** [Gram Vaani Hindi](https://www.openslr.org/118/) (OpenSLR SLR118) development
+set — 1,882 recordings, **5.02 hours of spontaneous Hindi telephone speech**, 8 kHz, from
+a community voice platform in rural India. Unscripted callers on real phone lines: the
+population this harness is about. Openly downloadable, free for academic use.
+
+```bash
+curl -O https://www.openslr.org/resources/118/GV_Dev_5h.tar.gz
+tar xzf GV_Dev_5h.tar.gz
+uv run asli fit --corpus GV_Dev_5h/Audio
+```
+
+48,631 silences measured; 6,514 are pauses of ≥200 ms (below that they are articulatory
+gaps between words, not hesitation — 200 ms is the conventional cut).
+
+| | |
+|---|---|
+| median pause | **320 ms** |
+| 75th percentile | 440 ms |
+| 90th percentile | 640 ms |
+| 99th percentile | 840 ms |
+| lognormal fit | μ=5.843, σ=0.393, **KS=0.085** |
+
+**The rate.** Share of real mid-utterance pauses long enough to end the turn early:
+
+| gate | pauses that trip it |
+|---:|---:|
+| 300 ms | 55.3% |
+| 400 ms | 30.0% |
+| **500 ms (default)** | **17.9%** |
+| 700 ms | 5.9% |
+| 900 ms | 0.4% |
+
+**About one mid-utterance pause in six is long enough to end the turn at the default
+setting.** Moving the gate to 700 ms takes that to 1 in 17; to 900 ms, 1 in 250.
+
+**This corrects an overstatement.** The 700 ms hesitation used in the sweep sits at the
+**94th percentile** of real pauses — it is a long pause, not a typical one. A typical
+320 ms pause does *not* trip the 500 ms gate. The earlier framing implied every caller
+gets cut off; the measured rate is 17.9% of pauses, which is smaller and far more
+defensible. It also means the sweep above should be read as *"when a caller does pause
+this long, here is what happens"* — and the table here says how often that is.
+
+Run the harness against realistic pauses instead of a fixed one:
+
+```bash
+uv run asli sweep --suite pir --agent sarvam --fitted
+```
+
+Caveats on this specific number: the pauses are *all* mid-utterance silences, not only
+those following a filler like `matlab` — filler-conditioned timing needs word-aligned
+transcripts, which is the next step. Gram Vaani callers are leaving voice messages
+rather than talking to an agent, and a conversation may hesitate differently. KS=0.085
+means the lognormal is a serviceable summary, not a tight fit — the percentile table
+above is empirical and does not depend on it.
+
 ### Reference agent — INEPA and SFR
 
 *These use our own fixed prompt in `agent.py`, not a vendor's agent.*
@@ -455,13 +514,12 @@ That file *is* the artefact — every number in this README is computed from it.
   per-session parameter and the endpointer does exactly what it's told. The finding
   is that the default sits just below a common hesitation length.
 - **n = 12.** A proving run, not a rate. Don't quote a percentage off it.
-- **The hesitation lengths are nominal.** A fixed 400/700 ms, not a distribution
-  fitted to real speech. Until that lands, PIR reads as *"at 700 ms"* and never as a
-  field rate. The fitting pipeline is built and verified (`asli fit`); the corpus is
-  the blocker — IndicVoices is gated and returns HTTP 401 without accepting its terms.
-- **The caller is synthetic.** Utterances are TTS, so this measures a model of Hindi
-  hesitation rather than a Hindi speaker — exactly what the fitting step above exists
-  to correct.
+- **The hesitation lengths are now grounded, the caller still is not.** Pause lengths
+  come from 5 hours of real spontaneous Hindi telephone speech (above), so the *timing*
+  is no longer arbitrary. The utterances themselves are still TTS, so the acoustics and
+  the placement of hesitation within a sentence remain synthetic.
+- **The pause distribution is all mid-utterance silences**, not specifically those after
+  a filler. Filler-conditioned timing needs word-aligned transcripts.
 - **PIR is conservative.** Event times are taken as *audio sent so far*, so network
   latency inflates the apparent endpoint time. That pushes results away from
   "premature", never toward it.
@@ -503,9 +561,10 @@ timing claim in the harness.
 1. ~~INEPA end to end~~ — done.
 2. ~~Degradation layer + SFR~~ — done. Still owed: an LLM confirmation classifier with
    Cohen's κ against ~200 hand-labelled turns.
-3. **Fit the hesitations to real speech.** `asli fit --corpus DIR` is built and
-   verified against a known distribution; it needs IndicVoices or Voice of India,
-   which are gated. This is the step that turns PIR from "at 700 ms" into a rate.
+3. ~~Fit the hesitations to real speech~~ — done, on 5.02 h of spontaneous Hindi
+   telephone speech (Gram Vaani / OpenSLR SLR118). PIR is now a rate: **17.9% of real
+   mid-utterance pauses exceed the 500 ms default.** Owed next: filler-conditioned
+   timing, which needs word-aligned transcripts.
 4. ~~Run the live lane~~ — done. Owed: the mode/placement probe across the whole
    entity bank rather than four entities.
 

@@ -16,25 +16,85 @@ from __future__ import annotations
 
 import json
 import math
+import subprocess
 from pathlib import Path
 
 import numpy as np
 
-from .drive import FRAME_SAMPLES
 from .spec import SAMPLE_RATE
 
 
-def pause_lengths_ms(pcm: np.ndarray, rate: int = SAMPLE_RATE, threshold: float = 0.02,
-                     min_ms: int = 80, max_ms: int = 4000) -> list[int]:
+ANALYSIS_FRAME_MS = 20  # pause lengths are the measurement here, so resolve them
+                        # finely — the recogniser's 512-sample frame is 64ms at 8kHz,
+                        # which would quantise a 700ms pause by ±9%.
+
+
+def read_audio(path: Path) -> tuple[np.ndarray, int]:
+    """Any format ffmpeg understands, at its native sample rate."""
+    if path.suffix.lower() == ".wav":
+        from .synth import read_wav
+
+        return read_wav(path)
+    rate = int(subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "a:0",
+         "-show_entries", "stream=sample_rate", "-of", "csv=p=0", str(path)],
+        capture_output=True, text=True, check=True).stdout.strip() or 0)
+    raw = subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-i", str(path), "-ac", "1",
+         "-f", "s16le", "-"], capture_output=True, check=True).stdout
+    return np.frombuffer(raw, dtype="<i2").copy(), rate
+
+
+def frame_rms(pcm: np.ndarray, frame: int) -> np.ndarray:
+    x = pcm.astype(np.float64) / 32768.0
+    n = len(x) // frame
+    if n <= 0:
+        return np.zeros(0)
+    return np.sqrt((x[: n * frame].reshape(n, frame) ** 2).mean(axis=1))
+
+
+def adaptive_threshold(rms: np.ndarray, min_contrast: float = 3.0) -> float | None:
+    """A speech/silence cut derived from the recording's own energy distribution.
+
+    A fixed threshold works on synthesised audio and fails on real recordings, whose
+    noise floors differ by orders of magnitude between a quiet handset and a roadside
+    call. Floor and speech level are taken as low/high percentiles and the cut is
+    placed between them geometrically.
+
+    Returns None when the file has too little contrast to separate the two at all —
+    all-noise or all-speech — so it can be skipped rather than contribute nonsense.
+    """
+    if len(rms) < 20:
+        return None
+    floor = float(np.percentile(rms, 10))
+    speech = float(np.percentile(rms, 95))
+    if speech <= 0:
+        return None
+    if floor <= 0:
+        # digital silence: nothing to separate from, so any real energy is speech
+        return speech * 0.05
+    if speech < floor * min_contrast:
+        return None
+    return float(np.sqrt(floor * speech))
+
+
+def pause_lengths_ms(pcm: np.ndarray, rate: int = SAMPLE_RATE, threshold: float | None = None,
+                     min_ms: int = 80, max_ms: int = 4000,
+                     frame_ms: int = ANALYSIS_FRAME_MS) -> list[int]:
     """Silence runs bracketed by speech on both sides — mid-utterance pauses only.
 
     Leading and trailing silence are excluded: they are recording margin, not
     hesitation, and including them would drag the distribution upward.
+
+    `threshold=None` derives the cut per recording (see `adaptive_threshold`).
     """
-    x = pcm.astype(np.float64) / 32768.0
-    frame_ms = FRAME_SAMPLES * 1000 / rate
-    loud = [float(np.sqrt(np.mean(x[i:i + FRAME_SAMPLES] ** 2))) >= threshold
-            for i in range(0, len(x) - FRAME_SAMPLES, FRAME_SAMPLES)]
+    frame = max(1, int(rate * frame_ms / 1000))
+    rms = frame_rms(pcm, frame)
+    if threshold is None:
+        threshold = adaptive_threshold(rms)
+        if threshold is None:
+            return []
+    loud = list(rms >= threshold)
     if not any(loud):
         return []
     first, last = loud.index(True), len(loud) - 1 - loud[::-1].index(True)
@@ -76,17 +136,26 @@ def sample_pauses(n: int, mu: float, sigma: float, seed: int = 0) -> list[int]:
 
 
 def fit_corpus(wavs: list[Path], out: Path | None = None) -> dict:
-    from .synth import read_wav
-
     pauses: list[int] = []
+    used = skipped = 0
     for w in wavs:
-        pcm, rate = read_wav(w)
-        pauses += pause_lengths_ms(pcm, rate)
+        try:
+            pcm, rate = read_audio(w)
+        except Exception:
+            skipped += 1
+            continue
+        found = pause_lengths_ms(pcm, rate)
+        if found:
+            used += 1
+            pauses += found
+        else:
+            skipped += 1
     if len(pauses) < 20:
         raise SystemExit(f"only {len(pauses)} pauses found — need a real corpus, not a sample")
 
     mu, sigma = fit_lognormal(pauses)
-    fit = {"n_pauses": len(pauses), "n_files": len(wavs), "mu": mu, "sigma": sigma,
+    fit = {"n_pauses": len(pauses), "n_files": len(wavs), "files_used": used,
+           "files_skipped": skipped, "mu": mu, "sigma": sigma,
            "ks": ks_statistic(pauses, mu, sigma),
            "median_ms": int(np.median(pauses)),
            "p25_ms": int(np.percentile(pauses, 25)),

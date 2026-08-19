@@ -1,0 +1,24 @@
+{
+  "cutoff_ms": 200,
+  "n_pauses": 6514,
+  "n_all_silences": 48631,
+  "files_used": 1882,
+  "audio_hours": 5.02,
+  "mu": 5.8433853809595835,
+  "sigma": 0.3927548595380956,
+  "ks": 0.08544863140434389,
+  "median_ms": 320,
+  "p25_ms": 260,
+  "p75_ms": 440,
+  "p90_ms": 640,
+  "p99_ms": 840,
+  "exceed": {
+    "300": 0.5534,
+    "400": 0.2997,
+    "500": 0.1792,
+    "700": 0.0591,
+    "900": 0.0038,
+    "1200": 0.0011
+  },
+  "source": "Gram Vaani Hindi (OpenSLR SLR118) dev set, spontaneous 8kHz telephone speech"
+}

@@ -53,6 +53,7 @@ def mp3(path: Path) -> str:
 def collect() -> dict:
     d: dict = {"said": SAID}
     d["sweep"] = json.loads((ROOT / "results/pir_sweep_sarvam.json").read_text())
+    d["fit"] = json.loads((ROOT / "results/pause_fit.json").read_text())
     d["hero"] = {k: v for k, v in json.loads((ROOT / "results/hero_wave.json").read_text()).items()
                  if k != "env"}
 

@@ -129,6 +129,36 @@ def test_indian_amounts_parse_as_lakh_and_crore():
         assert score.normalise("amount", text) == want, f"{text} -> {score.normalise('amount', text)}"
 
 
+def test_pause_detection_survives_a_real_noise_floor():
+    """A fixed threshold works on synthesised audio and fails on real recordings."""
+    from asli.fit import adaptive_threshold, frame_rms, pause_lengths_ms
+
+    built = [250, 700, 1100, 480]
+    parts = []
+    for gap in built:
+        parts += [tone(300), silence(gap)]
+    clean = np.concatenate(parts + [tone(300)])
+
+    rng = np.random.default_rng(0)
+    quiet = (clean + rng.normal(0, 300, len(clean))).astype(np.int16)
+    loud = (clean + rng.normal(0, 2000, len(clean))).astype(np.int16)
+
+    # the same gaps come back at three very different noise floors
+    for label, sig in (("clean", clean), ("quiet", quiet), ("loud", loud)):
+        got = pause_lengths_ms(sig, RATE)
+        assert len(got) == len(built), f"{label}: {got}"
+        assert all(abs(a - b) <= 40 for a, b in zip(built, got)), f"{label}: {got}"
+
+    # pure noise has no speech/silence contrast — abstain rather than invent pauses
+    noise = rng.normal(0, 500, RATE * 3).astype(np.int16)
+    assert adaptive_threshold(frame_rms(noise, 320)) is None
+    assert pause_lengths_ms(noise, RATE) == []
+
+    # leading and trailing silence is recording margin, not hesitation
+    padded = np.concatenate([silence(900), tone(300), silence(500), tone(300), silence(900)])
+    assert pause_lengths_ms(padded, RATE) == [500]  # exact at 20ms frames
+
+
 def test_spoken_digits_binds_multipliers_to_the_following_digit():
     assert score.spoken_digits("nine eight double seven, triple one") == "9877111"
     assert score.spoken_digits("char zero double five six") == "40556"  # 4-0-55-6, not 4-0-5-5-6

@@ -310,6 +310,7 @@ footer b{color:var(--orange)}
         <div class="knob"><div class="row"><span>filler</span></div>
           <div class="fillers" id="sbFillers"></div></div>
         <div class="outcome" id="sbOut" data-ok="0"></div>
+        <div class="measured" id="sbPct"></div>
         <div class="measured" id="sbMeas"></div>
       </div>
 
@@ -332,11 +333,12 @@ footer b{color:var(--orange)}
   <div class="idx"><b>02</b><span>the measurement</span></div>
   <h2>The cliff sits <span class="q">just above</span> the default.</h2>
   <p class="lede">Twelve utterances streamed in real time at each gate setting. Flat at 1.00 through every value up to and including the 500&nbsp;ms default, then straight to zero. <b>Moving the gate to 700&nbsp;ms removes the effect entirely</b> at this hesitation length.</p>
+  <p class="lede" style="margin-top:.9rem">And how often does a caller actually pause that long? Measured on 5.02&nbsp;hours of spontaneous Hindi telephone speech: <b>17.9% of mid-utterance pauses exceed the 500&nbsp;ms default</b> &mdash; about one in six. At 700&nbsp;ms it is one in seventeen.</p>
   <figure>
     <div class="scroll"><svg id="sweep" viewBox="0 0 780 320" role="img" aria-label="Premature interruption rate against silence duration: flat at 1.0 to 500ms, zero from 700ms."></svg></div>
     <figcaption>PIR = share of calls where the turn ended before she finished. n&nbsp;=&nbsp;12 per point. Event times are audio-sent-so-far, so latency pushes results <em>away</em> from &ldquo;premature&rdquo;. The curve is conservative.</figcaption>
   </figure>
-  <div class="tags"><span>silence_duration_ms</span><span>vad</span><span class="hot">default 500</span><span>threshold</span><span>prefix padding</span><span>min speech duration</span></div>
+  <div class="tags"><span>silence_duration_ms</span><span class="hot">default 500</span><span>17.9% of real pauses</span><span>n = 6,514 pauses</span><span>5.02h hindi telephony</span><span>openslr slr118</span></div>
 </section>
 
 <section class="scene rev" id="line">
@@ -628,8 +630,8 @@ $("#cav").innerHTML=[
   ["The recogniser is good.","Recognition was accurate throughout &mdash; the Hinglish, the fillers, <code>1.25 lakh</code>, <code>ek karod pachas lakh</code>, <code>04032026</code> all came through. Most of what first looked like vendor failures were bugs in our own extractor. Those are fixed; these numbers are post-fix."],
   ["The gate is a setting.","<code>silence_duration_ms</code> is documented and per-session, and the endpointer does exactly what it is told. The finding is that the default sits just below a common hesitation length."],
   ["n = 12.","A proving run, not a rate. Don't quote a percentage off it."],
-  ["The pauses are nominal.","A fixed 700&nbsp;ms, not a distribution fitted to real speech. Until that lands, PIR reads as <em>at 700&nbsp;ms</em> and never as a field rate. The fitting pipeline is built and verified; the corpus is gated."],
-  ["The caller is synthetic.","Utterances are TTS, so this measures a model of Hindi hesitation rather than a Hindi speaker &mdash; exactly what the corpus-fitting step exists to correct."],
+  ["700ms is a long pause, not a typical one.","Measured against 5 hours of spontaneous Hindi telephone speech, 700&nbsp;ms sits at the <b>94th percentile</b>. A typical pause is 320&nbsp;ms and does not trip the default. The honest rate is that <b>17.9% of real mid-utterance pauses</b> are long enough to end the turn early &mdash; about one in six, not all of them."],
+  ["The caller is still synthetic.","Pause <em>timing</em> now comes from real speech, but the utterances are TTS, so the acoustics and where the hesitation falls in a sentence remain synthetic."],
   ["No vendor is ranked.","One system was characterised, generously and in public. The bundled mock VAD is an instrument for calibrating scorers offline, never a comparison."]
 ].map(([h,b])=>`<div><h3>${h}</h3><p>${b}</p></div>`).join("");
 
@@ -660,6 +662,14 @@ function drawSky(){
 function animSky(){ if(!REDUCE){ skyT+=0.12; drawSky(); } requestAnimationFrame(animSky); }
 
 /* ================= SANDBOX: the model ================= */
+function erf(x){  // Abramowitz & Stegun 7.1.26 — plenty for a percentile readout
+  var s=x<0?-1:1; x=Math.abs(x);
+  var t=1/(1+0.3275911*x);
+  var y=1-((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t*t*Math.exp(-x*x)
+        - 0.254829592*t*Math.exp(-x*x)*0;
+  y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);
+  return s*y;
+}
 const FILLERS=[["मतलब","matlab"],["हाँ तो","haan toh"],["वो क्या बोलते हैं","woh kya bolte hain"],["ऐसा है कि","aisa hai ki"]];
 let sbFiller=0;
 document.querySelector("#sbFillers").innerHTML=FILLERS.map((f,i)=>
@@ -680,6 +690,16 @@ function sandbox(){
   o.innerHTML=fires
     ? `<span class="big">cut off</span>The gate elapses ${hes-g}ms before she resumes. Her turn ends mid-sentence and everything after &ldquo;${FILLERS[sbFiller][1]}&rdquo; is lost.`
     : `<span class="big">she finishes</span>The gate outlasts the ${hes}ms hesitation by ${g-hes}ms. The number survives.`;
+  // where does this hesitation sit among real Hindi pauses? mu/sigma are fitted to
+  // 5h of spontaneous telephone speech, so this is grounded rather than illustrative
+  var F=D.fit, z=(Math.log(hes)-F.mu)/F.sigma;
+  var pct=Math.round(50*(1+erf(z/Math.SQRT2)));
+  // from the fitted lognormal (KS 0.085), so approximate — the empirical percentiles
+  // are in results/pause_fit.json and differ by a point or two
+  document.querySelector("#sbPct").innerHTML =
+    "&asymp; <b>" + Math.min(99,Math.max(1,pct)) + "th percentile</b> of real Hindi " +
+    "mid-utterance pauses &mdash; median is " + F.median_ms + "ms, from " +
+    F.audio_hours + "h of telephone speech";
   const m=D.sweep.find(p=>p.silence_ms===g);
   document.querySelector("#sbMeas").innerHTML = (m && hes===700)
     ? `<i></i>measured on saaras:v3-realtime at this exact setting &mdash; PIR ${m.pir.toFixed(2)}, n=12`
