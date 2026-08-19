@@ -217,6 +217,31 @@ class Interruption:
     ms_early: int | None = None
     after_filler: str = ""
     in_injected_pause: bool = False
+    dangling: str = ""
+
+
+# Hindi marks grammatical relations *after* the word, so the token left hanging at a
+# mid-phrase pause is a case marker or conjunction, not a filler. STRICT requires a
+# following word in any context; MARGINAL is incomplete in continuous speech but legal
+# as an elliptical answer ("किसका?" — "राम का"). Both are reported, so the judgement is
+# a number rather than a hidden choice. Not checked by a Hindi linguist: fix by PR.
+DANGLING_STRICT = frozenset("कि क्योंकि इस उस लिए द्वारा अगर जबकि".split())
+DANGLING_MARGINAL = frozenset("का के की को में से ने तक पर तो और यह वह जो".split())
+
+
+def dangling(text: str) -> str:
+    """Was the turn ended on a word that cannot finish the utterance?
+
+    Silence-length independent: however long she then paused, a turn ending on `का`
+    is unfinished. This is the signal an agent can act on without raising the gate
+    for everyone, so the added latency is paid only by turns that are incomplete.
+    """
+    w = text.split()
+    if not w:
+        return ""
+    last = w[-1].strip("।,.?!\u200d")
+    return ("strict" if last in DANGLING_STRICT else
+            "marginal" if last in DANGLING_MARGINAL else "")
 
 
 def pir(spec: CallSpec, result: Result) -> Interruption:
@@ -236,7 +261,11 @@ def pir(spec: CallSpec, result: Result) -> Interruption:
                         and end <= e.t_ms <= end + seg.pause_after_ms
                         + ATTRIBUTION_TOLERANCE_MS):
                     filler, injected = seg.text, True
-            return Interruption(True, e.t_ms, spec.true_end_ms - e.t_ms, filler, injected)
+            at_cut = next((x.text for x in reversed(result.events)
+                           if x.kind == "transcript"
+                           and x.t_ms <= e.t_ms + ATTRIBUTION_TOLERANCE_MS), "")
+            return Interruption(True, e.t_ms, spec.true_end_ms - e.t_ms, filler,
+                                injected, dangling(at_cut))
     return Interruption(False)
 
 
@@ -426,6 +455,12 @@ def aggregate(rows: list[tuple[CallSpec, Result]]) -> dict:
         "pir_injected": rate([p.in_injected_pause for p in pirs]),
         "pir_n": len(pirs),
         "median_ms_early": sorted(early)[len(early) // 2] if early else None,
+        # of the cuts, the share an agent-side completeness guard would catch
+        # without touching the gate. Reported as two rates, not one judgement.
+        "cut_dangling_strict": rate([p.dangling == "strict"
+                                     for p in pirs if p.premature]),
+        "cut_dangling_marginal": rate([p.dangling == "marginal"
+                                       for p in pirs if p.premature]),
         # the conversation columns: of the calls cut off, what the agent actually had
         # to work with, and whether it was talking over the answer.
         "entity_first_turn": rate([x.entity_first_turn for x in cut

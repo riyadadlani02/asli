@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from asli import degrade, score  # noqa: E402
 from asli.drive import FRAME_SAMPLES, MockASR  # noqa: E402
-from asli.spec import CallSpec, Result, Segment  # noqa: E402
+from asli.spec import CallSpec, Event, Result, Segment  # noqa: E402
 
 RATE = 16000
 
@@ -299,6 +299,38 @@ def test_gate_advice_prices_the_latency_and_recommends_within_budget():
     assert rec["gate_ms"] == 900 and rec["calls_affected"] == .02
     assert fit.recommended_gate(f, budget_ms=200)["gate_ms"] == 700, "budget must bind"
     assert fit.recommended_gate(f, budget_ms=0)["gate_ms"] == 500, "no budget, no change"
+
+
+def test_dangling_separates_unfinished_endings_from_finished_ones():
+    """A guard that fires on a finished sentence is just "always wait" with extra steps."""
+    assert score.dangling("उसने कहा कि") == "strict"
+    assert score.dangling("के आयोजकों को") == "marginal"
+    assert score.dangling("हो पाया है") == "", "finite verb — she may well be done"
+    assert score.dangling("करना चाहता हूँ") == ""
+    assert score.dangling("इंक्वायरी का मतलब।") == "", "filler is not a dangling word"
+    assert score.dangling("") == ""
+
+
+def test_pir_reports_the_word_the_turn_was_cut_on():
+    _, spec = hesitant_utterance()
+    res = Result(spec_id="t", adapter="mock", events=[
+        Event("speech_end", 600),
+        Event("transcript", 600, "मेरा नंबर है, मतलब इस"),
+    ])
+    v = score.pir(spec, res)
+    assert v.premature and v.dangling == "strict"
+
+
+def test_dangling_rates_are_reported_over_the_cuts_only():
+    _, spec = hesitant_utterance()
+    def res(text):
+        return Result(spec_id="t", adapter="mock", events=[
+            Event("speech_end", 600), Event("transcript", 600, text)])
+    rows = [(spec, res("बात इस")), (spec, res("के लिए")), (spec, res("हो पाया है"))]
+    agg = score.aggregate(rows)
+    assert agg["pir"] == 1.0
+    assert agg["cut_dangling_strict"] == round(2 / 3, 4), "both strict words counted"
+    assert agg["cut_dangling_marginal"] == 0.0
 
 
 if __name__ == "__main__":

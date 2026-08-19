@@ -332,7 +332,8 @@ def main(argv: list[str] | None = None) -> int:
               f"true_end from VAD, spread median {spreads[len(spreads) // 2]}ms / "
               f"max {spreads[-1]}ms, pause floor median "
               f"{floors[len(floors) // 2] if floors else '-'}dB)\n")
-        print(f"  {'gate_ms':>7}  {'PIR':>6}  {'in_pause':>9}  {'median_ms_early':>15}")
+        print(f"  {'gate_ms':>7}  {'PIR':>6}  {'in_pause':>9}  {'median_ms_early':>15}"
+              f"  {'on_dangling':>11}")
         curve, rows_out = [], []
         for gate in gates:
             verdicts = []
@@ -361,9 +362,13 @@ def main(argv: list[str] | None = None) -> int:
             row = {"gate_ms": gate, "n": len(verdicts),
                    "pir": round(sum(v.premature for v in verdicts) / len(verdicts), 4),
                    "in_pause": round(sum(v.in_injected_pause for v in verdicts) / len(verdicts), 4),
-                   "median_ms_early": early[len(early) // 2] if early else None}
+                   "median_ms_early": early[len(early) // 2] if early else None,
+                   "on_dangling": round(sum(bool(v.dangling) for v in verdicts
+                                            if v.premature)
+                                        / max(sum(v.premature for v in verdicts), 1), 4)}
             print(f"  {gate:>7}  {row['pir']:>6}  {row['in_pause']:>9}  "
-                  f"{row['median_ms_early'] if row['median_ms_early'] is not None else '-':>15}")
+                  f"{row['median_ms_early'] if row['median_ms_early'] is not None else '-':>15}"
+                  f"  {row['on_dangling']:>11}")
             curve.append(row)
         dest = ROOT / "results" / f"real_pir{tag}.jsonl"
         dest.parent.mkdir(parents=True, exist_ok=True)
