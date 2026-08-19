@@ -362,6 +362,11 @@ footer b{color:var(--orange)}
           <input id="sbKey" type="password" placeholder="sarvam api key" autocomplete="off" spellcheck="false" aria-label="Sarvam API key">
           <button class="btn-sky" id="sbRun" type="button">run live</button>
         </div>
+        <div class="keyrow" style="margin-top:.5rem">
+          <input id="sbFile" type="file" accept="audio/*" aria-label="Upload a recording to test">
+          <button class="btn-sky" id="sbClear" type="button" hidden>clear</button>
+        </div>
+        <p class="privacy">Or stream <b>your own recording</b> instead of the embedded one &mdash; whole and unmodified, not a clip. It is decoded in your browser, the hesitation is located by the same energy VAD the harness uses, and the audio goes only to Sarvam. It never reaches this page, which has no backend to receive it. <b>Only upload recordings you are permitted to send to a third party.</b></p>
         <div class="livelog" id="sbLog"><span>idle &mdash; enter a key to stream one call.</span></div>
       </div>
     </div>
@@ -854,6 +859,92 @@ const logEl=document.querySelector("#sbLog");
 function slog(msg,cls){ const s=document.createElement("span"); if(cls) s.className=cls;
   s.textContent=msg; logEl.appendChild(s); logEl.scrollTop=logEl.scrollHeight; }
 
+/* ---- upload lane ----------------------------------------------------------
+   A straight port of asli/real.py + the dangling check in asli/score.py: same 20ms
+   frame, same percentile threshold, same run detection. Verified field-for-field
+   against the Python on 14 real recordings by tests/test_vad_port.py \u2014 including the
+   16kHz resample, which moves nothing at 20ms resolution. Two implementations is what
+   a static page with no backend costs; drift would make the page contradict itself.
+
+   One deliberate divergence: the harness SKIPS a recording carrying no mid-utterance
+   pause of 500ms or more, since it says nothing about PIR. Here the run continues and
+   says so instead \u2014 someone who uploaded a file is owed the transcript either way. */
+const FRAME_MS=20, MIN_PAUSE_MS=500, TOL_MS=100;
+const DANGLING_STRICT=new Set("\u0915\u093f \u0915\u094d\u092f\u094b\u0902\u0915\u093f \u0907\u0938 \u0909\u0938 \u0932\u093f\u090f \u0926\u094d\u0935\u093e\u0930\u093e \u0905\u0917\u0930 \u091c\u092c\u0915\u093f".split(" "));
+const DANGLING_MARGINAL=new Set("\u0915\u093e \u0915\u0947 \u0915\u0940 \u0915\u094b \u092e\u0947\u0902 \u0938\u0947 \u0928\u0947 \u0924\u0915 \u092a\u0930 \u0924\u094b \u0914\u0930 \u092f\u0939 \u0935\u0939 \u091c\u094b".split(" "));
+function danglingOf(text){
+  const w=(text||"").trim().split(/\s+/);
+  if(!w[0]) return "";
+  const last=w[w.length-1].replace(/[\u0964,.?!\u200d]+$/,"");
+  return DANGLING_STRICT.has(last)?"strict":DANGLING_MARGINAL.has(last)?"marginal":"";
+}
+// numpy-style linear interpolation, so the threshold matches the harness exactly
+function pctl(sorted,q){ const i=q/100*(sorted.length-1), lo=Math.floor(i), hi=Math.ceil(i);
+  return sorted[lo]+(sorted[hi]-sorted[lo])*(i-lo); }
+function frameRms(pcm,frame){
+  const n=Math.floor(pcm.length/frame), out=new Float64Array(Math.max(n,0));
+  for(let f=0;f<n;f++){ let s=0; const b=f*frame;
+    for(let i=0;i<frame;i++){ const v=pcm[b+i]/32768; s+=v*v; }
+    out[f]=Math.sqrt(s/frame); }
+  return out;
+}
+function adaptiveThreshold(rms){
+  if(rms.length<20) return null;
+  const s=Array.from(rms).sort((a,b)=>a-b), floor=pctl(s,10), speech=pctl(s,95);
+  if(speech<=0) return null;
+  if(floor<=0) return speech*0.05;          // digital silence: any energy is speech
+  if(speech<floor*3) return null;           // too little contrast to separate
+  return Math.sqrt(floor*speech);
+}
+function vadBounds(pcm,rate,scale){
+  const frame=Math.max(1,Math.floor(rate*FRAME_MS/1000));
+  const rms=frameRms(pcm,frame), th=adaptiveThreshold(rms);
+  if(th===null) return null;
+  const loud=Array.from(rms,v=>v>=th*scale), first=loud.indexOf(true);
+  if(first<0) return null;
+  const last=loud.lastIndexOf(true), runs=[];
+  let run=0;
+  for(let i=first;i<=last;i++){
+    if(loud[i]){ if(run) runs.push([(i-run)*FRAME_MS,i*FRAME_MS]); run=0; }
+    else run++;
+  }
+  return {startMs:first*FRAME_MS, endMs:(last+1)*FRAME_MS, runs};
+}
+function specFromAudio(pcm,rate){
+  const b=vadBounds(pcm,rate,1.0);
+  if(!b) return null;
+  const long=b.runs.filter(r=>r[1]-r[0]>=MIN_PAUSE_MS);
+  // the true end is measured here rather than built, so bound it: re-derive at half
+  // and double the threshold and report how far it moves
+  let spread=0;
+  for(const sc of [0.5,2.0]){ const alt=vadBounds(pcm,rate,sc);
+    if(alt) spread=Math.max(spread,Math.abs(alt.endMs-b.endMs)); }
+  return {startMs:b.startMs, trueEnd:b.endMs, pauses:long, nPauses:b.runs.length, spread};
+}
+async function buildUpload(file, gateMs){
+  const AC=window.AudioContext||window.webkitAudioContext, ac=new AC();
+  const buf=await ac.decodeAudioData(await file.arrayBuffer());
+  const sr=buf.sampleRate, n0=buf.length, mono=new Float32Array(n0);
+  for(let c=0;c<buf.numberOfChannels;c++){ const d=buf.getChannelData(c);
+    for(let i=0;i<n0;i++) mono[i]+=d[i]/buf.numberOfChannels; }
+  ac.close();
+  const ratio=16000/sr, n=Math.floor(n0*ratio);
+  const pad=Math.floor((gateMs+500)/1000*16000);   // let the last turn close
+  const all=new Int16Array(n+pad);
+  for(let i=0;i<n;i++){ const s=i/ratio, i0=Math.floor(s), f=s-i0;
+    const v=(mono[i0]||0)*(1-f)+(mono[i0+1]||0)*f;
+    all[i]=Math.max(-32768,Math.min(32767,Math.round(v*32767))); }
+  // the VAD must not see the pad: digital silence would drag the percentiles
+  const sp=specFromAudio(all.subarray(0,n),16000);
+  slog(`${file.name} \u00b7 ${(n0/sr).toFixed(1)}s \u00b7 ${sr}Hz \u2192 16kHz mono`);
+  if(!sp) throw new Error("NoContrast");
+  slog(`vad: speech ${sp.startMs}\u2013${sp.trueEnd}ms \u00b7 ${sp.nPauses} internal gaps, `+
+       `${sp.pauses.length} of them \u2265${MIN_PAUSE_MS}ms \u00b7 true-end spread \u00b1${sp.spread}ms`);
+  if(!sp.pauses.length) slog("no mid-utterance pause \u2265500ms \u2014 an early turn end here "+
+    "cannot be attributed to a hesitation","hot");
+  return {pcm:all, trueEnd:sp.trueEnd, windows:sp.pauses, upload:true};
+}
+
 async function buildPcm(hesMs, gateMs){
   const AC=window.AudioContext||window.webkitAudioContext;
   const ac=new AC();
@@ -878,8 +969,9 @@ async function buildPcm(hesMs, gateMs){
     const v=(merged[i0]||0)*(1-f)+(merged[i0+1]||0)*f;
     pcm[i]=Math.max(-32768,Math.min(32767,Math.round(v*32767)));
   }
-  return {pcm, trueEnd: Math.round((headEnd/sr)*1000)+hesMs+Math.round(((ch.length-tailStart)/sr)*1000),
-          cutWindow:[Math.round((headEnd/sr)*1000), Math.round((headEnd/sr)*1000)+hesMs]};
+  const p0=Math.round((headEnd/sr)*1000);
+  return {pcm, trueEnd: p0+hesMs+Math.round(((ch.length-tailStart)/sr)*1000),
+          windows:[[p0, p0+hesMs]], upload:false};
 }
 function b64(int16){
   const b=new Uint8Array(int16.buffer,int16.byteOffset,int16.byteLength);
@@ -895,12 +987,17 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
   liveBusy=true; document.querySelector("#sbRun").disabled=true;
   logEl.innerHTML="";
   if(document.hidden) slog("keep this tab in front \u2014 background tabs throttle timers and the audio will not be paced in real time","hot");
-  slog(`splicing a ${hes}ms hesitation\u2026`);
+  const file=document.querySelector("#sbFile").files[0];
+  slog(file?`decoding ${file.name} \u2014 streamed whole, hesitation slider ignored`
+           :`splicing a ${hes}ms hesitation\u2026`);
   let built;
-  try{ built=await buildPcm(hes, gateMs); }
-  catch(e){ slog("could not decode the audio: "+e.name,"hot"); liveBusy=false;
-    document.querySelector("#sbRun").disabled=false; return; }
-  const {pcm,trueEnd,cutWindow}=built;
+  try{ built = file ? await buildUpload(file, gateMs) : await buildPcm(hes, gateMs); }
+  catch(e){ slog(e.message==="NoContrast"
+      ? "too little contrast between speech and noise for the VAD to place the ends \u2014 "+
+        "skipped rather than guessed at"
+      : "could not decode the audio: "+e.name,"hot");
+    liveBusy=false; document.querySelector("#sbRun").disabled=false; return; }
+  const {pcm,trueEnd,windows,upload}=built;
   slog(`${(pcm.length/16000).toFixed(2)}s ready (incl. trailing silence) \u00b7 she stops at ${trueEnd}ms \u00b7 gate ${gateMs}ms`);
 
   const qs=new URLSearchParams({language_code:"hi-IN",model:"saaras:v3-realtime",sample_rate:"16000",
@@ -912,15 +1009,27 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
   catch(e){ slog("could not open the socket: "+e.name,"hot"); liveBusy=false;
     document.querySelector("#sbRun").disabled=false; return; }
 
-  let sent=0, finals=[], ended=false, cutEarly=false, cutAtMs=0, lastPartial="", kinds=new Set();
+  let sent=0, finals=[], ended=false, cutEarly=false, cutAtMs=0, cutText="",
+      lastPartial="", kinds=new Set();
   const done=()=>{ if(ended) return; ended=true; liveBusy=false;
     document.querySelector("#sbRun").disabled=false;
     const text=finals.join(" ").trim();
     const got=digitsOf(text);
     // Two separate outcomes, and conflating them would overstate the finding:
     // whether her turn was ended early, and whether the number ever arrived.
-    if(cutEarly) slog("\u2717 her turn was ended mid-number at ~"+cutAtMs+"ms","hot");
+    if(cutEarly){
+      slog("\u2717 her turn was ended inside a hesitation at ~"+cutAtMs+"ms","hot");
+      // the fix that costs nothing on the turns that are already finished: read the
+      // word left hanging rather than lengthening the gate for every caller
+      const d=danglingOf(cutText), w=(cutText||"").trim().split(/\s+/).pop()||"\u2014";
+      slog(`   last word before the pause: ${w}`+(d
+        ? `  \u2014 ${d}: cannot end a Hindi utterance, so she was not finished`
+        : "  \u2014 a legal ending, so this cut is defensible"), d?"hot":"ok");
+    }
     else slog("\u2713 she was allowed to finish","ok");
+    slog(`full transcript (${finals.length} turn${finals.length===1?"":"s"}): `+
+         (text||"(empty)"));
+    if(upload) { try{ ws.close(); }catch(e){} return; }
     if(got.includes("9877111")){
       if(finals.length>1) slog("\u2026 the number did arrive, but in turn "+finals.length+
         " \u2014 an agent replying at the first end-of-turn answers before hearing it","hot");
@@ -950,7 +1059,7 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
   ws.onmessage=ev=>{
     let m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
     if(m.event==="vad.speech_end"){
-      const inPause=sent>=cutWindow[0]&&sent<=cutWindow[1]+400;
+      const inPause=windows.some(w=>sent>=w[0]&&sent<=w[1]+TOL_MS);
       slog(`vad.speech_end @ ~${sent}ms`+(sent<trueEnd-200?" \u2014 before she finished":""),
            sent<trueEnd-200?"hot":null);
       if(inPause){ cutEarly=true; cutAtMs=sent;
@@ -959,6 +1068,7 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
     else if(m.event==="transcript.partial"){ if(m.text) lastPartial=m.text; }
     else if(m.event==="transcript.final"){
       finals.push(m.text||"");
+      if(cutEarly&&!cutText) cutText=m.text||"";
       // the whole finding is partial-vs-final, so show them adjacent rather than
       // dumping the finals at the end with the partials already discarded
       if(lastPartial) slog(`partial @ ~${sent}ms: ${lastPartial}`);
@@ -978,6 +1088,10 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
     if(!ended&&e.code===1006) slog("socket closed before any result (1006) \u2014 usually a rejected key","hot");
     done(); };
 });
+document.querySelector("#sbFile").addEventListener("change",e=>{
+  document.querySelector("#sbClear").hidden=!e.target.files.length; });
+document.querySelector("#sbClear").addEventListener("click",()=>{
+  document.querySelector("#sbFile").value=""; document.querySelector("#sbClear").hidden=true; });
 sandbox(); drawSky(); animSky();
 // requestAnimationFrame is throttled in background tabs, so paint the sky on the
 // events that matter too rather than relying on the loop alone
