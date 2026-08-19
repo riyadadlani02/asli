@@ -10,7 +10,7 @@ documentation summaries and was wrong in every detail (wrong URL, hex instead of
 base64, invented message names). An untested adapter is worse than none, because it
 fails silently and the numbers still look like numbers.
 
-So: if you have a key for OpenAI Realtime, Google, AssemblyAI, Vapi, Bland or anything
+So: if you have a key for OpenAI Realtime, Google, Vapi, Bland or anything
 else, an adapter you have actually run is genuinely valuable. See **Writing an adapter**
 in the README. Include one captured event trace in the PR so a reviewer can see the
 wire shapes you mapped from.
