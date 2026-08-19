@@ -34,6 +34,12 @@ class MockASR:
 
     Mirrors the vendor knobs: a turn ends after `negative_frames_count` consecutive
     frames below threshold. Default 18 frames = 576ms @16k, 1152ms @8k.
+
+    It emits a transcript at every turn end, not only at the end of the recording,
+    because a split turn is the thing the conversation metric is about: the text an
+    agent holds when it acts at the first end-of-turn is not the text the session
+    ends up with. Turn text is attributed from `spec.seg_bounds_ms` — ground truth,
+    which is the whole point of an instrument.
     """
 
     negative_frames_count: int = 18
@@ -67,8 +73,26 @@ class MockASR:
             events.append(Event("speech_end", int(len(x) * 1000 / self.rate)))
 
         heard = self.transcript_of or spec.text
+        if not self.transcript_of:
+            events = self._with_turn_transcripts(events, spec)
         events.append(Event("transcript", events[-1].t_ms if events else 0, heard))
         return Result(spec_id=spec.id, adapter=self.name, events=events, transcript=heard)
+
+    @staticmethod
+    def _with_turn_transcripts(events: list[Event], spec: CallSpec) -> list[Event]:
+        """One final per turn end, carrying the segments that had finished by then."""
+        if not spec.seg_bounds_ms:
+            return events
+        out: list[Event] = []
+        for e in events:
+            out.append(e)
+            if e.kind != "speech_end":
+                continue
+            said = " ".join(seg.text for (_, end), seg in zip(spec.seg_bounds_ms, spec.segments)
+                            if end <= e.t_ms)
+            if said:
+                out.append(Event("transcript", e.t_ms, said))
+        return out
 
 
 class SarvamWS:

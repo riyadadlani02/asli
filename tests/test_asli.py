@@ -237,6 +237,70 @@ def test_render_timing_is_exact_by_construction(monkeypatch=None):
     assert spec.internal_pauses == [(300, 800)]
 
 
+def test_recovery_separates_the_first_turn_view_from_the_session():
+    """The cost of acting at end-of-turn: the agent holds less than the session does."""
+    pcm = np.concatenate([tone(500), silence(700), tone(500)])
+    spec = CallSpec(
+        id="rec", entity_type="digits", canonical="9877111",
+        segments=[Segment("mera number hai", pause_after_ms=700),
+                  Segment("nine eight double seven triple one")],
+        seg_bounds_ms=[(0, 500), (1200, 1700)], true_end_ms=1700,
+    )
+    res = MockASR(negative_frames_count=8).run(pcm, spec)
+    r = score.recovery(spec, res, reply_latency_ms=800)
+
+    assert r.cut, "a 256ms gate must trip on the 700ms hesitation"
+    assert r.entity_first_turn is False, "the digits had not been said yet at the cut"
+    assert r.entity_full_session is True, "they are in the session transcript"
+    assert r.silence_budget_ms == spec.true_end_ms - score.pir(spec, res).t_ms
+    assert r.collides is True, "800ms of agent lag < the budget: it talks over the number"
+
+    # a slower agent stops colliding, and that is the only charitable direction
+    assert score.recovery(spec, res, reply_latency_ms=5000).collides is False
+
+    # not cut off -> the two views agree and there is nothing to collide with
+    ok = score.recovery(spec, MockASR(negative_frames_count=32).run(pcm, spec))
+    assert not ok.cut and ok.entity_first_turn and ok.collides is None
+
+
+def test_real_audio_spec_locates_the_pause_and_bounds_its_own_error():
+    """No splice: the pause and the true end are measured, and the error is reported."""
+    from asli import real
+
+    rate = 8000  # corpus telephony rate
+    t = lambda ms: (8000 * np.sin(2 * np.pi * 400 * np.arange(int(rate * ms / 1000)) / rate)
+                    ).astype(np.int16)
+    z = lambda ms: np.zeros(int(rate * ms / 1000), dtype=np.int16)
+    pcm = np.concatenate([z(200), t(800), z(700), t(600), z(300)])
+
+    spec, spread = real.spec_from_audio(pcm, rate, "synthetic")
+    assert spec.internal_pauses == [(1000, 1700)], "the 700ms gap, found not built"
+    assert abs(spec.true_end_ms - 2300) <= 20, "true end within one analysis frame"
+    assert spread <= 40, "the end must not move much when the threshold does"
+
+    # and the scorer works on it unchanged, which is the point of the CallSpec shape
+    assert score.pir(spec, MockASR(negative_frames_count=8, rate=rate).run(pcm, spec)).premature
+
+    # a recording with no mid-utterance pause says nothing about PIR and is dropped
+    assert real.spec_from_audio(np.concatenate([t(800), z(100), t(800)]), rate, "flat") is None
+
+
+def test_gate_advice_prices_the_latency_and_recommends_within_budget():
+    from asli import fit
+
+    f = {"exceed": {"300": .553, "400": .30, "500": .179, "700": .059, "900": .004, "1200": .0},
+         "calls_exceed": {"300": .90, "400": .70, "500": .43, "700": .18, "900": .02, "1200": .0}}
+    rows = fit.gate_advice(f)
+    assert [r["added_latency_ms"] for r in rows] == [-200, -100, 0, 200, 400, 700]
+    calls = [r["calls_affected"] for r in rows]
+    assert calls == sorted(calls, reverse=True), "a longer gate cannot affect more calls"
+
+    rec = fit.recommended_gate(f, budget_ms=400)
+    assert rec["gate_ms"] == 900 and rec["calls_affected"] == .02
+    assert fit.recommended_gate(f, budget_ms=200)["gate_ms"] == 700, "budget must bind"
+    assert fit.recommended_gate(f, budget_ms=0)["gate_ms"] == 500, "no budget, no change"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:

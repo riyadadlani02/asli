@@ -81,7 +81,9 @@ TENS = {"das": 10, "ten": 10, "bees": 20, "twenty": 20, "pachas": 50, "pachaas":
         # mapped to what it means, so a 50/25 substitution surfaces as an error
         # rather than being silently absorbed.
         "pachees": 25, "pachchees": 25, "twentyfive": 25, "pandra": 15, "pandrah": 15,
-        "solah": 16, "chaudah": 14, "terah": 13, "barah": 12, "gyarah": 11}
+        "solah": 16, "chaudah": 14, "terah": 13, "barah": 12, "gyarah": 11,
+        "पच्चीस": 25, "पचीस": 25, "तीस": 30, "चालीस": 40, "साठ": 60, "सत्तर": 70,
+        "अस्सी": 80, "नब्बे": 90, "पंद्रह": 15, "बीस": 20, "दस": 10}
 HALVES = {"saade", "sade", "saadhe", "sadhe", "साढ़े", "साढे"}  # "saade teen" = 3.5
 CURRENCY = re.compile(r"(?:\brs\b|\binr\b|rupees?|rupaye|rupaya|₹|रुपये|रुपया)", re.I)
 
@@ -199,6 +201,15 @@ def inepa(spec: CallSpec, result: Result) -> bool:
 
 # --- PIR --------------------------------------------------------------------
 
+ATTRIBUTION_TOLERANCE_MS = 100  # one audio chunk. Event times are audio-sent-so-far,
+                                # so a turn end is reported at the chunk boundary on
+                                # which it arrives, never earlier — on real recordings
+                                # every observed overshoot past a pause was 40-100ms,
+                                # i.e. exactly this quantisation. The tolerance decides
+                                # only which pause a cut is *attributed* to; whether a
+                                # cut happened at all is still a strict comparison.
+
+
 @dataclass
 class Interruption:
     premature: bool
@@ -221,10 +232,91 @@ def pir(spec: CallSpec, result: Result) -> Interruption:
         if e.kind == "speech_end" and e.t_ms < spec.true_end_ms:
             filler, injected = "", False
             for (start, end), seg in zip(spec.seg_bounds_ms, spec.segments):
-                if seg.pause_after_ms and end <= e.t_ms <= end + seg.pause_after_ms:
+                if (seg.pause_after_ms
+                        and end <= e.t_ms <= end + seg.pause_after_ms
+                        + ATTRIBUTION_TOLERANCE_MS):
                     filler, injected = seg.text, True
             return Interruption(True, e.t_ms, spec.true_end_ms - e.t_ms, filler, injected)
     return Interruption(False)
+
+
+# --- what happens after the interruption -------------------------------------
+
+REPLY_LATENCY_MS = 800  # LLM first token + TTS first audio: the agent's own lag between
+                        # deciding the turn ended and being audible. 800ms is a
+                        # deliberately generous figure for a tuned stack; a slower one
+                        # collides less, which is the one way this metric is charitable.
+
+
+@dataclass
+class Recovery:
+    """One turn is not a conversation. This is what the call does next.
+
+    A cut turn is only the first half of the failure. The caller keeps talking — the
+    entity is still coming — while the agent is already composing a reply to a
+    question she had not finished asking. Three things then decide the call:
+
+    `entity_first_turn`   did the value reach the agent by the time it acted?
+    `entity_full_session` was it on the socket at all, later on?
+    `collides`            was the agent audible while she was still saying it?
+
+    The gap between the first two is the cost of acting at end-of-turn: an agent that
+    replies when the endpointer fires sees a different, poorer transcript than the one
+    the session eventually contains. `collides` is why the caller then has to repeat
+    herself into an agent that is talking.
+    """
+
+    cut: bool
+    entity_first_turn: bool | None = None
+    entity_full_session: bool | None = None
+    silence_budget_ms: int | None = None
+    collides: bool | None = None
+
+
+def _entity_present(spec: CallSpec, text: str, by_construction: bool | None = None) -> bool | None:
+    """Did this transcript carry the value? None = the scorer cannot tell.
+
+    `by_construction` short-circuits the parse when the spec already settles it — the
+    entity is the last segment, so a turn that ended before that segment began cannot
+    contain it whatever the transcript says. Everywhere else, an unreadable value
+    abstains instead of being scored as absent: a spoken date in Devanagari digit
+    words is something this scorer cannot parse, and calling that a vendor failure
+    would be inventing a result.
+    """
+    if by_construction is not None:
+        return by_construction
+    if not text.strip():
+        return False
+    damaged = mangled_entity(spec, text)
+    return None if damaged is None else not damaged
+
+
+def recovery(spec: CallSpec, result: Result,
+             reply_latency_ms: int = REPLY_LATENCY_MS) -> Recovery:
+    """Score the rest of the call, from timestamps already in hand.
+
+    The first `transcript` event is what an agent acting at the first end-of-turn has
+    to work with; `result.transcript` is the whole session. `silence_budget_ms` is how
+    long the agent would have to stay quiet to avoid talking over the entity — the cut
+    lands in the hesitation, and the entity is what follows it, so the budget is the
+    distance from the turn-end decision to the true end of speech.
+    """
+    p = pir(spec, result)
+    first = result.first("transcript")
+    full = _entity_present(spec, result.transcript)
+    if not p.premature:
+        return Recovery(False, entity_first_turn=full, entity_full_session=full)
+    # the entity is the last segment: a turn ended before it began cannot carry it,
+    # and that holds without reading the transcript at all.
+    entity_onset = spec.seg_bounds_ms[-1][0] if spec.seg_bounds_ms else None
+    settled = False if entity_onset is not None and p.t_ms < entity_onset else None
+    return Recovery(
+        cut=True,
+        entity_first_turn=_entity_present(spec, first.text if first else "", settled),
+        entity_full_session=full,
+        silence_budget_ms=p.ms_early,
+        collides=reply_latency_ms < p.ms_early,
+    )
 
 
 def _words(text: str) -> list[str]:
@@ -249,12 +341,27 @@ def mangled_entity(spec: CallSpec, transcript: str) -> bool | None:
     ponytail: substring containment can false-negative on very short entities that
     occur by chance elsewhere in the turn; exact span alignment if the bank grows.
     """
-    if spec.entity_type in ("digits", "amount"):
-        truth = normalise(spec.entity_type, spec.canonical)
-        got = normalise(spec.entity_type, transcript)
+    if spec.entity_type == "digits":
+        truth = normalise("digits", spec.canonical)
+        got = normalise("digits", transcript)
         if not got:
             return None
         return truth not in got
+
+    if spec.entity_type == "amount":
+        truth = normalise("amount", spec.canonical)
+        if not normalise("amount", transcript):
+            return None
+        # An amount is spoken as one phrase, and other number words in the turn are
+        # not part of it — a filler like "ek minute" or a lead-in like "last five
+        # digits" would otherwise be absorbed into the figure and read as damage the
+        # recogniser never did. So the entity survived if any tail of the turn parses
+        # to the truth, which is the amount-shaped version of the containment rule
+        # used for digits above.
+        # ponytail: a tail parse could match by coincidence; exact span alignment if
+        # the bank grows enough for that to happen.
+        toks = transcript.split()
+        return not any(spoken_amount(" ".join(toks[i:])) == truth for i in range(len(toks)))
 
     want, got_words = set(_words(spec.segments[-1].text)), set(_words(transcript))
     if not want & got_words and _devanagari(transcript) and not _devanagari(spec.text):
@@ -303,6 +410,8 @@ def aggregate(rows: list[tuple[CallSpec, Result]]) -> dict:
         return round(sum(xs) / len(xs), 4) if xs else None
 
     early = [p.ms_early for p in pirs if p.premature]
+    recs = [recovery(s, r) for s, r in rows]
+    cut = [x for x in recs if x.cut]
     judged = [r.confirmed for _, r in rows if r.confirmed is not None]
     return {
         "n": len(rows),
@@ -315,6 +424,16 @@ def aggregate(rows: list[tuple[CallSpec, Result]]) -> dict:
         "pir_injected": rate([p.in_injected_pause for p in pirs]),
         "pir_n": len(pirs),
         "median_ms_early": sorted(early)[len(early) // 2] if early else None,
+        # the conversation columns: of the calls cut off, what the agent actually had
+        # to work with, and whether it was talking over the answer.
+        "entity_first_turn": rate([x.entity_first_turn for x in cut
+                                   if x.entity_first_turn is not None]),
+        "entity_full_session": rate([x.entity_full_session for x in cut
+                                     if x.entity_full_session is not None]),
+        "entity_session_abstained": sum(x.entity_full_session is None for x in cut) or None,
+        "rcr": rate([bool(x.collides) for x in cut]),
+        "median_silence_budget_ms": (sorted(x.silence_budget_ms for x in cut)[len(cut) // 2]
+                                     if cut else None),
         "sfr_asr": rate(asr),
         "sfr_asr_n": len(asr),
         "sfr_bb": rate(bb),

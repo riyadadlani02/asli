@@ -5,6 +5,9 @@
     asli sweep --suite pir        # the endpointing curve: PIR vs negative_frames_count
     asli run  --suite sfr --llm   # silent-failure rate under injected ASR error
     asli text --stance eager      # the same SFR in a text pipeline, no audio at all
+    asli conv --agent sarvam      # what the agent holds when it answers, and collisions
+    asli real --corpus DIR        # PIR on real recordings, no synthesis in the path
+    asli fit  --corpus DIR        # pause distribution, and what to set the gate to
 """
 
 from __future__ import annotations
@@ -26,10 +29,10 @@ from .spec import CallSpec, Result, Segment, to_jsonl
 
 ROOT = Path(__file__).parent.parent
 
-# Hindi discourse markers that precede a mid-thought pause. Stage 3 replaces the
-# fixed pause length here with one sampled from a distribution fitted to real
-# telephone speech (IndicVoices / Voice of India) — until then these are nominal
-# and the PIR number must be read as "at this pause length", not as a field rate.
+# Hindi discourse markers that precede a mid-thought pause. `--fitted` draws the pause
+# length from the distribution measured by `asli fit` instead of the constant, and
+# `asli real` drops the synthesis entirely; a fixed `--pause-ms` reads as "at this pause
+# length", never as a field rate.
 FILLERS = ["matlab", "woh kya bolte hain", "haan toh", "aisa hai ki", "ek minute"]
 
 
@@ -155,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="asli")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    for name in ("run", "sweep", "demo", "check", "fit", "text"):
+    for name in ("run", "sweep", "demo", "check", "fit", "text", "conv", "real"):
         s = sub.add_parser(name)
         s.add_argument("--suite", default="inepa", choices=["inepa", "pir", "sfr"])
         s.add_argument("--llm", action="store_true", help="run the reference agent (needs Azure keys)")
@@ -176,6 +179,17 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("--corpus", default=None, help="directory of real-speech wavs, for `fit`")
         s.add_argument("--fitted", action="store_true",
                        help="draw pause lengths from the fitted distribution")
+        s.add_argument("--gate", type=int, default=None,
+                       help="endpointing gate: silence_duration_ms (sarvam) or frames (mock)")
+        s.add_argument("--gates", default=None,
+                       help="comma-separated gates for `real`, e.g. 500,900")
+        s.add_argument("--limit", type=int, default=20, help="`real`: recordings to stream")
+        s.add_argument("--silence-pause", action="store_true",
+                       help="`real`: zero the detected pause — the one-variable control")
+        s.add_argument("--reply-latency-ms", type=int, default=score.REPLY_LATENCY_MS,
+                       help="`conv`: agent lag from turn-end decision to first audio")
+        s.add_argument("--budget-ms", type=int, default=400,
+                       help="`fit`: extra turn-end latency the deployment will accept")
         s.add_argument("--dry-run", action="store_true",
                        help="`text`: print the built corpus, make no API calls")
 
@@ -189,10 +203,11 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "fit":
         if not a.corpus:
             print("usage: asli fit --corpus DIR\n\n"
-                  "DIR should hold unscripted telephone speech — IndicVoices or Voice of\n"
-                  "India. IndicVoices is gated: accept the terms at\n"
-                  "  https://huggingface.co/datasets/ai4bharat/IndicVoices\n"
-                  "then download the hindi/ split and point --corpus at the wavs.",
+                  "DIR should hold unscripted telephone speech. Gram Vaani Hindi is open\n"
+                  "and is what the published fit uses:\n"
+                  "  curl -O https://www.openslr.org/resources/118/GV_Dev_5h.tar.gz\n"
+                  "  tar xzf GV_Dev_5h.tar.gz\n"
+                  "  asli fit --corpus GV_Dev_5h/Audio",
                   file=sys.stderr)
             return 2
         # anything ffmpeg reads — corpora ship as mp3 or flac as often as wav
@@ -203,7 +218,19 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         f = fitmod.fit_corpus(wavs, out=FIT_PATH)
         print(table(f"pause distribution ({f['n_files']} files, {f['n_pauses']} pauses)", f))
-        print(f"  wrote {FIT_PATH}\n  now: asli sweep --suite pir --agent sarvam --fitted")
+        print("  what to set the gate to, and what it costs\n")
+        print(f"  {'gate_ms':>7}  {'pauses':>7}  {'calls':>7}  {'added_latency_ms':>16}")
+        for r in fitmod.gate_advice(f):
+            print(f"  {r['gate_ms']:>7}  {r['pauses_tripped']:>7}  {r['calls_affected']:>7}  "
+                  f"{r['added_latency_ms']:>+16}")
+        rec = fitmod.recommended_gate(f, a.budget_ms)
+        if rec:
+            print(f"\n  within +{rec['budget_ms']}ms of added turn-end latency: set "
+                  f"silence_duration_ms={rec['gate_ms']}\n"
+                  f"  calls with a pause long enough to end the turn early: "
+                  f"{rec['calls_affected_at_default']:.1%} -> {rec['calls_affected']:.1%} "
+                  f"({rec['removes_share_of_affected_calls']:.0%} of them removed)")
+        print(f"\n  wrote {FIT_PATH}\n  now: asli sweep --suite pir --agent sarvam --fitted")
         return 0
 
     if a.cmd == "text":
@@ -236,6 +263,121 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n  wrote {dest}")
         return 0
 
+    if a.cmd == "conv":
+        gate = a.gate or (18 if a.agent == "mock" else 500)
+        dest = Path(a.out or ROOT / "results" / "conv.jsonl")
+        if a.dry_run:  # re-score the stored calls; the rows are the artefact
+            from .spec import from_jsonl
+            rows = [from_jsonl(ln) for ln in dest.read_text().splitlines() if ln.strip()]
+        else:
+            specs = build_pir(base, a.pause_ms, a.fitted)
+            asr = make_adapter(a.agent, gate=gate, lang=a.lang, rate=rate, mode=a.mode)
+            rows = [(s_, call(asr, audio_for(s_, dials), s_)) for s_ in specs]
+        for s_, r in rows:
+            if r.error:
+                print(f"  ! {s_.id}: {r.error}", file=sys.stderr)
+        recs = [(s_, r, score.recovery(s_, r, a.reply_latency_ms)) for s_, r in rows]
+        agg = (score.aggregate(rows) if a.dry_run
+               else write([(s_, r) for s_, r, _ in recs], dest))
+        cut = [x for _, _, x in recs if x.cut]
+        print(f"\nafter the interruption  (agent={a.agent}, gate={gate}, "
+              f"pause={a.pause_ms}ms, reply_latency={a.reply_latency_ms}ms, n={len(rows)})\n")
+        print(f"  {'id':<22}  {'cut':>5}  {'1st turn':>8}  {'session':>7}  "
+              f"{'budget_ms':>9}  {'collides':>8}")
+        for s_, _, x in recs:
+            print(f"  {s_.id[:22]:<22}  {str(x.cut):>5}  {str(x.entity_first_turn):>8}  "
+                  f"{str(x.entity_full_session):>7}  "
+                  f"{(x.silence_budget_ms if x.silence_budget_ms is not None else '-'):>9}  "
+                  f"{str(x.collides):>8}")
+        summary = {"gate_ms": gate, "pause_ms": a.pause_ms, "n": len(rows),
+                   "n_cut": len(cut), "reply_latency_ms": a.reply_latency_ms,
+                   **{k: agg[k] for k in ("pir", "entity_first_turn", "entity_full_session",
+                                          "entity_session_abstained", "rcr",
+                                          "median_silence_budget_ms")}}
+        (ROOT / "results" / "conv.json").write_text(json.dumps(summary, indent=2))
+        print(table("summary", summary))
+        print(f"  wrote {dest} + results/conv.json")
+        return 0
+
+    if a.cmd == "real":
+        from . import real as realmod
+
+        if not a.corpus:
+            print("usage: asli real --corpus corpus/GV_Dev_5h/Audio --agent sarvam\n\n"
+                  "Streams real unscripted telephone recordings that already carry a\n"
+                  "mid-utterance pause. No TTS anywhere in the path.", file=sys.stderr)
+            return 2
+        loaded = realmod.load_corpus(a.corpus, min_pause_ms=500, limit=a.limit)
+        if not loaded:
+            print(f"no usable recordings under {a.corpus}", file=sys.stderr)
+            return 2
+        spreads = sorted(sp for *_, sp in loaded)
+        floors = sorted(f for f in (realmod.pause_floor_db(pcm, r_, sp)
+                                   for sp, pcm, r_, _ in loaded) if f is not None)
+        gates = ([int(g) for g in a.gates.split(",")] if a.gates
+                 else [a.gate] if a.gate else [500, 900])
+        tag = "_silenced" if a.silence_pause else ""
+        stored: dict = {}
+        if a.dry_run:
+            # re-score the stored calls, no network. The rows are the artefact — but a
+            # row was produced at one gate, so re-scoring can only speak for that one.
+            gates = gates[:1]
+            from .spec import from_jsonl
+            for ln in (ROOT / "results" / f"real_pir{tag}.jsonl").read_text().splitlines():  # noqa: E501
+                if ln.strip():
+                    sp, res = from_jsonl(ln)
+                    stored[sp.id] = res
+        print(f"\nPIR on real callers  (agent={a.agent}, n={len(loaded)}, "
+              f"{'pause SILENCED (control)' if a.silence_pause else 'pause as recorded'}, "
+              f"true_end from VAD, spread median {spreads[len(spreads) // 2]}ms / "
+              f"max {spreads[-1]}ms, pause floor median "
+              f"{floors[len(floors) // 2] if floors else '-'}dB)\n")
+        print(f"  {'gate_ms':>7}  {'PIR':>6}  {'in_pause':>9}  {'median_ms_early':>15}")
+        curve, rows_out = [], []
+        for gate in gates:
+            verdicts = []
+            for spec, pcm, srate, _ in loaded:
+                if a.dry_run:
+                    if spec.id not in stored:
+                        continue
+                    res = stored[spec.id]
+                else:
+                    asr = make_adapter(a.agent, gate=gate, lang=a.lang, rate=srate,
+                                       mode=a.mode)
+                    audio = (realmod.quiet_pause(pcm, srate, spec) if a.silence_pause
+                             else pcm)
+                    res = call(asr, audio, spec)
+                if res.error:
+                    print(f"  ! {spec.id}: {res.error}", file=sys.stderr)
+                    continue
+                verdicts.append(score.pir(spec, res))
+                # stamp the setting into the row: a result is meaningless without it
+                spec.degradation = {"silence_duration_ms": gate,
+                                    "pause_silenced": bool(a.silence_pause)}
+                rows_out.append(to_jsonl(spec, res))
+            if not verdicts:
+                continue
+            early = sorted(v.ms_early for v in verdicts if v.premature)
+            row = {"gate_ms": gate, "n": len(verdicts),
+                   "pir": round(sum(v.premature for v in verdicts) / len(verdicts), 4),
+                   "in_pause": round(sum(v.in_injected_pause for v in verdicts) / len(verdicts), 4),
+                   "median_ms_early": early[len(early) // 2] if early else None}
+            print(f"  {gate:>7}  {row['pir']:>6}  {row['in_pause']:>9}  "
+                  f"{row['median_ms_early'] if row['median_ms_early'] is not None else '-':>15}")
+            curve.append(row)
+        dest = ROOT / "results" / f"real_pir{tag}.jsonl"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text("\n".join(rows_out))
+        (ROOT / "results" / f"real_pir{tag}.json").write_text(json.dumps(
+            {"corpus": str(a.corpus), "n": len(loaded), "gates": curve,
+             "pause_silenced": bool(a.silence_pause),
+             "end_spread_median_ms": spreads[len(spreads) // 2],
+             "end_spread_max_ms": spreads[-1],
+             "pause_floor_db_median": floors[len(floors) // 2] if floors else None,
+             "ids": [s.id for s, *_ in loaded]}, indent=2))
+        print(f"\n  wrote {dest} + results/real_pir{tag}.json")
+        return 0
+
     if a.cmd == "check":
         import os
 
@@ -246,7 +388,7 @@ def main(argv: list[str] | None = None) -> int:
         spec = build_pir(base, a.pause_ms, a.fitted)[0]
         pcm = audio_for(spec, dials)
         print(f"  sending {len(pcm) / rate:.1f}s of audio, paced in real time...")
-        asr = make_adapter("sarvam", gate=a.frames if a.frames != 18 else 500,
+        asr = make_adapter("sarvam", gate=a.gate or (a.frames if a.frames != 18 else 500),
                            lang=a.lang, rate=rate, mode=a.mode)
         res = call(asr, pcm, spec)
         if res.error:
