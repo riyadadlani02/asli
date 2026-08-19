@@ -1,0 +1,82 @@
+name: asli
+
+# Two jobs on purpose. `checks` is the one every contributor gets: no keys, no
+# network, so a fork's PR runs it. `regression` is opt-in and only fires where a
+# key exists, because a workflow that fails on every fork for want of a secret
+# trains people to ignore it.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      gate_ms:
+        description: "endpointing gate to sweep against (ms)"
+        default: "500"
+
+jobs:
+  checks:
+    name: scorers (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv --python 3.12
+      - run: uv pip install -e .
+      - name: calibration
+        run: |
+          uv run python tests/test_asli.py
+          uv run python tests/test_sfr_text.py
+      - name: the site is rebuildable and matches what is committed
+        run: |
+          uv pip install -e ".[agent]" || true
+          if uv run python build_site.py 2>/dev/null; then
+            git diff --exit-code -- site/index.html docs/index.html \
+              || { echo "::error::build_site.py output differs from the committed page — run it and commit docs/"; exit 1; }
+          else
+            echo "::notice::build_site.py needs results/ and ffmpeg; skipped"
+          fi
+
+  regression:
+    name: endpointing regression (live)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: uv venv --python 3.12 && uv pip install -e .
+      - name: sweep, and fail if the cliff has moved
+        env:
+          SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
+          ELEVEN_API_KEY: ${{ secrets.ELEVEN_API_KEY }}
+          ELEVEN_VOICE_ID: ${{ secrets.ELEVEN_VOICE_ID }}
+          GATE_MS: ${{ github.event.inputs.gate_ms || '500' }}
+        run: |
+          if [ -z "$SARVAM_API_KEY" ]; then
+            echo "::notice::no SARVAM_API_KEY secret — live regression skipped"; exit 0
+          fi
+          uv run asli demo
+          uv run asli sweep --suite pir --agent sarvam --pause-ms 700 \
+            --out results/ci_sweep.json
+          uv run python - <<'PY'
+          import json, os, sys
+          gate = int(os.environ.get("GATE_MS", "500"))
+          curve = json.load(open("results/ci_sweep.json"))
+          at = next((r for r in curve if r["silence_ms"] == gate), None)
+          if at is None:
+              sys.exit(f"::error::gate {gate}ms not in the sweep")
+          print(f"PIR at {gate}ms = {at['pir']}  (n={at['pir_n']})")
+          # The regression this guards: a model or config change that starts cutting
+          # callers off at a gate that previously did not. Tighten the bound once you
+          # have a baseline you trust for your own deployment.
+          if at["pir"] > 0.0:
+              print(f"::warning::{at['pir']:.0%} of callers were cut off mid-utterance at {gate}ms")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sweep
+          path: results/ci_sweep.json
+          if-no-files-found: ignore
