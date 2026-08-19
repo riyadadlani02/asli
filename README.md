@@ -476,6 +476,19 @@ uv run asli sweep --suite pir --agent sarvam   --pause-ms 700
 uv run asli sweep --suite pir --agent deepgram --pause-ms 700
 ```
 
+### Is this Indic, or just human?
+
+Open, and worth more than anything else in this repo. A first attempt using AMI
+(English meetings) produced a higher rate for English — 45% of gaps over 500 ms — but
+the corpora are not comparable: AMI records one headset per speaker in a meeting, so
+each channel mixes the speaker's hesitations with every silence while others talk.
+**9.8% of the English gaps exceed 1.5 seconds against 0.0% for Hindi**, which is the
+other participants, not a speaking style.
+
+Settling it needs a single-speaker spontaneous English corpus on a telephone channel,
+or diarisation applied to AMI first. Method, numbers and what to fetch:
+[docs/language-comparison.md](docs/language-comparison.md).
+
 ### Grounded in real speech: how often does this actually happen?
 
 The 700 ms hesitation used above had to come from somewhere. It now does.

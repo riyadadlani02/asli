@@ -1,0 +1,20 @@
+{
+  "language": "english",
+  "source": "AMI headset (ES2002a, ES2003a, IS1000a)",
+  "n_pauses": 2322,
+  "audio_hours": 1.11,
+  "median_ms": 460,
+  "p75_ms": 840,
+  "p90_ms": 1500,
+  "mu": 6.258062434065171,
+  "sigma": 0.7175901945244213,
+  "exceed": {
+    "300": 0.7097,
+    "400": 0.5616,
+    "500": 0.45,
+    "700": 0.3183,
+    "900": 0.2308,
+    "1200": 0.1494
+  },
+  "caveat": "meeting corpus: one headset per speaker, so gaps include listening time between turns and are biased upward"
+}
