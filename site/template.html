@@ -79,6 +79,7 @@ body{margin:0;background:var(--ground);color:var(--bone);font-family:var(--sans)
   display:inline-block;margin-right:.5rem;animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.25}}
 .talkhint{font-size:.72rem;color:#3A5470;flex:1 1 12rem;line-height:1.4}
+.btn-sky.alt.dl{margin-top:.7rem;width:100%;justify-content:center}
 .report{margin-top:.8rem;border:1px solid rgba(10,26,42,.22);border-radius:8px;overflow:hidden}
 .report table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:.68rem}
 .report th{text-align:left;padding:.4rem .55rem;background:rgba(10,26,42,.07);color:#2C4A63;
@@ -389,6 +390,8 @@ footer b{color:var(--orange)}
         </div>
         <div class="livelog" id="sbLog"><span>idle &mdash; enter a key, then replay the embedded call or speak your own.</span></div>
         <div class="report" id="sbReport" hidden></div>
+        <div class="report" id="sbDiff" hidden></div>
+        <button class="btn-sky alt dl" id="sbDl" type="button" hidden>download report (.md)</button>
       </div>
     </div>
 
@@ -861,6 +864,113 @@ function sandbox(){
 document.querySelector("#sbHes").addEventListener("input",sandbox);
 document.querySelector("#sbGate").addEventListener("input",sandbox);
 
+/* ================= turn-taking policy: the intervention =====================
+   Baseline is what the endpointer does on its own: every vad.speech_end is a turn.
+   The policy adds one rule — if the text at that end cannot (or would not) end a
+   Hindi utterance, it is not an end; hold the turn open and merge what follows.
+
+   Applied here to the recorded stream, but it reads only the turn's own text, which
+   a live system has at that same instant. So this is a faithful replay of a policy
+   that is implementable in real time, not a hindsight edit.
+
+   The alternative fix is to lengthen silence_duration_ms for everyone, which costs
+   latency on every turn that was already finished. This costs latency only on turns
+   that are demonstrably unfinished. That is the whole argument. */
+function applyMarkerPolicy(turns){
+  const out=[]; let held=null, merged=0;
+  for(const t of turns){
+    let cur={...t};
+    if(held){ cur={...cur, from:held.from, text:(held.text+" "+cur.text).trim()};
+              held=null; merged++; }
+    if(DANGLING_REAL(danglingOf(cur.text))) held=cur; else out.push(cur);
+  }
+  if(held) out.push(held);            // ended on a marker with nothing after it
+  return {turns:out.map(t=>({...t, dangling:danglingOf(t.text)})), merged};
+}
+
+function policyDiff(baseline, meta){
+  const fixed=applyMarkerPolicy(baseline);
+  const firstB=baseline[0]?baseline[0].text:"";
+  const firstF=fixed.turns[0]?fixed.turns[0].text:"";
+  const target=(meta&&meta.target)||"";
+  const has=t=>target?digitsOf(t).includes(target):null;
+  return {meta, baseline, fixed:fixed.turns, merged:fixed.merged,
+          firstB, firstF, hasB:has(firstB), hasF:has(firstF)};
+}
+
+function renderDiff(d){
+  const el=document.querySelector("#sbDiff");
+  const m=d.meta||{};
+  const yn=v=>v===null?"&mdash;":(v?"<b style='color:#0F6B45'>yes</b>":"<b style='color:#B32B06'>no</b>");
+  const cut=n=>n.filter(t=>DANGLING_REAL(t.dangling)).length;
+  el.hidden=false;
+  el.innerHTML=
+   `<div class="head">difference &middot; gate ${m.gateMs}ms &middot; mode ${m.mode} &middot; `+
+   `same audio, same recogniser, same call &mdash; only the turn-taking policy differs</div>`+
+   `<table><thead><tr><th></th><th>baseline<br>silence only</th><th>+ marker policy</th></tr></thead><tbody>`+
+   `<tr><td>turns</td><td>${d.baseline.length}</td><td>${d.fixed.length}</td></tr>`+
+   `<tr><td>ends on an unfinished word</td><td>${cut(d.baseline)}</td><td>${cut(d.fixed)}</td></tr>`+
+   `<tr><td>ends suppressed</td><td>&mdash;</td><td>${d.merged}</td></tr>`+
+   `<tr><td>text the agent holds<br>at the first end-of-turn</td>`+
+   `<td>${d.firstB||"(empty)"}</td><td>${d.firstF||"(empty)"}</td></tr>`+
+   (d.hasB===null?"":`<tr><td>the number is there<br>when it first replies</td>`+
+     `<td>${yn(d.hasB)}</td><td>${yn(d.hasF)}</td></tr>`)+
+   `</tbody></table>`+
+   `<div class="head" style="border-top:1px solid rgba(10,26,42,.14);border-bottom:none">`+
+   `the policy reads only the text present at that turn end, so it is implementable `+
+   `live; here it is replayed over the recorded stream. It spends latency only on `+
+   `turns that are demonstrably unfinished &mdash; unlike raising the gate, which `+
+   `spends it on every caller.</div>`;
+  lastReport=d;
+  document.querySelector("#sbDl").hidden=false;
+}
+
+let lastReport=null;
+function reportMarkdown(d){
+  const m=d.meta||{}, L=[];
+  L.push("# asli — turn-taking difference report","",
+    `generated: ${new Date().toISOString()}`,
+    `source: ${m.source||"live call"}`,
+    `endpoint: saaras:v3-realtime · mode ${m.mode} · silence_duration_ms ${m.gateMs}`,
+    "",
+    "Same audio, same recogniser, same call. Only the downstream turn-taking policy",
+    "differs. The policy reads only the text available at each turn end, so it is",
+    "implementable in real time; here it is replayed over the recorded event stream.",
+    "",
+    "| | baseline (silence only) | + marker policy |",
+    "|---|---|---|",
+    `| turns | ${d.baseline.length} | ${d.fixed.length} |`,
+    `| ends on an unfinished word | ${d.baseline.filter(t=>DANGLING_REAL(t.dangling)).length} | ${d.fixed.filter(t=>DANGLING_REAL(t.dangling)).length} |`,
+    `| ends suppressed | — | ${d.merged} |`,
+    `| text at first end-of-turn | ${d.firstB||"(empty)"} | ${d.firstF||"(empty)"} |`);
+  if(d.hasB!==null) L.push(`| number present at first reply | ${d.hasB?"yes":"no"} | ${d.hasF?"yes":"no"} |`);
+  L.push("","## turns — baseline","");
+  d.baseline.forEach((t,i)=>L.push(`${i+1}. [${(t.from/1000).toFixed(1)}–${(t.to/1000).toFixed(1)}s] ${t.text||"(empty)"}`+
+    (DANGLING_REAL(t.dangling)?`   ← ${DANGLING_NOTE[t.dangling]}`:"")));
+  L.push("","## turns — with the marker policy","");
+  d.fixed.forEach((t,i)=>L.push(`${i+1}. ${t.text||"(empty)"}`+
+    (DANGLING_REAL(t.dangling)?`   ← ${DANGLING_NOTE[t.dangling]}`:"")));
+  L.push("","## caveats","",
+    "- A live call has no authored end, so PIR is not reported. The marker test is a",
+    "  heuristic: strict and marginal tiers are grammatical, the filler tier only says",
+    "  the speaker was mid-thought.",
+    "- Romanised output (translit, codemix) is not checked — the marker lists are",
+    "  Devanagari and romanised markers collide with English words.",
+    "","## raw turns","","```json",JSON.stringify(d.baseline,null,1),"```");
+  return L.join("\n");
+}
+
+function downloadReport(){
+  if(!lastReport) return;
+  const md=reportMarkdown(lastReport);
+  const blob=new Blob([md],{type:"text/markdown;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`asli-report-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.md`;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },0);
+}
+
 /* ================= SANDBOX: speak into the mic ================= */
 /* A real call has no ground truth — nobody authored when the speaker "actually"
    finished — so PIR, which is a comparison against a known true end, is not
@@ -962,6 +1072,8 @@ async function stopTalk(){
   try{ st.ws.close(); }catch(e){}
   try{ st.ac.close(); }catch(e){}
   renderReport(st);
+  if(st.turns.length) renderDiff(policyDiff(st.turns,
+      {gateMs:st.gateMs, mode:st.mode, source:"microphone"}));
   talkState=null;
 }
 
@@ -995,6 +1107,7 @@ function renderReport(st){
     `says she was mid-thought.</div>`;
 }
 
+document.querySelector("#sbDl").addEventListener("click",downloadReport);
 document.querySelector("#sbTalk").addEventListener("click",()=>{
   if(talkState&&!talkState.stopped) stopTalk(); else startTalk();
 });
@@ -1113,7 +1226,7 @@ function runOne(key, pcm, trueEnd, windows, gateMs, mode, tagged){
       return resolve({mode,error:e.name}); }
 
     let sent=0, finals=[], ended=false, cutEarly=false, cutAtMs=0, cutText="",
-        lastPartial="", kinds=new Set();
+        lastPartial="", kinds=new Set(), turnRecs=[], lastEnd=0;
     const done=()=>{
       if(ended) return;
       ended=true; clearTimeout(guard);
@@ -1141,7 +1254,7 @@ function runOne(key, pcm, trueEnd, windows, gateMs, mode, tagged){
       } else slog(tag+"✗ number damaged — got "+(got||"nothing")+", truth 9877111","hot");
       try{ ws.close(); }catch(e){}
       resolve({mode,cutEarly,cutAtMs,dangling:dang,turns:finals.length,digits:got,text,
-               lastWord:cutEarly?lastW:"—"});
+               lastWord:cutEarly?lastW:"—",turnRecs});
     };
     const guard=setTimeout(done,45000);
 
@@ -1175,6 +1288,8 @@ function runOne(key, pcm, trueEnd, windows, gateMs, mode, tagged){
       else if(m.event==="transcript.partial"){ if(m.text) lastPartial=m.text; }
       else if(m.event==="transcript.final"){
         finals.push(m.text||"");
+        turnRecs.push({from:lastEnd,to:sent,text:m.text||"",dangling:danglingOf(m.text||"")});
+        lastEnd=sent;
         if(cutEarly&&!cutText) cutText=m.text||"";
         // the whole finding is partial-vs-final, so show them adjacent rather than
         // dumping the finals at the end with the partials already discarded
@@ -1247,6 +1362,9 @@ document.querySelector("#sbRun").addEventListener("click",async()=>{
     rows.push(await runOne(key,pcm,trueEnd,windows,gateMs,mode,multi));
   }
   if(multi) report(rows,gateMs,hes);
+  const withTurns=rows.find(r=>r&&r.turnRecs&&r.turnRecs.length);
+  if(withTurns) renderDiff(policyDiff(withTurns.turnRecs,
+      {gateMs, mode:withTurns.mode, source:"embedded utterance", target:"9877111"}));
   liveBusy=false; document.querySelector("#sbRun").disabled=false;
 });
 sandbox(); drawSky(); animSky();
