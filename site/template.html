@@ -319,6 +319,21 @@ footer b{color:var(--orange)}
   #printdoc .good{color:#186B44;font-weight:700}
   #printdoc .deva{font-family:"Kohinoor Devanagari","Noto Sans Devanagari","Nirmala UI",serif}
   #printdoc .box{border:1px solid #bbb;padding:.7em .9em;margin:.8em 0;background:#faf9f7}
+  #printdoc .sbs{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:.9em 0;
+    border:1px solid #bbb;break-inside:avoid}
+  #printdoc .sbs > div{padding:.65em .8em}
+  #printdoc .sbs > div:first-child{border-right:1px solid #bbb;background:#fbf7f6}
+  #printdoc .sbs > div:last-child{background:#f6faf7}
+  #printdoc .sbs h3{margin:0 0 .45em;font-size:9pt;text-transform:uppercase;
+    letter-spacing:.06em;font-family:ui-monospace,Menlo,monospace}
+  #printdoc .sbs .a h3{color:#B3300A}
+  #printdoc .sbs .b h3{color:#186B44}
+  #printdoc .sbs p{margin:.3em 0;font-size:10pt}
+  #printdoc .step{font-family:ui-monospace,Menlo,monospace;font-size:8.7pt;color:#444;
+    margin:.28em 0}
+  #printdoc .said{font-size:10pt;margin:.3em 0}
+  #printdoc .verdict{margin-top:.5em;padding-top:.4em;border-top:1px dotted #bbb;
+    font-size:9.5pt}
   #printdoc .box b{display:block;margin-bottom:.25em}
   #printdoc ul{margin:.4em 0 .4em 1.1em;padding:0}
   #printdoc li{margin:.25em 0}
@@ -360,6 +375,21 @@ footer b{color:var(--orange)}
   #printdoc .good{color:#186B44;font-weight:700}
   #printdoc .deva{font-family:"Kohinoor Devanagari","Noto Sans Devanagari","Nirmala UI",serif}
   #printdoc .box{border:1px solid #bbb;padding:.7em .9em;margin:.8em 0;background:#faf9f7}
+  #printdoc .sbs{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:.9em 0;
+    border:1px solid #bbb;break-inside:avoid}
+  #printdoc .sbs > div{padding:.65em .8em}
+  #printdoc .sbs > div:first-child{border-right:1px solid #bbb;background:#fbf7f6}
+  #printdoc .sbs > div:last-child{background:#f6faf7}
+  #printdoc .sbs h3{margin:0 0 .45em;font-size:9pt;text-transform:uppercase;
+    letter-spacing:.06em;font-family:ui-monospace,Menlo,monospace}
+  #printdoc .sbs .a h3{color:#B3300A}
+  #printdoc .sbs .b h3{color:#186B44}
+  #printdoc .sbs p{margin:.3em 0;font-size:10pt}
+  #printdoc .step{font-family:ui-monospace,Menlo,monospace;font-size:8.7pt;color:#444;
+    margin:.28em 0}
+  #printdoc .said{font-size:10pt;margin:.3em 0}
+  #printdoc .verdict{margin-top:.5em;padding-top:.4em;border-top:1px dotted #bbb;
+    font-size:9.5pt}
   #printdoc .box b{display:block;margin-bottom:.25em}
   #printdoc ul{margin:.4em 0 .4em 1.1em;padding:0}
   #printdoc li{margin:.25em 0}
@@ -1123,70 +1153,86 @@ function buildPrintDoc(rep){
     return `<div style="margin:.7em 0">${head}${t}</div>`;
   }).join("");
 
+  const sbs = (S?S.exchanges:[]).map((ex,i)=>{
+    const R=rep.rows[i], first=ex.turns[0]?ex.turns[0].text:"", whole=ex.turns.map(t=>t.text).join(" ");
+    return `<div class="sbs">
+      <div class="a"><h3>Without &mdash; as it works today</h3>
+        <div class="said"><b>Customer:</b> ${esc(ex.said)}</div>
+        <div class="step">she pauses &mdash; the system decides she has finished</div>
+        <div class="step">the agent replies holding only:</div>
+        <div class="said deva">&ldquo;${esc(first)}&rdquo;</div>
+        <div class="verdict"><b class="bad">It answers without the ${ex.entity_type==="amount"?"amount":"number"}.</b></div></div>
+      <div class="b"><h3>With &mdash; our rule</h3>
+        <div class="said"><b>Customer:</b> ${esc(ex.said)}</div>
+        <div class="step">she pauses on <span class="deva">मतलब</span> &mdash; a word that
+          cannot end a sentence, so we keep listening</div>
+        <div class="step">the agent replies holding:</div>
+        <div class="said deva">&ldquo;${esc(whole)}&rdquo;</div>
+        <div class="verdict">${ex.ok_whole
+          ? `<b class="good">It answers with the complete ${ex.entity_type==="amount"?"amount":"number"}.</b>`
+          : `<b class="good">It answers with the complete sentence</b> &mdash; though the
+             ${ex.entity_type==="amount"?"amount":"number"} itself was misheard. See below.`}</div></div>
+    </div>`;
+  }).join("");
+
   document.querySelector("#printdoc").innerHTML = `
-  <h1>Why the agent answered before your customer finished</h1>
+  <h1>Your agent is answering before the customer has finished</h1>
   <div class="sub">Call ${S?"recorded":"measured"} ${when} &middot; speech provider: ${esc(prov)}
-    &middot; the system was set to treat ${gate} milliseconds of silence as the end of a turn.</div>
+    &middot; the system treats ${gate} milliseconds of silence as the end of a turn.</div>
 
-  <h2>What happened</h2>
-  <p>Your customer paused in the middle of a sentence &mdash; the way people naturally do
-  just before reading out a number. The system read that pause as &ldquo;she has finished
-  speaking&rdquo; and the agent replied. She had not finished. The number arrived afterwards,
-  as if it were a new sentence.</p>
-  ${splits?`<p>On this call that happened <b>${splits} time${splits===1?"":"s"}</b>.
-   Each time, the agent began answering a question the customer was still asking.</p>`:""}
+  <h2>What is happening</h2>
+  <p>Your customer pauses in the middle of a sentence &mdash; the way people naturally do
+  just before reading out a number. The system reads that pause as &ldquo;she has finished
+  speaking&rdquo; and the agent replies. She has not finished. The number arrives
+  afterwards, as if it were a new sentence.</p>
+  ${splits?`<p>On this call it happened <b>${splits} time${splits===1?"":"s"}</b> &mdash;
+   every single time she was asked for a detail.</p>`:""}
 
+  <h2>The same call, side by side</h2>
+  ${sbs}
+
+  <h2>The difference in numbers</h2>
   ${tbl}
 
   <h2>Why this happens with any speech system</h2>
   <p>Systems decide you have stopped talking by timing the silence. Silence is all they
-  measure. But a silence cannot tell the difference between <i>&ldquo;I have finished&rdquo;</i>
-  and <i>&ldquo;I am thinking&rdquo;</i> &mdash; they sound identical.</p>
+  measure. But a silence cannot tell the difference between <i>&ldquo;I have
+  finished&rdquo;</i> and <i>&ldquo;I am thinking&rdquo;</i> &mdash; they sound identical.</p>
   <p>In Hindi this matters more than in English, because the natural pause words &mdash;
-  <span class="deva">मतलब</span>, <span class="deva">हाँ तो</span> &mdash; come exactly
+  <span class="deva">मतलब</span>, <span class="deva">हाँ तो</span> &mdash; fall exactly
   where a number or a name is about to follow. We measured five hours of real Hindi
   phone calls: the typical pause is about a third of a second, but roughly
   <b>one pause in six runs longer than the usual setting allows</b>.</p>
-  <p>This is not a fault of one supplier. We saw the same behaviour on two unrelated
-  speech providers, because both decide the same way.</p>
+  <p>We tested two unrelated speech providers and both behave the same way, so this is
+  not a matter of choosing a different supplier.</p>
 
-  <h2>What we do differently</h2>
+  <h2>What our rule does</h2>
   <div class="box"><b>We read the words, not only the silence.</b>
-  Some words simply cannot end a sentence in Hindi &mdash; in English, no one stops
-  speaking after &ldquo;the&rdquo; or &ldquo;because&rdquo;. When the customer stops on
-  a word like that, we know she is still mid-sentence, so we keep listening instead of
-  replying.</div>
-  ${rejoined?`<p>On this call that rule would have kept <b>${rejoined} of ${splits}</b>
-   interrupted turns together, so the agent would have had the full answer before it
-   spoke.</p>`:""}
+  Some words simply cannot end a sentence &mdash; in English, nobody stops speaking
+  after &ldquo;the&rdquo; or &ldquo;because&rdquo;. When your customer stops on a word
+  like that, we know she is still mid-sentence, so the agent keeps listening instead of
+  interrupting.</div>
+  ${rejoined?`<p>On this call the rule holds <b>${rejoined} of ${splits}</b> interrupted
+   turns together, so the agent has the whole answer before it speaks.</p>`:""}
+  <p>It costs nothing on calls that were already fine. Telling the system to simply wait
+  longer would slow down <i>every</i> call, including the ones where the customer had
+  clearly finished; our rule waits only when the words show the sentence is unfinished.</p>
 
-  <h2>Why not simply wait longer?</h2>
-  <p>You could tell the system to wait, say, a second before replying. That works &mdash;
-  and it slows down <i>every</i> call, including the ones where the customer had clearly
-  finished. Every customer waits longer so that the occasional hesitant one is heard.</p>
-  <p>Our rule only waits when the words show the sentence is unfinished. Callers who
-  finished normally are answered just as quickly as before.</p>
-
-  <h2>What this does not fix</h2>
-  <ul>
-  ${misheard?`<li><b>A misheard number stays misheard.</b> On this call the customer said
-    <span class="deva">पचास</span> (fifty) and the system recorded
-    <span class="deva">पच्चीस</span> (twenty-five) &mdash; ₹2,25,000 instead of
-    ₹2,50,000. Keeping the sentence together does not correct that. Nothing in the
-    text marks it as wrong, which is why an agent would act on it.</li>`:""}
-  <li>Our rule catches pauses on words that cannot end a sentence. Hindi puts its verb
-    last, so a customer can also stop mid-thought on a word that <i>looks</i> like a
-    proper ending. Those we do not catch yet.</li>
-  <li>These figures are from this call. They show the behaviour clearly; they are not a
-    service-wide average.</li>
-  </ul>
+  ${misheard?`<h2>A second problem this surfaced</h2>
+  <p>On the last exchange your customer said <span class="deva">पचास</span> (fifty) and
+  the system recorded <span class="deva">पच्चीस</span> (twenty-five) &mdash;
+  <b>₹2,25,000 instead of ₹2,50,000</b>. That is a separate fault from the interruption,
+  and it is the more expensive one: nothing in the text marks it as wrong, so an agent
+  would simply act on it.</p>
+  <p>Holding the sentence together does not correct a misheard number &mdash; but the
+  same tooling detects it, which is how it was found here.</p>`:""}
 
   <h2>Appendix &mdash; the call as the system recorded it</h2>
   ${transcript}
 
   <div class="foot">Produced by asli, an open harness for measuring what Indic voice
-  agents do when a caller hesitates. Every figure here was measured on a real call,
-  not modelled. github.com/riyadadlani02/asli</div>`;
+  agents do when a caller hesitates. Every figure here was measured on a real call.
+  github.com/riyadadlani02/asli</div>`;
 }
 
 function downloadReport(){
