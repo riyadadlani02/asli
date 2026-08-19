@@ -50,10 +50,29 @@ def mp3(path: Path) -> str:
     return base64.b64encode(out).decode()
 
 
+def _text_lane() -> dict:
+    """Aggregates for the text instantiation, recomputed from the stored rows so the
+    page can never drift from what was actually run."""
+    from asli.spec import Result
+    from asli.text import run as textrun
+
+    out = {}
+    for stance in ("careful", "eager"):
+        path = ROOT / f"results/sfr_text_{stance}.jsonl"
+        rows = []
+        for line in path.read_text().splitlines():
+            if line.strip():
+                d = json.loads(line)
+                rows.append((textrun.Item(**d["item"]), Result(**d["result"])))
+        out[stance] = textrun.aggregate(rows)
+    return out
+
+
 def collect() -> dict:
     d: dict = {"said": SAID}
     d["sweep"] = json.loads((ROOT / "results/pir_sweep_sarvam.json").read_text())
     d["fit"] = json.loads((ROOT / "results/pause_fit.json").read_text())
+    d["text"] = _text_lane()
     d["hero"] = {k: v for k, v in json.loads((ROOT / "results/hero_wave.json").read_text()).items()
                  if k != "env"}
 

@@ -280,6 +280,20 @@ control: **if it scores the same as the detectable ones, SFR is reading confirm-
 rather than error sensitivity.** It does not (0.25 vs 0.55), which is what makes the
 rest of the number worth reading.
 
+![Take the microphone away — SFR measured in a retrieval pipeline, with the undetectable control](docs/img/generalisation.png)
+
+| corruption | detectable | careful | eager |
+|---|---|---:|---:|
+| truncation | yes | 0.50 | 0.65 |
+| omission | yes | 0.00 | 0.00 |
+| contradiction | yes | 0.15 | 0.35 |
+| scale swap | yes | 0.43 | 0.57 |
+| format flip | yes | 0.33 | 0.67 |
+| **digit swap** | **no — the control** | **0.55** | **0.60** |
+
+Stance separates in the same direction as the voice lane (0.25 careful vs 0.38 eager),
+and the control sits above both — the metric is reading error sensitivity, not caution.
+
 Full method, results, and two things that came out negative:
 [docs/sfr-text.md](docs/sfr-text.md).
 
