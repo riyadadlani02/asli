@@ -372,3 +372,103 @@ class OpenAIWS:
                           transcript=" ".join(finals), error=f"{type(exc).__name__}: {exc}")
         return Result(spec_id=spec.id, adapter=self.name, events=events,
                       transcript=" ".join(finals).strip())
+
+
+class GeminiLive:
+    """Gemini Live, automatic activity detection.
+
+    `silenceDurationMs` is the same knob the other lanes sweep, so the axis is
+    comparable. The turn-end EVENT is not: Gemini Live emits no explicit VAD-stop
+    message, so `speech_end` here is inferred from the first chunk of the model's
+    reply — the moment an agent built on this would start talking over the caller.
+
+    That inference includes model response latency, so it lands LATER than the true
+    turn-end decision and makes a cut look less early than it was. The bias runs
+    against finding prematurity, the same direction as the socket-timestamp caveat on
+    the other lanes. Read the Gemini row as a lower bound, and never as an equal-footing
+    comparison with the lanes that report their own VAD.
+
+    Two API traps, both silent: the live models reject a TEXT response modality, and
+    audio sent as `realtimeInput.mediaChunks` is accepted and then ignored — the socket
+    stays open and simply never answers. It has to be `realtimeInput.audio`.
+    """
+
+    name = "gemini"
+    URL = ("wss://generativelanguage.googleapis.com/ws/"
+           "google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent")
+    CHUNK_MS = 100
+    NATIVE_RATE = 16000
+
+    def __init__(self, *, language_code: str = "hi",
+                 model: str = "models/gemini-3.1-flash-live-preview",
+                 rate: int = SAMPLE_RATE, silence_duration_ms: int | None = None, **params):
+        self.rate, self.model = rate, model
+        self.lang = language_code.split("-")[0]
+        self.gate = silence_duration_ms or 500
+
+    async def run(self, pcm: np.ndarray, spec: CallSpec) -> Result:
+        import asyncio
+        import base64
+
+        import websockets
+
+        if self.rate != self.NATIVE_RATE:
+            return Result(spec_id=spec.id, adapter=self.name,
+                          error=f"gemini lane needs {self.NATIVE_RATE} Hz, got {self.rate}")
+        audio = np.concatenate([pcm, np.zeros(int(self.NATIVE_RATE * 2.5), np.int16)])
+        events: list[Event] = []
+        heard: list[str] = []
+        sent_ms = 0
+        try:
+            async with websockets.connect(
+                f"{self.URL}?key={os.environ['GEMINI_API_KEY']}", max_size=None,
+            ) as ws:
+                await ws.send(json.dumps({"setup": {
+                    "model": self.model,
+                    "generationConfig": {"responseModalities": ["AUDIO"]},
+                    "realtimeInputConfig": {
+                        "automaticActivityDetection": {"silenceDurationMs": self.gate}},
+                    "inputAudioTranscription": {}}}))
+                await asyncio.wait_for(ws.recv(), timeout=20)  # setupComplete
+
+                async def pump() -> None:
+                    nonlocal sent_ms
+                    step = int(self.NATIVE_RATE * self.CHUNK_MS / 1000)
+                    for i in range(0, len(audio), step):
+                        await ws.send(json.dumps({"realtimeInput": {"audio": {
+                            "mimeType": f"audio/pcm;rate={self.NATIVE_RATE}",
+                            "data": base64.b64encode(
+                                audio[i : i + step].astype("<i2").tobytes()).decode()}}}))
+                        sent_ms += self.CHUNK_MS
+                        await asyncio.sleep(self.CHUNK_MS / 1000)
+                    await ws.send(json.dumps({"realtimeInput": {"audioStreamEnd": True}}))
+
+                sender = asyncio.create_task(pump())
+
+                async def reader() -> None:
+                    replied = False
+                    async for raw in ws:
+                        content = json.loads(raw).get("serverContent")
+                        if not isinstance(content, dict):
+                            continue
+                        if text := content.get("inputTranscription", {}).get("text", ""):
+                            heard.append(text)
+                            events.append(Event("transcript", sent_ms, text))
+                        if "modelTurn" in content and not replied:
+                            replied = True  # inferred turn end — see the class docstring
+                            events.append(Event("speech_end", sent_ms))
+                        if content.get("turnComplete"):
+                            return
+
+                try:
+                    await asyncio.wait_for(reader(),
+                                           timeout=len(audio) / self.NATIVE_RATE + 20)
+                except asyncio.TimeoutError:
+                    pass
+                finally:
+                    sender.cancel()
+        except Exception as exc:
+            return Result(spec_id=spec.id, adapter=self.name, events=events,
+                          transcript=" ".join(heard), error=f"{type(exc).__name__}: {exc}")
+        return Result(spec_id=spec.id, adapter=self.name, events=events,
+                      transcript=" ".join(heard).strip())
