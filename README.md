@@ -390,7 +390,10 @@ reading partials has it; one that acts when the endpointer fires does not.
 
 The fourth row is why she then repeats herself into an agent that is talking. 800 ms is
 a *generous* figure for LLM-first-token plus TTS-first-audio, and it is an input
-(`--reply-latency-ms`), not a claim — a slower stack collides more, never less.
+(`--reply-latency-ms`), not a claim — and the row does not rest on it. The smallest
+budget in the set is 1,249 ms, so any agent audible inside 1.25 s collides on all
+twelve, and collision reaches zero only past 2.9 s. A slower stack collides *less*,
+and trades the collision for dead air.
 
 Three of the twelve sessions are scored **abstained** rather than failed: they are
 spoken dates in Devanagari digit words, which this scorer cannot parse. Calling that a
@@ -759,8 +762,10 @@ That file *is* the artefact — every number in this README is computed from it.
   stable over 5 runs; individual values were not.
 - **The conversation lane's collision row is parameterised, not measured.** 800 ms of
   agent lag is an input (`--reply-latency-ms`); the harness measures the *budget* — how
-  long the agent would have to stay silent — and the collision follows from the two. A
-  slower stack collides more, never less.
+  long the agent would have to stay silent — and the collision follows from the two. The
+  result is insensitive to that input: the smallest budget in the set is 1,249 ms, so
+  every lag under 1.25 s yields the same 12/12, and collision reaches zero only past
+  2.9 s. A slower stack collides *less*, and holds dead air instead.
 - **Three of the twelve conversation sessions abstain** rather than fail: spoken dates
   in Devanagari digit words, which this scorer cannot parse. The session-transcript row
   is a rate over what is readable, and the abstention count is printed beside it.

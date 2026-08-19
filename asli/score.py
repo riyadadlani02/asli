@@ -244,8 +244,10 @@ def pir(spec: CallSpec, result: Result) -> Interruption:
 
 REPLY_LATENCY_MS = 800  # LLM first token + TTS first audio: the agent's own lag between
                         # deciding the turn ended and being audible. 800ms is a
-                        # deliberately generous figure for a tuned stack; a slower one
-                        # collides less, which is the one way this metric is charitable.
+                        # deliberately generous figure for a tuned stack, and not
+                        # load-bearing: the smallest budget observed is 1249ms, so every
+                        # value under that scores the same. A slower stack collides less,
+                        # and holds dead air instead.
 
 
 @dataclass
