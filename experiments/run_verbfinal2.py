@@ -61,7 +61,7 @@ def to_native(pcm: np.ndarray) -> np.ndarray:
     return np.concatenate([out, np.zeros(int(NATIVE * 2.5), np.int16)])
 
 
-async def transcribe(pcm: np.ndarray, td: dict) -> tuple[list[int], list[str]]:
+async def transcribe(pcm: np.ndarray, td: dict) -> tuple[list[int], list[str], str]:
     sess = {"type": "session.update", "session": {"type": "transcription",
             "audio": {"input": {"format": {"type": "audio/pcm", "rate": NATIVE},
                       "transcription": {"model": "gpt-4o-transcribe", "language": "hi"},
@@ -69,38 +69,48 @@ async def transcribe(pcm: np.ndarray, td: dict) -> tuple[list[int], list[str]]:
     ends: list[int] = []
     finals: list[str] = []
     sent = 0
-    async with websockets.connect("wss://api.openai.com/v1/realtime?intent=transcription",
-                                  additional_headers={"Authorization": f"Bearer {KEY}"},
-                                  max_size=None) as ws:
-        await ws.send(json.dumps(sess))
+    # A handshake timeout killed a 145-row run outright. A failed call is one bad row,
+    # never the end of the run — and the reason is recorded, because a row with no
+    # turns is unreadable otherwise: "held past the timeout" and "the call failed" look
+    # identical from the outside, and 22% of the semantic lane came back that way.
+    try:
+        async with websockets.connect("wss://api.openai.com/v1/realtime?intent=transcription",
+                                      additional_headers={"Authorization": f"Bearer {KEY}"},
+                                      max_size=None) as ws:
+            await ws.send(json.dumps(sess))
 
-        async def pump():
-            nonlocal sent
-            for i in range(0, len(pcm), 2400):
-                await ws.send(json.dumps({"type": "input_audio_buffer.append",
-                    "audio": base64.b64encode(pcm[i:i + 2400].astype("<i2").tobytes()).decode()}))
-                sent += 100
-                await asyncio.sleep(0.1)
+            async def pump():
+                nonlocal sent
+                for i in range(0, len(pcm), 2400):
+                    await ws.send(json.dumps({"type": "input_audio_buffer.append",
+                        "audio": base64.b64encode(pcm[i:i + 2400].astype("<i2").tobytes()).decode()}))
+                    sent += 100
+                    await asyncio.sleep(0.1)
 
-        t = asyncio.create_task(pump())
+            t = asyncio.create_task(pump())
 
-        async def read():
-            async for raw in ws:
-                m = json.loads(raw)
-                ty = m.get("type", "")
-                if "speech_stopped" in ty:
-                    ends.append(sent)
-                elif "transcription" in ty and "completed" in ty:
-                    finals.append(m.get("transcript", ""))
-                    if len(finals) >= 2:
-                        return
+            async def read():
+                async for raw in ws:
+                    m = json.loads(raw)
+                    ty = m.get("type", "")
+                    if "speech_stopped" in ty:
+                        ends.append(sent)
+                    elif "transcription" in ty and "completed" in ty:
+                        finals.append(m.get("transcript", ""))
+                        if len(finals) >= 2:
+                            return
 
-        try:
-            await asyncio.wait_for(read(), timeout=len(pcm) / NATIVE + 16)
-        except Exception:
-            pass
-        t.cancel()
-    return ends, finals
+            try:
+                await asyncio.wait_for(read(), timeout=len(pcm) / NATIVE + 16)
+            except asyncio.TimeoutError:
+                # the stream ran out without a second final. Not an error: with semantic
+                # detection that is what holding the turn looks like from here.
+                pass
+            finally:
+                t.cancel()
+    except Exception as exc:
+        return ends, finals, f"{type(exc).__name__}: {exc}"[:160]
+    return ends, finals, ""
 
 
 def build(item: dict, arm: str) -> CallSpec:
@@ -129,9 +139,10 @@ async def preflight(items: list[dict]) -> tuple[list[dict], list[dict]]:
         for which in ("verb_head", "dangler_head"):
             spec = CallSpec(id=f"{item['id']}-{which}", entity_type=item["entity_type"],
                             canonical=item["canonical"], segments=[Segment(item[which])])
-            _, finals = await transcribe(to_native(synth.render(spec)), MODES["server_vad"])
+            _, finals, err = await transcribe(to_native(synth.render(spec)), MODES["server_vad"])
             text = finals[0] if finals else ""
-            verdicts[which] = ("empty" if not text
+            verdicts[which] = ("failed" if err
+                               else "empty" if not text
                                else "question" if text.strip().rstrip("।").endswith("?")
                                else "ok")
             report.append({"id": item["id"], "head": which, "verdict": verdicts[which],
@@ -145,7 +156,7 @@ async def preflight(items: list[dict]) -> tuple[list[dict], list[dict]]:
 
 
 def row_of(spec: CallSpec, item: dict, arm: str, mode: str,
-           ends: list[int], finals: list[str]) -> dict:
+           ends: list[int], finals: list[str], err: str = "") -> dict:
     """`split` is primary. PIR timing is descriptive only — `ends` is sampled at the
     pump position when the event arrived, so it is biased late by network latency and
     cannot be trusted to the width of a 700 ms window."""
@@ -160,24 +171,48 @@ def row_of(spec: CallSpec, item: dict, arm: str, mode: str,
             "pir_premature": p.premature, "pir_in_pause": p.in_injected_pause,
             "ms_early": p.ms_early, "first": finals[0] if finals else "",
             "has_answer": bool(got) and truth in got,
+            "error": err,
             "lexical_would_hold": lexical_holds(finals[0] if finals else "")}
 
 
 def rate(rows: list[dict], **where) -> tuple[float | None, int]:
-    sel = [r for r in rows if all(r[k] == v for k, v in where.items()) and r["turns"] > 0]
+    sel = [r for r in rows if all(r[k] == v for k, v in where.items())
+           and r["turns"] > 0 and not r.get("error")]
     return (round(sum(r["split"] for r in sel) / len(sel), 4), len(sel)) if sel else (None, 0)
+
+
+PF_PATH = Path("results/verbfinal2_preflight.json")
+ROWS_PATH = Path("results/verbfinal2.json")
+
+
+def cached_preflight(items: list[dict]) -> list[dict] | None:
+    """Reuse a stored verdict rather than re-deciding it.
+
+    Pre-flight is a live call and it is stochastic: one head passed on the first run
+    and dropped on the second. Re-deciding each time means the surviving item set moves
+    between runs, so a resumed run would be measuring a different corpus from the rows
+    already on disk. Delete the file to force a fresh pre-flight.
+    """
+    if not PF_PATH.exists():
+        return None
+    verdicts: dict[str, set] = {}
+    for r in json.loads(PF_PATH.read_text()):
+        verdicts.setdefault(r["id"], set()).add(r["verdict"])
+    return [i for i in items if verdicts.get(i["id"]) == {"ok"}]
 
 
 async def main() -> int:
     items = yaml.safe_load(open(Path(__file__).parent / "verbfinal2.yaml"))
-    print(f"pre-flight: {len(items)} items, {len(items) * 2} heads\n")
-    ok, pf_report = await preflight(items)
+    Path("results").mkdir(exist_ok=True)
+    if (ok := cached_preflight(items)) is not None:
+        print(f"pre-flight: reusing {PF_PATH} — {len(ok)}/{len(items)} items usable")
+    else:
+        print(f"pre-flight: {len(items)} items, {len(items) * 2} heads\n")
+        ok, pf_report = await preflight(items)
+        json.dump(pf_report, open(PF_PATH, "w"), ensure_ascii=False, indent=1)
 
     kept = len(ok) / len(items)
     print(f"\n  {len(ok)}/{len(items)} items usable ({kept:.0%})")
-    Path("results").mkdir(exist_ok=True)
-    json.dump(pf_report, open("results/verbfinal2_preflight.json", "w"),
-              ensure_ascii=False, indent=1)
     if kept < GATE or len(ok) < 30:
         print(f"\nABORT before the main run: need >={GATE:.0%} usable and n>=30.\n"
               f"The corpus is the problem, not the hypothesis. See "
@@ -186,21 +221,30 @@ async def main() -> int:
 
     print(f"\nmain run: {len(ok)} items x {len(ARMS)} arms x {len(MODES)} modes "
           f"= {len(ok) * len(ARMS) * len(MODES)} calls\n")
-    rows = []
+    rows = json.loads(ROWS_PATH.read_text()) if ROWS_PATH.exists() else []
+    done = {(r["id"], r["arm"], r["mode"]) for r in rows if not r.get("error")}
+    if done:
+        print(f"  resuming: {len(done)} rows already on disk, "
+              f"{len(ok) * len(ARMS) * len(MODES) - len(done)} to go\n")
     for item in ok:
         for arm in ARMS:
-            spec = build(item, arm)
-            pcm = to_native(synth.render(spec))
+            spec = None
             for mode, td in MODES.items():
-                ends, finals = await transcribe(pcm, td)
-                rows.append(row_of(spec, item, arm, mode, ends, finals))
+                if (item["id"], arm, mode) in done:
+                    continue
+                if spec is None:
+                    spec = build(item, arm)
+                    pcm = to_native(synth.render(spec))
+                ends, finals, err = await transcribe(pcm, td)
+                rows.append(row_of(spec, item, arm, mode, ends, finals, err))
+                # Written every row, not at the end: a 40-minute run killed at row 55
+                # lost everything once already.
+                json.dump(rows, open(ROWS_PATH, "w"), ensure_ascii=False, indent=1)
                 r = rows[-1]
                 print(f"  {item['id']:<7} {arm:<11} {mode:<13} turns={r['turns']} "
-                      f"{'SPLIT' if r['split'] else 'held ':<6} "
+                      f"{'ERR  ' if r['error'] else 'SPLIT' if r['split'] else 'held ':<6} "
                       f"lex={'hold' if r['lexical_would_hold'] else '—':<4} "
                       f"{r['first'][:38]!r}", flush=True)
-    json.dump(rows, open("results/verbfinal2.json", "w"), ensure_ascii=False, indent=1)
-
     print("\n\nsplit rate (turn ended inside the hesitation)\n")
     print(f"  {'arm':<12}{'server_vad':>14}{'semantic_vad':>16}")
     for arm in ARMS:
