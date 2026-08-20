@@ -230,6 +230,17 @@ def subs() -> dict[str, str]:
         "__T_UNION_R__": str(uni["union"]),
         "__T_UNION_TOT__": str(uni["n"]),
         "__T_UNION_P__": f"not significant (Fisher p = {uni['p']})",
+        "__T_BUDGET_NOTE__": (
+            f"<b>Latency is the constraint, not the variable.</b> At a budget of "
+            f"{BUDGET_MS}&nbsp;ms per turn the gate cannot move at all &mdash; its smallest "
+            f"useful step is +200&nbsp;ms &mdash; so the rule is not the weaker option here, "
+            f"it is the only one that fits. Raise the budget past 200&nbsp;ms and the honest "
+            f"answer flips: a 900&nbsp;ms gate leaves 1.3% of callers cut against 42.6% "
+            f"today, which is more than this rule achieves. <b>Which column matters is a "
+            f"product decision, and it is an input here rather than an assumption.</b> The "
+            f"rule's own effectiveness on real callers is "
+            f"<a href=\"https://github.com/riyadadlani02/asli/blob/main/docs/prereg-real-callers.md\">"
+            f"pre-registered and not yet run</a>."),
         "__T_LAT__": (
             f"A false hold costs one more endpointing cycle: the turn had already ended "
             f"after {lat['gate_ms']}&nbsp;ms of silence, and holding it open means waiting "
@@ -467,6 +478,37 @@ def _union() -> dict:
             "p": round(p, 3)}
 
 
+BUDGET_MS = 50  # a product decision, so it is an input here and not an assumption
+
+
+def _budget() -> list[dict]:
+    """Latency as a constraint rather than a free variable.
+
+    Under a tight budget the gate cannot move at all — the smallest useful step is
+    +200 ms — so the comparison is not "which is more effective" but "which is even on
+    the table". Raise the budget above 200 ms and the honest answer changes: a 900 ms
+    gate prevents far more cuts than this rule does.
+    """
+    fit = json.loads((ROOT / "results/pause_fit.json").read_text())
+    lat = json.loads((ROOT / "results/policy_latency.json").read_text())
+    adv = {r["gate_ms"]: r for r in fitmod.gate_advice(fit)}
+    rule_ms = lat["policy_expected_ms"]
+    rows = [{"label": "leave the gate at 500 ms", "cut": pct(adv[500]["calls_affected"]),
+             "cut_pct": adv[500]["calls_affected"] * 100, "ms": "0 ms", "fits": True},
+            {"label": "raise the gate to 700 ms", "cut": pct(adv[700]["calls_affected"]),
+             "cut_pct": adv[700]["calls_affected"] * 100,
+             "ms": f"{adv[700]['added_latency_ms']} ms",
+             "fits": adv[700]["added_latency_ms"] <= BUDGET_MS},
+            {"label": "raise the gate to 900 ms", "cut": pct(adv[900]["calls_affected"]),
+             "cut_pct": adv[900]["calls_affected"] * 100,
+             "ms": f"{adv[900]['added_latency_ms']} ms",
+             "fits": adv[900]["added_latency_ms"] <= BUDGET_MS},
+            {"label": "our rule, gate stays at 500 ms",
+             "cut": "not yet measured on real callers", "cut_pct": 0,
+             "ms": f"&le; {rule_ms:.0f} ms", "fits": rule_ms <= BUDGET_MS}]
+    return rows
+
+
 def collect() -> dict:
     d: dict = {"said": SAID}
     d["sweep"] = json.loads((ROOT / "results/pir_sweep_sarvam.json").read_text())
@@ -477,6 +519,7 @@ def collect() -> dict:
     d["semantic"] = _semantic_lane()
     d["policy"] = _policy_lane()
     d["latency"] = json.loads((ROOT / "results/policy_latency.json").read_text())
+    d["budget"] = _budget()
     d["ledger"] = _ledger()
     d["sample"] = _score_sample(json.loads((ROOT / "results/sample_call.json").read_text()))
     d["hero"] = {k: v for k, v in json.loads((ROOT / "results/hero_wave.json").read_text()).items()
