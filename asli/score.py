@@ -83,7 +83,14 @@ TENS = {"das": 10, "ten": 10, "bees": 20, "twenty": 20, "pachas": 50, "pachaas":
         "pachees": 25, "pachchees": 25, "twentyfive": 25, "pandra": 15, "pandrah": 15,
         "solah": 16, "chaudah": 14, "terah": 13, "barah": 12, "gyarah": 11,
         "पच्चीस": 25, "पचीस": 25, "तीस": 30, "चालीस": 40, "साठ": 60, "सत्तर": 70,
-        "अस्सी": 80, "नब्बे": 90, "पंद्रह": 15, "बीस": 20, "दस": 10}
+        "अस्सी": 80, "नब्बे": 90, "पंद्रह": 15, "बीस": 20, "दस": 10,
+        # The Devanagari teens were missing while their romanisations were present, so a
+        # Hindi recogniser's own output did not parse. The cost was silent and it ran in
+        # our favour: "बारह लाख पचास हज़ार" is 12,50,000, and with बारह unreadable the
+        # scale fell through to "a lakh" and the amount scored 1,50,000 — a wrong number
+        # asserted with confidence, which is the failure this repo is named after.
+        "ग्यारह": 11, "बारह": 12, "तेरह": 13, "चौदह": 14, "सोलह": 16, "सत्रह": 17,
+        "अठारह": 18, "उन्नीस": 19, "पन्द्रह": 15}
 HALVES = {"saade", "sade", "saadhe", "sadhe", "साढ़े", "साढे"}  # "saade teen" = 3.5
 CURRENCY = re.compile(r"(?:\brs\b|\binr\b|rupees?|rupaye|rupaya|₹|रुपये|रुपया)", re.I)
 
