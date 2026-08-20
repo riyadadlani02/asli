@@ -15,7 +15,7 @@
   "ms_early": 1800,
   "first": "जो मोबाइल नंबर मैंने बैंक में रजिस्टर करवाया था, उसका",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-01",
@@ -120,7 +120,7 @@
   "ms_early": 1356,
   "first": "आपके रिकॉर्ड में मेरे अकाउंट के जो आखिरी पांच अंक हैं, उनका...",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-02",
@@ -330,7 +330,7 @@
   "ms_early": 794,
   "first": "बैंक ने मेरे लोन के लिए जो अमाउंट सैंक्शन किया था उसका",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-05",
@@ -435,7 +435,7 @@
   "ms_early": 1791,
   "first": "मेरी पॉलिसी का जो नंबर आपके सिस्टम में दर्ज है उसका",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-06",
@@ -540,7 +540,7 @@
   "ms_early": 544,
   "first": "मैंने अपनी गाड़ी के नुकसान के लिए क्लेम फाइल किया है लेकिन",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-07",
@@ -639,7 +639,7 @@
   "ms_early": 1985,
   "first": "आपके कंप्यूटर पर मेरा जो कस्टमर आइडेंटिफिकेशन नंबर दिख रहा होगा, उसका...",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-08",
@@ -744,7 +744,7 @@
   "ms_early": 1272,
   "first": "मेरे क्रेडिट कार्ड से जो ट्रांजैक्शन पिछले हफ्ते हुई थी, उसकी...",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-09",
@@ -843,7 +843,7 @@
   "ms_early": 1224,
   "first": "सर्विस सेंटर वाले ने मुझे जो टिकट नंबर दिया है उसका",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-10",
@@ -942,7 +942,7 @@
   "ms_early": 1100,
   "first": "मेरे होम लोन पर अभी जो प्रिंसिपल अमाउंट बचा है उसका",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-11",
@@ -1047,7 +1047,7 @@
   "ms_early": 2009,
   "first": "पेमेंट करने के बाद मेरे फोन पर जो रेफरंस आया था, उसका",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-12",
@@ -1148,7 +1148,7 @@
   "ms_early": 718,
   "first": "फ्लैट खरीदने के लिए हमारे बीच जो सौदा तय हुआ है, उसका",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-13",
@@ -1253,7 +1253,7 @@
   "ms_early": 924,
   "first": "हर महीने मेरी सैलरी से जो ईएमआई अपने आप कटती है उसकी?",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-15",
@@ -1464,7 +1464,7 @@
   "ms_early": 949,
   "first": "मेरी टर्म इंश्योरेंस पॉलिसी में जो टोटल कवर मुझे मिला है, उसका",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-17",
@@ -1674,7 +1674,7 @@
   "ms_early": 1129,
   "first": "पिछले साल मैंने इनकम टैक्स के रूप में जो पैसा भरा था, उसका",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-19",
@@ -1779,7 +1779,7 @@
   "ms_early": 649,
   "first": "मुझे हर महीने मकान मालिक को जो किराया देना पड़ता है, उसका",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-21",
@@ -1884,7 +1884,7 @@
   "ms_early": 1115,
   "first": "मेरा डेबिट कार्ड जिन चार अंकों पर ख़ताम होता है, उनका?",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-22",
@@ -1985,7 +1985,7 @@
   "ms_early": 733,
   "first": "मैंने अपनी बेटी की शादी के लिए जो फिक्स्ड डिपॉजिट कर दी है, उसकी",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-23",
@@ -2194,7 +2194,7 @@
   "ms_early": 1034,
   "first": "इस ऑपरेशन में अस्पताल का जो कुल खर्चा लगता है उसका",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-25",
@@ -2297,7 +2297,7 @@
   "ms_early": 1169,
   "first": "पिछली बार जिस ऑफिसर से बात हुई थी उसने जो एक्सटेंशन बताया था उसका",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-28",
@@ -2402,7 +2402,7 @@
   "ms_early": 656,
   "first": "मुझे हर महीने कंपनी से जो सैलरी अकाउंट में मिलती है, उसकी",
   "has_answer": false,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-29",
@@ -2507,7 +2507,7 @@
   "ms_early": 2563,
   "first": "मेरे फिक्स्ड डिपॉजिट की जो मैच्योरिटी डेट सिस्टम में होती है, उसकी",
   "has_answer": true,
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-30",
@@ -2619,7 +2619,7 @@
   "first": "पिछले महीने मेरा जो मोबाइल का बिल हुआ था, उसका",
   "has_answer": false,
   "error": "",
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-31",
@@ -2724,7 +2724,7 @@
   "first": "कंपनी ने मुझे जो नया एम्प्लॉई कोड जारी किया है उसका",
   "has_answer": true,
   "error": "",
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-32",
@@ -2835,7 +2835,7 @@
   "first": "मैंने इस साल अपने बेटे की स्कूल फीस में जो पैसा भरा है, उसका",
   "has_answer": false,
   "error": "",
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-33",
@@ -2946,7 +2946,7 @@
   "first": "ऑनलाइन फॉर्म भरते वक्त मैंने जो सिक्योरिटी क्वेश्चन का आंसर डाला था, उसका",
   "has_answer": true,
   "error": "",
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-34",
@@ -3057,7 +3057,7 @@
   "first": "मुझे इस गाड़ी के लोन का जो बकाया अभी चुकाना है उसका?",
   "has_answer": false,
   "error": "",
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-35",
@@ -3168,7 +3168,7 @@
   "first": "हमारे ऑफिस का जो लैंडलाइन नंबर अभी चलता है उसका?",
   "has_answer": true,
   "error": "",
-  "lexical_would_hold": false
+  "lexical_would_hold": true
  },
  {
   "id": "vf-36",

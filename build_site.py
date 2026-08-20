@@ -190,6 +190,7 @@ def subs() -> dict[str, str]:
     conv = json.loads((ROOT / "results/conv.json").read_text())
     eng = json.loads((ROOT / "results/pause_fit_english.json").read_text())
     sem = _semantic_lane()
+    pol = _policy_lane()
     sem_sv = sum(a["server_vad"]["n"] for a in sem["arms"])
     sem_worst = max(a["semantic_vad"]["rate"] for a in sem["arms"])
     sem_worst = f"{sem_worst * 100:.0f}%"
@@ -222,6 +223,21 @@ def subs() -> dict[str, str]:
             f"the other participants, not a speaking style. Settling it needs single-speaker "
             f"spontaneous English telephony, or diarisation applied to AMI first. Until then "
             f"the rate above is measured on Hindi and claimed only for Hindi."),
+        "__T_POL_NOTE__": (
+            f"The rule fires on the turn's own text, so it inherits whatever the "
+            f"recogniser did to that text. That is the whole of the filler row: the head "
+            f"ends on <i>matlab</i> in all 31, and the recogniser returned it in "
+            f"{pol['arms'][1]['rescued']} &mdash; where the word was dropped the rule has "
+            f"nothing to fire on. <b>An earlier version of this table was much worse and "
+            f"the reason was our own list.</b> It carried the bare postpositions "
+            f"<code>का/के/की</code> but not the fused forms <code>उसका</code>, "
+            f"<code>उसकी</code>, <code>उनका</code>, which are the same word plus a "
+            f"pronoun and just as unable to end a sentence. 27 of 31 turns in the first "
+            f"row ended on one and none matched, so the rule scored 3/31 where it now "
+            f"scores {pol['arms'][0]['rescued']}/31. The word lists had also been copied "
+            f"into three files that had drifted apart; there is one now, in "
+            f"<code>asli.score</code>, and re-scoring costs nothing because the "
+            f"transcripts are already stored."),
         "__T_SEM_HEAD__": (
             f"On the same audio, at the same nominal gate: the silence timer ended the "
             f"turn early in <b>every one of {sem_sv} calls</b>. Semantic detection did it "
@@ -313,6 +329,78 @@ def _real_lane() -> dict[str, str]:
             "__T_FLOOR__": f"{base.get('pause_floor_db_median', '-')} dB"}
 
 
+def _policy_lane() -> dict:
+    """The intervention's own numbers, recomputed from the stored rows.
+
+    Measured on the same 186 calls as the semantic section, so the two are directly
+    comparable rather than each quoting its own private run.
+    """
+    rows = json.loads((ROOT / "results/verbfinal2.json").read_text())
+    ok = [r for r in rows if r["turns"] > 0 and not r.get("error")]
+    arms = []
+    for arm in ("dangler", "filler", "verb-final"):
+        cut = [r for r in ok if r["mode"] == "server_vad" and r["arm"] == arm and r["split"]]
+        held = sum(r["lexical_would_hold"] for r in cut)
+        arms.append({"arm": arm, "cuts": len(cut), "rescued": held,
+                     "residual": round(1 - held / len(cut), 3) if cut else None})
+    sem = [r for r in ok if r["mode"] == "semantic_vad" and r["split"]]
+    return {"arms": arms, "sem_residual": len(sem),
+            "sem_rescued": sum(r["lexical_would_hold"] for r in sem)}
+
+
+def _ledger() -> list[dict]:
+    """Everything measured that has no section of its own.
+
+    One honest list rather than a scene each: a result that did not earn a section still
+    has to be findable, and several of these are negative.
+    """
+    def j(f):
+        return json.loads((ROOT / f"results/{f}").read_text())
+
+    def at_default(f):
+        return next((r for r in j(f) if r["silence_ms"] == 512), j(f)[0])
+
+    modes, rep, hes, vf1 = j("mode_matrix.json"), j("inepa_repeats.json"), \
+        j("hesitation_summary.json"), j("verbfinal.json")
+    return [
+        {"what": "Output modes &mdash; entity kept after a hesitation",
+         "n": "8 each",
+         "value": " &middot; ".join(f"{k} {v['hesitation'][0]}/8" for k, v in modes.items()),
+         "reading": "Only <code>verbatim</code> survives intact. The two romanising modes "
+                    "lose the number every time: the vendor's own numeral normaliser runs "
+                    "before we ever see it."},
+        {"what": "The same suite, five identical runs",
+         "n": f"{len(rep['runs'])} runs",
+         "value": f"{pct(rep['mean'])} every run",
+         "reading": "The same three entities miss every time. The failures are "
+                    "deterministic, so one run is not a lucky draw &mdash; and anything "
+                    "that moves this number moved something real."},
+        {"what": "Does the hesitation itself damage recognition?",
+         "n": f"{sum(hes.values())} pairs",
+         "value": f"{hes['BROKEN BY HESITATION']} broken &middot; "
+                  f"{hes['fixed by hesitation']} fixed &middot; "
+                  f"{hes['both wrong']} wrong either way",
+         "reading": "Broken and fixed cancel out. The hesitation is not damaging "
+                    "recognition, it is ending the turn. Two different failures, and this "
+                    "is what separates them."},
+        {"what": "PIR on a degraded line, at the default gate",
+         "n": "12 per point",
+         "value": f"clean {at_default('pir_sweep_sarvam.json')['pir']} &middot; "
+                  f"8&nbsp;kHz {at_default('pir_sweep_telephony.json')['pir']} &middot; "
+                  f"babble {at_default('pir_sweep_degraded.json')['pir']}",
+         "reading": "The telephony codec changes nothing. Heavy babble drives it to zero "
+                    "&mdash; not an improvement: the noise fills the pause so the turn "
+                    "never ends at all. The mirror failure."},
+        {"what": "Experiment B, first attempt",
+         "n": f"{len(vf1)} calls",
+         "value": "inconclusive, kept",
+         "reading": "The control failed and the design could not separate its own arms. "
+                    "Written up with the reason in "
+                    "<code>experiments/verbfinal-README.md</code> rather than deleted, "
+                    "because the next person will otherwise build it the same way."},
+    ]
+
+
 def collect() -> dict:
     d: dict = {"said": SAID}
     d["sweep"] = json.loads((ROOT / "results/pir_sweep_sarvam.json").read_text())
@@ -321,6 +409,8 @@ def collect() -> dict:
     d["vendors"] = _vendor_lane()
     d["lanes"] = _lane_results()
     d["semantic"] = _semantic_lane()
+    d["policy"] = _policy_lane()
+    d["ledger"] = _ledger()
     d["sample"] = _score_sample(json.loads((ROOT / "results/sample_call.json").read_text()))
     d["hero"] = {k: v for k, v in json.loads((ROOT / "results/hero_wave.json").read_text()).items()
                  if k != "env"}
