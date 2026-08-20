@@ -34,7 +34,13 @@ recording is the segmenter stopping, not the speaker*.
 That gives perfect labels for one class and none for the other:
 
 - **continues** — a pause with more speech after it. Free, exact, thousands available.
-- **finished** — a pause the speaker chose to end on. **Zero clean examples.**
+- **finished** — a pause the speaker chose to end on. **Far fewer than the positives,
+  but not zero — that claim was wrong when first written here.** Counting utterance-final
+  words against a random-cut baseline finds real closing formulae: `धन्यवाद` ends 107 of
+  the 140 segments it appears in, 19.4× baseline and surviving Bonferroni correction
+  (`experiments/derive_markers.py`). A speaker who says thank-you and stops did that on
+  purpose, and a random cut cannot imitate it. That is on the order of 100 clean
+  negatives, which reaches the n needed for AUC 0.70 and falls short for 0.65.
 
 With no negative class you can measure recall and not precision. Precision *is* the
 latency cost, which is the whole argument for any turn-holding rule. So this corpus

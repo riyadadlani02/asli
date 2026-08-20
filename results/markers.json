@@ -1,0 +1,58 @@
+{
+ "n_utterances": 1872,
+ "n_tokens": 47403,
+ "baseline_p_final": 0.0395,
+ "min_count": 25,
+ "bonferroni_n": 283,
+ "finality_markers": [
+  {
+   "word": "धन्यवाद",
+   "count": 140,
+   "final": 107,
+   "p_final": 0.7643,
+   "lift": 19.35,
+   "p_value": 2.2661261409603178e-119
+  },
+  {
+   "word": "करें",
+   "count": 30,
+   "final": 11,
+   "p_final": 0.3667,
+   "lift": 9.28,
+   "p_value": 9.894927869614081e-09
+  },
+  {
+   "word": "जाएगी",
+   "count": 28,
+   "final": 9,
+   "p_final": 0.3214,
+   "lift": 8.14,
+   "p_value": 8.132362716581416e-07
+  },
+  {
+   "word": "जाए",
+   "count": 57,
+   "final": 12,
+   "p_final": 0.2105,
+   "lift": 5.33,
+   "p_value": 1.9310230551670507e-06
+  },
+  {
+   "word": "हैं",
+   "count": 498,
+   "final": 78,
+   "p_final": 0.1566,
+   "lift": 3.97,
+   "p_value": 7.042104623267452e-25
+  },
+  {
+   "word": "है",
+   "count": 1501,
+   "final": 231,
+   "p_final": 0.1539,
+   "lift": 3.9,
+   "p_value": 1.1385229667717186e-68
+  }
+ ],
+ "dangler_note": "not derivable from this corpus — segment ends are cut mid-phrase, so known danglers sit at the random baseline"
+}
