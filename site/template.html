@@ -247,6 +247,9 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .dig{font-variant-numeric:tabular-nums;font-size:1.05rem;letter-spacing:.1em}
 .dig .miss{color:var(--orange);opacity:.5;text-decoration:line-through}
 .hot{color:var(--orange)}
+.sub2{font-family:var(--mono);font-size:.62rem;color:var(--bone2);opacity:.75}
+ul.lane{margin:.5rem 0 0 .9rem;padding:0}
+ul.lane li{font-size:.78rem;color:var(--bone2);margin:.15rem 0}
 .tbl{border-collapse:collapse;width:100%;min-width:34rem;font-family:var(--mono);font-size:.78rem}
 .tbl th{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--edge2);
   font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bone3);font-weight:400;
@@ -494,6 +497,8 @@ footer b{color:var(--orange)}
         </div>
         <div class="knob" style="margin-top:.6rem"><div class="row"><span>provider</span><b id="sbProvV">Sarvam</b></div>
           <div class="fillers modes" id="sbProvs"></div></div>
+        <div class="knob" style="margin-top:.6rem"><div class="row"><span>measured on this lane</span></div>
+          <div id="laneCard"></div></div>
         <div class="knob" style="margin-top:.6rem"><div class="row"><span>output mode</span><b id="sbModeV">translit</b></div>
           <div class="fillers modes" id="sbModes"></div></div>
         <div class="talkrow">
@@ -556,8 +561,43 @@ footer b{color:var(--orange)}
   <div class="tags"><span>silence_duration_ms</span><span class="hot">default 500</span><span>__T_PAUSES500__ of real pauses</span><span>__T_CALLS500__ of real callers</span><span>n = 6,514 pauses</span><span>5.02h hindi telephony</span><span>openslr slr118</span></div>
 </section>
 
+<section class="scene rev" id="semantic">
+  <div class="idx"><b>05</b><span>the fix that exists</span></div>
+  <h2>A silence timer fails <span class="q">every time</span>.<br>Semantic detection almost never does.</h2>
+  <p class="lede">Everything above measures a silence timer. But one class of turn
+  detection does not use a timer at all &mdash; it reads what was said and decides
+  whether the sentence could have ended there. <b>__T_SEM_HEAD__</b></p>
+
+  <div class="scroll" style="margin-top:1.6rem">
+    <table class="tbl" id="semTbl">
+      <thead><tr><th>where the hesitation falls</th><th>silence timer<br>500&nbsp;ms</th><th>semantic detection</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <p class="lede" style="margin-top:1.4rem">The first row is the control, and it is
+  what makes the other two readable. The pause there falls after a word that
+  <em>cannot</em> end a Hindi sentence &mdash; a genitive or a conjunction, the
+  equivalent of stopping on &ldquo;the&rdquo;. Semantic detection never once mistook it
+  for an ending. So it can do this in Hindi, and the other two rows are not measuring
+  a model that simply does not understand the language.</p>
+
+  <p class="lede" style="margin-top:1.2rem"><b>The hypothesis this was built to test
+  failed.</b> Hindi is verb-final, so a speaker can stop mid-thought on a finite verb
+  that looks like a complete sentence &mdash; and detection trained mostly on English
+  might inherit a blind spot there. It does not. The verb-final and filler arms are
+  statistically indistinguishable (p&nbsp;=&nbsp;0.66), nothing here reaches
+  significance, and the filler arm &mdash; a discourse marker, no verb involved &mdash;
+  fails at least as often. Whatever is left is not about verb position.</p>
+
+  <div class="ctrlbox" id="semCtrl"></div>
+
+  <p class="sub" style="margin-top:1.2rem">__T_SEM_NOTE__</p>
+  <div class="tags"><span>__T_SEM_N__ calls</span><span>0 failures</span><span class="hot">control 0/24</span><span>3 arms</span><span>one model, one language</span></div>
+</section>
+
 <section class="scene rev" id="conv">
-  <div class="idx"><b>05</b><span>after the interruption</span></div>
+  <div class="idx"><b>06</b><span>after the interruption</span></div>
   <h2>One turn is not <span class="q">a conversation</span>.</h2>
   <p class="lede">Being cut off is the first half of the failure. She keeps talking &mdash; the number is still coming &mdash; while the agent is already composing a reply to a question she had not finished. Three things then decide the call, and all three are timestamps we already hold.</p>
   <div class="scroll" style="margin-top:1.6rem">
@@ -578,7 +618,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="real">
-  <div class="idx"><b>06</b><span>real callers</span></div>
+  <div class="idx"><b>07</b><span>real callers</span></div>
   <h2>Real audio says <span class="q">something else</span>.</h2>
   <p class="lede">Every number above rides on a synthesised caller, so the acoustics and the placement of the hesitation are ours. PIR does not need that: it needs only the moment speech ended, and no known entity &mdash; so real recordings can drive it directly. __T_REAL_N__ unscripted Hindi telephone recordings that already carry a mid-utterance pause of 500&nbsp;ms or more, streamed as they were recorded, at the default gate.</p>
   <div class="scroll" style="margin-top:1.6rem">
@@ -593,7 +633,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="line">
-  <div class="idx"><b>07</b><span>the line</span></div>
+  <div class="idx"><b>08</b><span>the line</span></div>
   <h2>What the recogniser is <span class="q">actually given</span>.</h2>
   <p class="lede">The same utterance down a real telephony path. Everything above 3.4&nbsp;kHz &mdash; the detail separating one digit word from another &mdash; is gone before any model sees it.</p>
   <div class="grid" id="agrid"></div>
@@ -602,7 +642,7 @@ footer b{color:var(--orange)}
 
 
 <section class="scene rev" id="general">
-  <div class="idx"><b>08</b><span>the generalisation</span></div>
+  <div class="idx"><b>09</b><span>the generalisation</span></div>
   <h2>Take the microphone away.<br>The measure <span class="q">stays</span>.</h2>
   <p class="lede">Silent failure is a property of <em>agents</em>, not of speech pipelines: when the input was corrupted, did the behaviour show the agent noticed? That question survives losing the audio. The same scoring function, pointed at a retrieval pipeline &mdash; authored records, an authored corruption, no microphone anywhere.</p>
 
@@ -623,14 +663,14 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="honest">
-  <div class="idx"><b>09</b><span>read before citing</span></div>
+  <div class="idx"><b>10</b><span>read before citing</span></div>
   <h2>What this <span class="q">is not</span>.</h2>
   <p class="lede">A benchmark that hides its limits is marketing. These are the ones that change how you read everything above.</p>
   <div class="cav" id="cav"></div>
 </section>
 
 <section class="scene rev" id="run">
-  <div class="idx"><b>10</b><span>the tool</span></div>
+  <div class="idx"><b>11</b><span>the tool</span></div>
   <h2>Point it at <span class="q">your own</span> agent.</h2>
   <p class="lede">The harness is the durable artefact; these numbers are just what it found on one afternoon. An adapter is a single method.</p>
   <pre><b>uv</b> venv --python 3.12 &amp;&amp; <b>uv</b> pip install -e ".[agent]"
@@ -902,6 +942,39 @@ function sweep(){
     '<div class="hot"><span>the undetectable control</span><b>'+T.careful.sfr_undetectable.toFixed(2)+"</b></div>"+
     '<div><span>clean accuracy, both stances</span><b>'+T.careful.clean_accuracy.toFixed(2)+"</b></div>";
 })();
+
+/* the semantic lane */
+(function(){
+  const S=D.semantic, F=x=>x.rate===null?"&mdash;":x.rate.toFixed(2)+` <span class="sub2">n=${x.n}</span>`;
+  const NAME={dangler:"after a word that cannot end a sentence <span class=\"sub2\">the control</span>",
+              "verb-final":"after a finite verb <span class=\"sub2\">a legal ending</span>",
+              filler:"after a discourse marker <span class=\"sub2\">matlab</span>"};
+  document.querySelector("#semTbl tbody").innerHTML=S.arms.map(a=>
+    `<tr><td>${NAME[a.arm]}</td><td class="no"><b>${F(a.server_vad)}</b></td>`+
+    `<td><b>${F(a.semantic_vad)}</b></td></tr>`).join("");
+  document.querySelector("#semCtrl").innerHTML=
+    `<div><span>calls</span><b>${S.n_calls}</b></div>`+
+    `<div><span>failed calls</span><b>${S.failures}</b></div>`+
+    '<div class="hot"><span>silence timer, every arm</span><b>1.00</b></div>'+
+    `<div><span>held so long no turn ever ended</span><b>${S.held_out}</b></div>`;
+})();
+
+/* what each lane has actually been measured on */
+function laneCard(k){
+  const L=D.lanes[k];
+  document.querySelector("#laneCard").innerHTML=
+    `<div class="row"><span>turn ended</span><b>${L.end_ms===null?"&mdash;":L.end_ms+" ms"+(L.inferred?" &dagger;":"")}</b></div>`+
+    `<div class="row"><span>number in first turn</span><b class="${L.kept?"":"no"}">${L.kept?"yes":"no"}</b></div>`+
+    (L.measured.length
+      ? `<ul class="lane ok">${L.measured.map(x=>`<li>${x}</li>`).join("")}</ul>`
+      : '<p class="sub" style="margin:.5rem 0">Only the one-utterance matrix row above. '+
+        'This lane has not been swept, replayed against real callers, or run through '+
+        'the mode grid &mdash; and the page says so rather than implying parity.</p>')+
+    (L.not_measured.length
+      ? `<p class="sub" style="margin-top:.5rem">not on this lane: `+
+        `${L.not_measured.join("; ")}</p>` : "");
+}
+laneCard("sarvam");
 
 /* vendor matrix */
 document.querySelector("#vendTbl tbody").innerHTML=D.vendors.map(v=>
@@ -1497,6 +1570,7 @@ document.querySelector("#sbProvs").addEventListener("click",e=>{
   sbProv=b.dataset.p;
   document.querySelectorAll("#sbProvs button").forEach(x=>x.setAttribute("aria-pressed",x===b));
   document.querySelector("#sbProvV").textContent=PROVIDERS[sbProv].label;
+  laneCard(sbProv);
   // output mode is a Sarvam concept; hiding it beats showing a control that does nothing
   document.querySelector("#sbModes").closest(".knob").style.display =
     sbProv==="sarvam" ? "" : "none";
