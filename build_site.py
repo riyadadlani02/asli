@@ -122,6 +122,60 @@ def _vendor_lane() -> list[dict]:
              "inferred": not r.get("end_source", "vad").startswith("vad")} for r in rows]
 
 
+def _semantic_lane() -> dict:
+    """Experiment B2, recomputed from the stored rows.
+
+    A failed call is not a measurement and a zero-turn row is not a split — both are
+    excluded here exactly as they are in the experiment's own analysis, so the page and
+    the README cannot drift apart.
+    """
+    rows = json.loads((ROOT / "results/verbfinal2.json").read_text())
+
+    def cell(arm: str, mode: str) -> dict:
+        sel = [r for r in rows if r["arm"] == arm and r["mode"] == mode
+               and r["turns"] > 0 and not r.get("error")]
+        return {"rate": round(sum(r["split"] for r in sel) / len(sel), 3) if sel else None,
+                "n": len(sel)}
+
+    arms = ["dangler", "verb-final", "filler"]
+    held = [r for r in rows if r["turns"] == 0 and not r.get("error")]
+    return {
+        "arms": [{"arm": a, "server_vad": cell(a, "server_vad"),
+                  "semantic_vad": cell(a, "semantic_vad")} for a in arms],
+        "n_calls": len(rows),
+        "failures": sum(1 for r in rows if r.get("error")),
+        "held_out": len(held),
+        "held_out_no_event": sum(1 for r in held if not r["ends"]),
+        "splits": [{"id": r["id"], "arm": r["arm"], "verb": r["verb"]} for r in rows
+                   if r["mode"] == "semantic_vad" and r["split"] and not r.get("error")],
+    }
+
+
+# What each lane has actually been measured on. Uneven on purpose: Sarvam carries the
+# deep lanes because it was the first vendor, and printing the gaps is more useful than
+# implying parity that does not exist.
+LANE_EXTRAS = {
+    "sarvam": ["the endpointing sweep, 8 gate settings",
+               "20 real unscripted callers, streamed unmodified",
+               "four output modes, and which keep the number",
+               "the 12-session conversation lane"],
+    "openai": ["semantic vs silence turn detection, 186 calls"],
+    "deepgram": [],
+    "gemini": [],
+}
+ALL_EXTRAS = [x for v in LANE_EXTRAS.values() for x in v]
+
+
+def _lane_results() -> dict:
+    out = {}
+    for row in _vendor_lane():
+        key = next(k for k, v in LANES.items() if v == row["label"])
+        mine = LANE_EXTRAS[key]
+        out[key] = {**row, "measured": mine,
+                    "not_measured": [x for x in ALL_EXTRAS if x not in mine]}
+    return out
+
+
 def pct(x: float | None) -> str:
     return "-" if x is None else f"{x * 100:.1f}%".replace(".0%", "%")
 
@@ -135,6 +189,10 @@ def subs() -> dict[str, str]:
     fit = json.loads((ROOT / "results/pause_fit.json").read_text())
     conv = json.loads((ROOT / "results/conv.json").read_text())
     eng = json.loads((ROOT / "results/pause_fit_english.json").read_text())
+    sem = _semantic_lane()
+    sem_sv = sum(a["server_vad"]["n"] for a in sem["arms"])
+    sem_worst = max(a["semantic_vad"]["rate"] for a in sem["arms"])
+    sem_worst = f"{sem_worst * 100:.0f}%"
     rec = fitmod.recommended_gate(fit)
     advice = "".join(
         f"<tr><td>{r['gate_ms']}{' (default)' if r['gate_ms'] == 500 else ''}</td>"
@@ -164,6 +222,22 @@ def subs() -> dict[str, str]:
             f"the other participants, not a speaking style. Settling it needs single-speaker "
             f"spontaneous English telephony, or diarisation applied to AMI first. Until then "
             f"the rate above is measured on Hindi and claimed only for Hindi."),
+        "__T_SEM_HEAD__": (
+            f"On the same audio, at the same nominal gate: the silence timer ended the "
+            f"turn early in <b>every one of {sem_sv} calls</b>. Semantic detection did it "
+            f"in <b>{sem_worst}</b> of its worst arm, and <b>never</b> in the control."),
+        "__T_SEM_N__": str(sem["n_calls"]),
+        "__T_SEM_NOTE__": (
+            f"{sem['held_out']} calls are excluded from the semantic column: they returned "
+            f"no turn, no transcript and no turn-end event, with no error &mdash; on audio "
+            f"that produced a turn on every silence-timer row. That is what holding a turn "
+            f"forever looks like from outside, so excluding them makes each semantic figure "
+            f"an <b>upper bound</b>. One more thing cuts against this experiment and is kept: "
+            f"both verb-final failures are imperatives &mdash; <i>likh leejiye</i>, "
+            f"<i>note kar leejiye</i> &mdash; where ending the turn is defensible rather "
+            f"than premature. Drop those two and that arm is 0/24, level with the control. "
+            f"That is subsetting after seeing the data, so it is a question for the next "
+            f"run and not a result of this one."),
         "__T_CONV_PIR__": f"{conv['n_cut']}/{conv['n']}",
         "__T_FIRSTTURN__": pct(conv["entity_first_turn"]),
         "__T_SESSION__": pct(conv["entity_full_session"]),
@@ -245,6 +319,8 @@ def collect() -> dict:
     d["fit"] = json.loads((ROOT / "results/pause_fit.json").read_text())
     d["text"] = _text_lane()
     d["vendors"] = _vendor_lane()
+    d["lanes"] = _lane_results()
+    d["semantic"] = _semantic_lane()
     d["sample"] = _score_sample(json.loads((ROOT / "results/sample_call.json").read_text()))
     d["hero"] = {k: v for k, v in json.loads((ROOT / "results/hero_wave.json").read_text()).items()
                  if k != "env"}
