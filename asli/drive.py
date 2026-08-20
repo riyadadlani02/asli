@@ -276,25 +276,54 @@ class DeepgramWS:
 
 
 class OpenAIWS:
-    """OpenAI realtime transcription, server_vad.
+    """OpenAI realtime transcription with explicit turn detection.
 
     `server_vad` is a silence timer, so `silence_duration_ms` means the same thing here
     as on the other lanes and the sweep axis is comparable across all of them.
+
+    Both modes use a general Realtime session. OpenAI's transcription-only session
+    supports server VAD but not semantic VAD, while a general session supports both
+    and can still emit input-audio transcription events.
 
     Audio is resampled to 24kHz because the endpoint rejects 16k, and a wrong rate
     silently distorts every timestamp.
     """
 
     name = "openai"
-    URL = "wss://api.openai.com/v1/realtime?intent=transcription"
+    URL = "wss://api.openai.com/v1/realtime?model=gpt-realtime"
     CHUNK_MS = 100
     NATIVE_RATE = 24000
+    OPEN_TIMEOUT_S = 20
+    WRITE_TIMEOUT_S = 15
+    CLOSE_TIMEOUT_S = 5
 
     def __init__(self, *, language_code: str = "hi", model: str = "gpt-4o-transcribe",
-                 rate: int = SAMPLE_RATE, silence_duration_ms: int | None = None, **params):
+                 rate: int = SAMPLE_RATE, silence_duration_ms: int | None = None,
+                 turn_detection: str = "server_vad", **params):
         self.rate, self.model = rate, model
         self.lang = language_code.split("-")[0]
         self.gate = silence_duration_ms or 500
+        if turn_detection not in {"server_vad", "semantic_vad"}:
+            raise ValueError(f"unsupported OpenAI turn detection: {turn_detection}")
+        self.turn_detection = turn_detection
+
+    def turn_detection_payload(self) -> dict[str, object]:
+        """Return the provider payload without exposing a semantic mode as a timer."""
+        if self.turn_detection == "semantic_vad":
+            return {"type": "semantic_vad"}
+        return {"type": "server_vad", "silence_duration_ms": self.gate}
+
+    def session_update_payload(self) -> dict[str, object]:
+        """Build the documented general-Realtime setup for either turn detector."""
+        turn_detection = {**self.turn_detection_payload(), "create_response": False}
+        return {"type": "session.update", "session": {
+            "type": "realtime",
+            "audio": {"input": {
+                "format": {"type": "audio/pcm", "rate": self.NATIVE_RATE},
+                "transcription": {"model": self.model, "language": self.lang},
+                "turn_detection": turn_detection,
+            }},
+        }}
 
     def _to_native(self, pcm: np.ndarray) -> np.ndarray:
         if self.rate == self.NATIVE_RATE:
@@ -310,36 +339,33 @@ class OpenAIWS:
     async def run(self, pcm: np.ndarray, spec: CallSpec) -> Result:
         import asyncio
         import base64
+        from contextlib import suppress
 
         import websockets
 
         audio = self._to_native(pcm)
         # a silence timer needs a tail longer than its own gate to close the last turn
         audio = np.concatenate([audio, np.zeros(int(self.NATIVE_RATE * 2.5), np.int16)])
-        td = {"type": "server_vad", "silence_duration_ms": self.gate}
         events: list[Event] = []
         finals: list[str] = []
         sent_ms = 0
         try:
             async with websockets.connect(
                 self.URL, additional_headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
-                max_size=None,
+                max_size=None, open_timeout=self.OPEN_TIMEOUT_S, close_timeout=self.CLOSE_TIMEOUT_S,
             ) as ws:
-                await ws.send(json.dumps({"type": "session.update", "session": {
-                    "type": "transcription",
-                    "audio": {"input": {
-                        "format": {"type": "audio/pcm", "rate": self.NATIVE_RATE},
-                        "transcription": {"model": self.model, "language": self.lang},
-                        "turn_detection": td}}}}))
+                await asyncio.wait_for(ws.send(json.dumps(self.session_update_payload())),
+                                       timeout=self.WRITE_TIMEOUT_S)
 
                 async def pump() -> None:
                     nonlocal sent_ms
                     step = int(self.NATIVE_RATE * self.CHUNK_MS / 1000)
                     for i in range(0, len(audio), step):
-                        await ws.send(json.dumps({
+                        await asyncio.wait_for(ws.send(json.dumps({
                             "type": "input_audio_buffer.append",
                             "audio": base64.b64encode(
-                                audio[i : i + step].astype("<i2").tobytes()).decode()}))
+                                audio[i : i + step].astype("<i2").tobytes()).decode()})),
+                            timeout=self.WRITE_TIMEOUT_S)
                         sent_ms += self.CHUNK_MS
                         await asyncio.sleep(self.CHUNK_MS / 1000)
 
@@ -367,6 +393,8 @@ class OpenAIWS:
                     pass
                 finally:
                     sender.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await sender
         except Exception as exc:
             return Result(spec_id=spec.id, adapter=self.name, events=events,
                           transcript=" ".join(finals), error=f"{type(exc).__name__}: {exc}")
