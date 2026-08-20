@@ -570,7 +570,7 @@ footer b{color:var(--orange)}
   <p class="sub" style="margin-top:.9rem"><b>This one is not ours.</b> It ships in
   OpenAI's realtime API and in Gemini Live, and it is measured here because a page that
   only showed failures would have implied nobody had solved this. Our own rule is the
-  next section, and it is weaker than this in two of three cases.</p>
+  next section, and semantic detection beats it on <b>all three</b> of the cases measured here.</p>
 
   <div class="scroll" style="margin-top:1.6rem">
     <table class="tbl" id="semTbl">
@@ -622,6 +622,17 @@ footer b{color:var(--orange)}
       <tbody></tbody>
     </table>
   </div>
+
+  <p class="lede" style="margin-top:1.4rem"><b>Semantic detection beats this rule on
+  every row above</b>, and the previous section is where that is measured. Two things
+  are still true and neither is a consolation prize. <b>Sarvam and Deepgram do not offer
+  semantic turn detection at all</b> &mdash; on the Indic stacks actually deployed for
+  these languages, this rule is not the weaker option, it is the only one. And of the
+  __T_UNION_N__ turns semantic detection still cut, this rule holds __T_UNION_K__: the
+  two approaches fail on different cases, so running both cut the residual from
+  __T_UNION_N__ to __T_UNION_R__ in __T_UNION_TOT__ turns. That difference is
+  <b>__T_UNION_P__</b> &mdash; a direction, not a win, and it is printed here so nobody
+  has to take the direction on trust.</p>
 
   <p class="lede" style="margin-top:1.4rem"><b>The last row is the ceiling, and it is
   structural.</b> A finite verb is a legal ending, so no lexical rule can fire there
