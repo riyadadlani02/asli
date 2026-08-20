@@ -1,0 +1,42 @@
+{
+  "codemix": {
+    "control": [
+      24,
+      24
+    ],
+    "hesitation": [
+      24,
+      24
+    ]
+  },
+  "transcribe": {
+    "control": [
+      18,
+      24
+    ],
+    "hesitation": [
+      12,
+      24
+    ]
+  },
+  "translit": {
+    "control": [
+      12,
+      24
+    ],
+    "hesitation": [
+      12,
+      24
+    ]
+  },
+  "verbatim": {
+    "control": [
+      18,
+      24
+    ],
+    "hesitation": [
+      18,
+      24
+    ]
+  }
+}

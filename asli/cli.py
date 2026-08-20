@@ -99,15 +99,44 @@ ADAPTERS = {"sarvam": SarvamWS, "deepgram": DeepgramWS, "openai": OpenAIWS,
             "gemini": GeminiLive}
 
 
-def make_adapter(name: str, *, gate: int, lang: str, rate: int, mode: str = "verbatim"):
+def make_adapter(name: str, *, gate: int, lang: str, rate: int, mode: str = "verbatim",
+                 turn_detection: str = "server_vad"):
     if name == "mock":
         return MockASR(negative_frames_count=gate, rate=rate)
     if name in ADAPTERS and name != "sarvam":
-        return ADAPTERS[name](language_code=lang, rate=rate, silence_duration_ms=gate)
+        kwargs = {"language_code": lang, "rate": rate, "silence_duration_ms": gate}
+        if name == "openai":
+            kwargs["turn_detection"] = turn_detection
+        return ADAPTERS[name](**kwargs)
     # verbatim keeps the spoken form ("triple one"), so INEPA measures the agent's
     # parsing. translit/codemix apply the vendor's own numeral normaliser first,
     # which is a different measurement — see the README.
     return SarvamWS(language_code=lang, rate=rate, silence_duration_ms=gate, mode=mode)
+
+
+def real_result_stem(agent: str, turn_detection: str, *, silence_pause: bool) -> str:
+    """Name real-caller artefacts by the provider turn-detection condition.
+
+    Semantic detection is not a different value of the silence timer. Keeping its
+    rows separate prevents a one-sided semantic run from being mistaken for the
+    established server-timer evidence (or overwriting it).
+    """
+    stem = "real_pir"
+    if agent == "openai":
+        stem += f"_openai_{turn_detection}"
+    if silence_pause:
+        stem += "_silenced"
+    return stem
+
+
+def real_gates(agent: str, turn_detection: str, *, gate: int | None,
+               gates: str | None) -> list[int | None]:
+    """Return the real-caller conditions without inventing a semantic timeout."""
+    if agent == "openai" and turn_detection == "semantic_vad":
+        return [None]
+    if gates:
+        return [int(value) for value in gates.split(",")]
+    return [gate] if gate else [500, 900]
 
 
 def audio_for(spec: CallSpec, dials: dict) -> np.ndarray:
@@ -182,6 +211,9 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("--mode", default="verbatim",
                        choices=["verbatim", "transcribe", "translit", "codemix"],
                        help="Sarvam transcription mode; verbatim preserves spoken numerals")
+        s.add_argument("--turn-detection", default="server_vad",
+                       choices=["server_vad", "semantic_vad"],
+                       help="OpenAI turn detection; semantic_vad is not a silence timer")
         s.add_argument("--out", default=None)
         s.add_argument("--corpus", default=None, help="directory of real-speech wavs, for `fit`")
         s.add_argument("--fitted", action="store_true",
@@ -278,7 +310,8 @@ def main(argv: list[str] | None = None) -> int:
             rows = [from_jsonl(ln) for ln in dest.read_text().splitlines() if ln.strip()]
         else:
             specs = build_pir(base, a.pause_ms, a.fitted)
-            asr = make_adapter(a.agent, gate=gate, lang=a.lang, rate=rate, mode=a.mode)
+            asr = make_adapter(a.agent, gate=gate, lang=a.lang, rate=rate, mode=a.mode,
+                               turn_detection=a.turn_detection)
             rows = [(s_, call(asr, audio_for(s_, dials), s_)) for s_ in specs]
         for s_, r in rows:
             if r.error:
@@ -321,16 +354,16 @@ def main(argv: list[str] | None = None) -> int:
         spreads = sorted(sp for *_, sp in loaded)
         floors = sorted(f for f in (realmod.pause_floor_db(pcm, r_, sp)
                                    for sp, pcm, r_, _ in loaded) if f is not None)
-        gates = ([int(g) for g in a.gates.split(",")] if a.gates
-                 else [a.gate] if a.gate else [500, 900])
-        tag = "_silenced" if a.silence_pause else ""
+        gates = real_gates(a.agent, a.turn_detection, gate=a.gate, gates=a.gates)
+        result_stem = real_result_stem(a.agent, a.turn_detection,
+                                       silence_pause=a.silence_pause)
         stored: dict = {}
         if a.dry_run:
             # re-score the stored calls, no network. The rows are the artefact — but a
             # row was produced at one gate, so re-scoring can only speak for that one.
             gates = gates[:1]
             from .spec import from_jsonl
-            for ln in (ROOT / "results" / f"real_pir{tag}.jsonl").read_text().splitlines():  # noqa: E501
+            for ln in (ROOT / "results" / f"{result_stem}.jsonl").read_text().splitlines():  # noqa: E501
                 if ln.strip():
                     sp, res = from_jsonl(ln)
                     stored[sp.id] = res
@@ -339,7 +372,7 @@ def main(argv: list[str] | None = None) -> int:
               f"true_end from VAD, spread median {spreads[len(spreads) // 2]}ms / "
               f"max {spreads[-1]}ms, pause floor median "
               f"{floors[len(floors) // 2] if floors else '-'}dB)\n")
-        print(f"  {'gate_ms':>7}  {'PIR':>6}  {'in_pause':>9}  {'median_ms_early':>15}"
+        print(f"  {'condition':>9}  {'PIR':>6}  {'in_pause':>9}  {'median_ms_early':>15}"
               f"  {'on_dangling':>11}")
         curve, rows_out = [], []
         for gate in gates:
@@ -350,8 +383,8 @@ def main(argv: list[str] | None = None) -> int:
                         continue
                     res = stored[spec.id]
                 else:
-                    asr = make_adapter(a.agent, gate=gate, lang=a.lang, rate=srate,
-                                       mode=a.mode)
+                    asr = make_adapter(a.agent, gate=gate or 500, lang=a.lang, rate=srate,
+                                       mode=a.mode, turn_detection=a.turn_detection)
                     audio = (realmod.quiet_pause(pcm, srate, spec) if a.silence_pause
                              else pcm)
                     res = call(asr, audio, spec)
@@ -361,6 +394,8 @@ def main(argv: list[str] | None = None) -> int:
                 verdicts.append(score.pir(spec, res))
                 # stamp the setting into the row: a result is meaningless without it
                 spec.degradation = {"silence_duration_ms": gate,
+                                    "turn_detection": (a.turn_detection
+                                                       if a.agent == "openai" else None),
                                     "pause_silenced": bool(a.silence_pause)}
                 rows_out.append(to_jsonl(spec, res))
             if not verdicts:
@@ -373,21 +408,27 @@ def main(argv: list[str] | None = None) -> int:
                    "on_dangling": round(sum(bool(v.dangling) for v in verdicts
                                             if v.premature)
                                         / max(sum(v.premature for v in verdicts), 1), 4)}
-            print(f"  {gate:>7}  {row['pir']:>6}  {row['in_pause']:>9}  "
+            condition = f"{gate}ms" if gate is not None else "semantic"
+            print(f"  {condition:>9}  {row['pir']:>6}  {row['in_pause']:>9}  "
                   f"{row['median_ms_early'] if row['median_ms_early'] is not None else '-':>15}"
                   f"  {row['on_dangling']:>11}")
             curve.append(row)
-        dest = ROOT / "results" / f"real_pir{tag}.jsonl"
+        if a.dry_run:
+            print("\n  re-scored stored rows; no result files were written")
+            return 0
+        dest = ROOT / "results" / f"{result_stem}.jsonl"
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text("\n".join(rows_out))
-        (ROOT / "results" / f"real_pir{tag}.json").write_text(json.dumps(
+        (ROOT / "results" / f"{result_stem}.json").write_text(json.dumps(
             {"corpus": str(a.corpus), "n": len(loaded), "gates": curve,
+             "agent": a.agent,
+             "turn_detection": (a.turn_detection if a.agent == "openai" else None),
              "pause_silenced": bool(a.silence_pause),
              "end_spread_median_ms": spreads[len(spreads) // 2],
              "end_spread_max_ms": spreads[-1],
              "pause_floor_db_median": floors[len(floors) // 2] if floors else None,
              "ids": [s.id for s, *_ in loaded]}, indent=2))
-        print(f"\n  wrote {dest} + results/real_pir{tag}.json")
+        print(f"\n  wrote {dest} + results/{result_stem}.json")
         return 0
 
     if a.cmd == "check":
@@ -401,7 +442,8 @@ def main(argv: list[str] | None = None) -> int:
         pcm = audio_for(spec, dials)
         print(f"  sending {len(pcm) / rate:.1f}s of audio, paced in real time...")
         asr = make_adapter("sarvam", gate=a.gate or (a.frames if a.frames != 18 else 500),
-                           lang=a.lang, rate=rate, mode=a.mode)
+                           lang=a.lang, rate=rate, mode=a.mode,
+                           turn_detection=a.turn_detection)
         res = call(asr, pcm, spec)
         if res.error:
             print(f"\n  FAILED: {res.error}", file=sys.stderr)
@@ -441,7 +483,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {'gate':>6}  {'silence_ms':>10}  {'PIR':>6}  {'in_pause':>9}  {'median_ms_early':>15}")
         curve = []
         for frames in gates:
-            asr = make_adapter(a.agent, gate=frames, lang=a.lang, rate=rate, mode=a.mode)
+            asr = make_adapter(a.agent, gate=frames, lang=a.lang, rate=rate, mode=a.mode,
+                               turn_detection=a.turn_detection)
             rows = [(s, call(asr, pcm, s)) for s, pcm in audio]
             agg = score.aggregate(rows)
             ms = round(frames * 512 * 1000 / rate) if a.agent == "mock" else frames
@@ -455,7 +498,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     specs = build_pir(base, a.pause_ms, a.fitted) if a.suite == "pir" else base
-    asr = make_adapter(a.agent, gate=a.frames, lang=a.lang, rate=rate, mode=a.mode)
+    asr = make_adapter(a.agent, gate=a.frames, lang=a.lang, rate=rate, mode=a.mode,
+                       turn_detection=a.turn_detection)
     rows = run_suite(specs, asr, dials, a.llm, inject_error=(a.suite == "sfr"), stance=a.stance)
     agg = write(rows, Path(a.out or ROOT / "results" / f"{a.suite}.jsonl"))
     print(table(f"{a.suite} (agent={a.agent}, n={agg['n']}, stance={a.stance}, "

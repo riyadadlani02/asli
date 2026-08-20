@@ -413,7 +413,7 @@ footer b{color:var(--orange)}
 <div class="vig" aria-hidden="true"></div>
 
 <div id="printdoc"></div>
-<div class="pill" id="navpill"><b>asli</b><a href="#cliff">measure</a><a href="#run">run it</a><a href="https://github.com/riyadadlani02/asli" rel="noopener">code</a></div>
+<div class="pill" id="navpill"><b>asli</b><a href="#instrument">the problem</a><a href="#real">the fix</a><a href="#sky">try live</a><a href="https://github.com/riyadadlani02/asli" rel="noopener">full docs</a></div>
 <div class="pill" id="statepill" data-ok="0"><span id="stateTxt">cut off</span></div>
 <div class="pill" id="gatepill"><label for="gate">gate</label>
   <input id="gate" type="range" min="100" max="1200" step="50" value="500" aria-label="silence_duration_ms">
@@ -422,25 +422,24 @@ footer b{color:var(--orange)}
 <div class="wrap">
 
 <section class="scene" id="hero">
-  <div class="stamp">saaras:v3-realtime &nbsp;<b>/</b>&nbsp; 12 authored utterances &nbsp;<b>+</b>&nbsp; __T_REAL_N__ real callers &nbsp;<b>/</b>&nbsp; august 2026</div>
-  <h1>She hesitated.<br><span class="q">The final transcript<br>dropped the number.</span></h1>
-  <p class="lede">Indian callers hesitate mid-sentence &mdash; <em>matlab</em>, the verbal equivalent of &ldquo;umm&rdquo;. The gap splits her turn. The partials carry all seven digits; the final that lands 105&nbsp;ms later ends at <em>matlab</em> and reports that it covered the whole turn. <b>One call reproduces it</b> &mdash; <a href="#trace">the socket trace is below</a>, message by message.</p>
-  <p class="lede" style="margin-top:1rem">How often is a caller in a position to hit this? Measured, not assumed: in 1,788 unscripted Hindi telephone recordings, <b>__T_CALLS500__ carry a hesitation long enough to end the turn early at the documented default</b> &mdash; and streaming twenty of them at that default, <b>__T_REALHEAD__</b>. And when the turn does end early, an agent replying at that moment has the account number in <b>__T_FIRSTTURN__ of calls</b> &mdash; while the session transcript has it.</p>
-  <p class="sub" style="margin-top:1rem;max-width:56ch"><b>Two things this is not:</b> recognition was accurate throughout, and the endpointing gate is a documented setting doing what it is told. Neither is the finding &mdash; <a href="#trace">the dropped entity</a> and <a href="#conv">what the agent is holding when it answers</a> are.</p>
+  <div class="stamp">real callers &nbsp;<b>/</b>&nbsp; same 20 calls, two turn detectors &nbsp;<b>/</b>&nbsp; august 2026</div>
+  <h1>A pause is not<br><span class="q">the end of a thought.</span></h1>
+  <p class="lede">A caller says <em>matlab</em> (&ldquo;umm&rdquo;), pauses, then gives the number. A silence timer can treat the pause as the end and make the agent answer too soon. The <a href="#instrument">one-call replay</a> shows the exact moment it happens.</p>
   <div class="box" style="margin-top:1.6rem">
-    <b>If you change one thing, change this.</b> Of the four transcription modes, only
-    <code>verbatim</code> keeps the number through a hesitation &mdash; <b>8/8</b>. The two
-    that romanise numerals lose it <b>every time, 0/8</b>, because the vendor's numeral
-    normaliser runs before you ever see the text. One setting, measured, no code.
-    <a href="#modes">The grid is section 01.</a>
+    <b>What worked on real callers.</b> On the same __T_REAL_PAIR_N__ pause-selected calls,
+    the 500&nbsp;ms timer cut inside a hesitation <b>__T_REAL_PAIR_SERVER_PAUSE__</b>.
+    Meaning-based turn detection cut <b>__T_REAL_PAIR_SEMANTIC_PAUSE__</b>.
+    <a href="#real">See the paired result.</a>
   </div>
 
-  <div class="tags"><span class="hot">__T_CALLS500__ of real callers</span><span>real audio, no tts</span><span>one call reproduces it</span><span>entity at first reply __T_FIRSTTURN__</span><span>translit 0/8 (n=8)</span></div>
-  <p class="sub" style="margin-top:1.6rem">Built by <a href="https://github.com/riyadadlani02" rel="noopener">riyadadlani02</a> &middot; <a href="https://github.com/riyadadlani02/asli" rel="noopener">github.com/riyadadlani02/asli</a> &middot; MIT &middot; corrections and adapters welcome by issue or PR</p>
+  <div class="tags"><span class="hot">__T_REAL_PAIR_SEMANTIC_PAUSE__ hesitation cuts</span><span>real audio, no tts</span><span>same callers, two settings</span><span>try your own call below</span></div>
+  <p class="sub" style="margin-top:1.6rem">Full methods, caveats, and every saved row live in the <a href="https://github.com/riyadadlani02/asli" rel="noopener">repository docs</a>.</p>
 </section>
 
 <section class="scene rev" id="instrument">
   <div class="idx"><b>00</b><span>the instrument</span></div>
+  <h2>The caller pauses.<br><span class="q">The timer answers.</span></h2>
+  <p class="lede">Press play. The caller has not finished, but the turn closes at the pause.</p>
   <div class="panel" style="margin-top:0">
     <div class="panel-head"><span>dig-01 &middot; hindi &middot; 16 khz</span><span>mode <b>translit</b> &middot; truth <b>9877111</b></span></div>
     <div class="panel-body">
@@ -456,21 +455,21 @@ footer b{color:var(--orange)}
       </div>
     </div>
   </div>
-  <div class="tags"><span>segment-wise tts</span><span>spliced silence</span><span class="hot">true end known</span><span>no forced alignment</span></div>
+  <div class="tags"><span>one reproducible call</span><span class="hot">true end known</span><span>full trace below</span></div>
 </section>
 <section class="scene rev" id="modes">
   <div class="idx"><b>01</b><span>where it happens</span></div>
-  <h2>Four modes. <span class="q">One</span> keeps the number.</h2>
-  <p class="lede">Same audio, same hesitation, same gate &mdash; only the requested output mode changes. With the filler sitting immediately before the digits, <code>verbatim</code> returns the number 8 times out of 8 and <code>transcribe</code> 6, while <code>translit</code> and <code>codemix</code> return it <b>0 times out of 8</b>. On the two shorter utterances the transcript simply stops at the filler: <code>&ldquo;The reference is Matlab&rdquo;</code>, and the entity is gone rather than mangled.</p>
+  <h2>Output mode is <span class="q">not the fix.</span></h2>
+  <p class="lede">We tested all four modes with the same filler and six repeats. Results differ, but no mode reliably prevents an early turn. The simple comparison stays here; the full matrix is in the docs.</p>
   <div class="chips" role="tablist" id="chips"></div>
   <div class="modeout" id="modeout"></div>
-  <div class="tags"><span>4 modes &times; 4 utterances &times; 2 runs</span><span>filler before the entity</span><span class="hot">translit 0/8</span><span>codemix 0/8</span><span>verbatim 8/8</span></div>
+  <div class="tags"><span>192 calls</span><span>fixed filler: matlab</span><span class="hot">no mode-wide winner</span></div>
 </section>
 
 <section class="scene rev" id="trace">
   <div class="idx"><b>02</b><span>the socket trace</span></div>
-  <h2>The partial is complete.<br>The final <span class="q">is not</span>.</h2>
-  <p class="lede">Every message on the socket, no early exit. The partials carry the whole utterance. The final that lands 105&nbsp;ms later has the digits removed &mdash; while reporting <code>end_s 3.607</code>, claiming to cover the entire turn.</p>
+  <h2>The live stream has it.<br>The final <span class="q">does not.</span></h2>
+  <p class="lede">The partial contains the number. The final closes at the hesitation. This is why replying immediately is unsafe.</p>
   <figure><div class="trace" id="tr"></div></figure>
   <div class="tags"><span>transcript.partial</span><span class="hot">transcript.final</span><span>vad.speech_end</span><span>session.end</span></div>
 </section>
@@ -479,8 +478,8 @@ footer b{color:var(--orange)}
   <canvas id="skycv" aria-hidden="true"></canvas>
   <div class="inner">
     <div class="idx"><b>03</b><span>the sandbox</span></div>
-    <h2>Fly your own caller.</h2>
-    <p class="lede">Set how long she hesitates and how patient the endpointer is. The left panel is a <b>model</b> &mdash; the same arithmetic the harness measures, with our real datapoints marked. The right panel is <b>not</b> a model: it streams the audio to a live endpoint and reports what actually comes back.</p>
+    <h2>Try it <span class="q">live.</span></h2>
+    <p class="lede">Change the pause and detector. The left side is a quick model; the right side sends audio to your own endpoint and shows the real result.</p>
 
     <div class="tower">
       <div class="card">
@@ -530,14 +529,13 @@ footer b{color:var(--orange)}
 
 <section class="scene rev" id="cliff">
   <div class="idx"><b>04</b><span>the measurement</span></div>
-  <h2>The cliff sits <span class="q">just above</span> the default.</h2>
-  <p class="lede">Twelve utterances streamed in real time at each gate setting. Flat at 1.00 through every value up to and including the 500&nbsp;ms default, then straight to zero. <b>Moving the gate to 700&nbsp;ms removes the effect entirely</b> at this hesitation length.</p>
-  <p class="lede" style="margin-top:.9rem">And how often does a caller actually pause that long? Measured on 5.02&nbsp;hours of spontaneous Hindi telephone speech: <b>17.9% of mid-utterance pauses exceed the 500&nbsp;ms default</b> &mdash; about one in six. At 700&nbsp;ms it is one in seventeen.</p>
+  <h2>Waiting longer <span class="q">helps.</span></h2>
+  <p class="lede">A longer silence timer makes fewer early cuts. It also makes every completed call wait longer. This curve shows that tradeoff.</p>
   <figure>
     <div class="scroll"><svg id="sweep" viewBox="0 0 780 320" role="img" aria-label="Premature interruption rate against silence duration: flat at 1.0 to 500ms, zero from 700ms."></svg></div>
     <figcaption>PIR = share of calls where the turn ended before she finished. n&nbsp;=&nbsp;12 per point. Event times are audio-sent-so-far, so latency pushes results <em>away</em> from &ldquo;premature&rdquo;. The curve is conservative.</figcaption>
   </figure>
-  <p class="lede" style="margin-top:1.4rem">&ldquo;Raise the gate&rdquo; is not free: it elapses before the agent may answer, so every millisecond is added to <em>every</em> turn. The right-hand column is the share of <b>recordings</b> carrying one such pause &mdash; a caller only has to hesitate once.</p>
+  <p class="lede" style="margin-top:1.4rem">The cost is simple: extra waiting happens on every turn, even when the caller is already done.</p>
   <div class="scroll">
     <table class="tbl">
       <thead><tr><th>silence_duration_ms</th><th>pauses tripped</th><th>callers affected</th><th>added turn-end latency</th></tr></thead>
@@ -546,7 +544,7 @@ footer b{color:var(--orange)}
   </div>
   <p class="lede" style="margin-top:1.2rem"><b>__T_REC__</b></p>
 
-  <p class="lede" style="margin-top:1.8rem">One supplier&rsquo;s tuning? Four stacks, same utterance, same 700&nbsp;ms hesitation, documented default. <b>The three running a silence timer lose the number. The one doing semantic detection keeps it.</b></p>
+  <p class="lede" style="margin-top:1.8rem">Across four stacks on the same test call, timer-based systems cut sooner; the semantic one keeps listening.</p>
   <div class="scroll">
     <table class="tbl" id="vendTbl">
       <thead><tr><th>stack</th><th>turn detection</th><th>turn ended</th><th>first turn the agent holds</th><th>number in it</th></tr></thead>
@@ -560,12 +558,8 @@ footer b{color:var(--orange)}
 
 <section class="scene rev" id="solution">
   <div class="idx"><b>05</b><span>our proposal</span></div>
-  <h2>Read the words, <span class="q">not only</span> the silence.</h2>
-  <p class="lede"><b>Our rule.</b> Some words cannot end a Hindi sentence. When a turn
-  ends on one, it is not an ending &mdash; hold it open and merge what follows.</p>
-  <p class="lede" style="margin-top:.9rem">Raising the gate for everyone adds latency to
-  every turn of every call. This adds it only to turns that are demonstrably unfinished.
-  It reads the turn's own text, which a live system already holds at that instant.</p>
+  <h2>Use meaning when you can.<br><span class="q">Use a guardrail when you cannot.</span></h2>
+  <p class="lede">Semantic turn detection is the cleanest fix. Providers without it can hold a turn when its last words clearly sound unfinished.</p>
 
   <div class="scroll" style="margin-top:1.6rem">
     <table class="tbl" id="polTbl">
@@ -574,18 +568,11 @@ footer b{color:var(--orange)}
     </table>
   </div>
 
-  <p class="lede" style="margin-top:1.4rem"><b>Sarvam and Deepgram ship no semantic
-  turn detection.</b> On the Indic stacks actually deployed for these languages, this
-  rule is not the weaker option &mdash; it is the only one. Where semantic detection is
-  available it does better (next section), and of the __T_UNION_N__ turns it still cut,
-  this rule holds __T_UNION_K__.</p>
-
-  <p class="lede" style="margin-top:1.2rem"><b>The last row is the ceiling.</b> A finite
-  verb is a legal ending, so no word list can fire there. No tuning fixes that.</p>
+  <p class="lede" style="margin-top:1.4rem">The word-based guardrail catches some unfinished turns without delaying every call. It cannot safely decide every sentence, which is why semantic detection is better where available.</p>
 
   <div class="ctrlbox" id="polCtrl"></div>
 
-  <h3 style="margin-top:2rem">What it costs</h3>
+  <h3 style="margin-top:2rem">Cost</h3>
   <p class="lede" style="margin-top:.6rem">__T_LAT__</p>
   <div class="scroll" style="margin-top:1.2rem">
     <table class="tbl" id="latTbl">
@@ -593,18 +580,15 @@ footer b{color:var(--orange)}
       <tbody></tbody>
     </table>
   </div>
-  <p class="lede" style="margin-top:1.2rem">__T_BUDGET_NOTE__</p>
-  <p class="sub" style="margin-top:1rem">__T_LAT_CAV_SHORT__</p>
-
-  <p class="sub" style="margin-top:1rem">__T_POL_NOTE_SHORT__</p>
-  <div class="tags"><span>same 186 calls</span><span class="hot">verb-final residual 1.00</span><span>no added latency on finished turns</span><span>replayed, not hindsight</span></div>
+  <p class="sub" style="margin-top:1.2rem">Details and limits: <a href="https://github.com/riyadadlani02/asli#our-proposal" rel="noopener">read the repository notes</a>.</p>
+  <div class="tags"><span>fallback for non-semantic providers</span><span class="hot">do not guess every sentence</span></div>
 </section>
 
 <section class="scene rev" id="semantic">
   <div class="idx"><b>06</b><span>what vendors ship</span></div>
-  <h2>A silence timer fails <span class="q">every time</span>.<br>Semantic detection almost never does.</h2>
-  <p class="lede">Some vendors read the words instead of timing the silence. <b>__T_SEM_HEAD__</b></p>
-  <p class="sub" style="margin-top:.8rem"><b>Not ours</b> &mdash; it ships in OpenAI's realtime API and Gemini Live, and it beats our rule on all three cases here.</p>
+  <h2>Timer: <span class="q">__T_REAL_PAIR_SERVER_PAUSE__.</span><br>Meaning: <span class="q">__T_REAL_PAIR_SEMANTIC_PAUSE__.</span></h2>
+  <p class="lede">On the same __T_REAL_PAIR_N__ real callers, the 500&nbsp;ms timer cut inside a hesitation <b>__T_REAL_PAIR_SERVER_PAUSE__</b>. Semantic detection cut <b>__T_REAL_PAIR_SEMANTIC_PAUSE__</b>.</p>
+  <p class="sub" style="margin-top:.8rem">The smaller synthetic experiment below checks the same idea across sentence shapes. It supports the real-caller result; it does not replace it.</p>
 
   <div class="scroll" style="margin-top:1.6rem">
     <table class="tbl" id="semTbl">
@@ -613,20 +597,18 @@ footer b{color:var(--orange)}
     </table>
   </div>
 
-  <p class="lede" style="margin-top:1.4rem">Row one is the control: a word that <em>cannot</em> end a Hindi sentence. Never once mistaken for an ending &mdash; so the other rows are not measuring a model that simply cannot read the language.</p>
-
-  <p class="sub" style="margin-top:1rem">The hypothesis behind this &mdash; that detection trained on English inherits a blind spot for verb-final languages &mdash; <b>failed</b>. Verb-final and filler are indistinguishable (p&nbsp;=&nbsp;0.66).</p>
+  <p class="lede" style="margin-top:1.4rem">The control shows that semantic detection can recognise an obviously unfinished Hindi phrase. The statistical detail is in the docs.</p>
 
   <div class="ctrlbox" id="semCtrl"></div>
 
   <p class="sub" style="margin-top:1.2rem">__T_SEM_NOTE__</p>
-  <div class="tags"><span>__T_SEM_N__ calls</span><span>0 failures</span><span class="hot">control 0/24</span><span>3 arms</span><span>one model, one language</span></div>
+  <div class="tags"><span>same __T_REAL_PAIR_N__ real callers</span><span class="hot">__T_REAL_PAIR_SEMANTIC_PAUSE__ pause cuts</span><span>__T_SEM_N__ supporting synthetic calls</span></div>
 </section>
 
 <section class="scene rev" id="conv">
   <div class="idx"><b>07</b><span>after the interruption</span></div>
-  <h2>One turn is not <span class="q">a conversation</span>.</h2>
-  <p class="lede">Being cut off is the first half of the failure. She keeps talking &mdash; the number is still coming &mdash; while the agent is already composing a reply to a question she had not finished. Three things then decide the call, and all three are timestamps we already hold.</p>
+  <h2>One cut can break<br><span class="q">the whole conversation.</span></h2>
+  <p class="lede">The caller keeps talking. The agent may already be replying without the number. These rows compare the first turn with the full transcript.</p>
   <div class="scroll" style="margin-top:1.6rem">
     <table class="tbl">
       <thead><tr><th>at the 500&nbsp;ms default, n&nbsp;=&nbsp;12 live calls</th><th></th></tr></thead>
@@ -639,30 +621,29 @@ footer b{color:var(--orange)}
       </tbody>
     </table>
   </div>
-  <p class="lede" style="margin-top:1.4rem">The first two rows are the same call scored two ways, and the gap between them is the cost of answering at end-of-turn: the value is on the socket, just not yet. The fourth row is why she then has to repeat it into an agent that is talking &mdash; 800&nbsp;ms is a generous figure for LLM-plus-TTS first audio, and the row does not rest on it: the earliest cut here lands 1,249&nbsp;ms before she finishes, so any agent audible inside 1.25&nbsp;s collides on all twelve. A slower stack collides <em>less</em> &mdash; it trades the collision for dead air.</p>
-  <p class="sub" style="margin-top:1.2rem">__T_ABSTAIN__</p>
-  <div class="tags"><span class="hot">first-reply view</span><span>vs session transcript</span><span>collision at 800ms</span><span>12 live calls</span><span>no new audio</span></div>
+  <p class="lede" style="margin-top:1.4rem">The value can arrive seconds after the system has decided to answer. A safer turn detector stops the bad decision earlier.</p>
+  <div class="tags"><span class="hot">first reply versus full session</span><span>12 live calls</span><span>details in docs</span></div>
 </section>
 
 <section class="scene rev" id="real">
   <div class="idx"><b>08</b><span>real callers</span></div>
-  <h2>Real audio says <span class="q">something else</span>.</h2>
-  <p class="lede">Every number above rides on a synthesised caller, so the acoustics and the placement of the hesitation are ours. PIR does not need that: it needs only the moment speech ended, and no known entity &mdash; so real recordings can drive it directly. __T_REAL_N__ unscripted Hindi telephone recordings that already carry a mid-utterance pause of 500&nbsp;ms or more, streamed as they were recorded, at the default gate.</p>
+  <h2>The real-caller <span class="q">proof.</span></h2>
+  <p class="lede">These are the same __T_REAL_PAIR_N__ public Hindi voice messages, selected because each has a long mid-sentence pause. No TTS. No changed caller set.</p>
   <div class="scroll" style="margin-top:1.6rem">
     <table class="tbl">
       <thead><tr><th>condition</th><th>turn ended inside<br>a hesitation</th><th>any early<br>turn end</th><th>what changed</th></tr></thead>
       <tbody>__T_REAL_ROWS__</tbody>
     </table>
   </div>
-  <p class="lede" style="margin-top:1.4rem">__T_REAL_VERDICT__</p>
-  <p class="sub" style="margin-top:1.2rem">The cost of using real audio is stated rather than hidden: <code>true_end_ms</code> is no longer known by construction but measured by the same energy VAD that found the pause &mdash; a 20&nbsp;ms analysis frame, and a per-recording spread of __T_SPREAD__ when the threshold is halved and doubled. The VAD takes the last frame above threshold as the end, so a trailing quiet syllable makes an early cut look <em>less</em> early. Like the latency in the socket timestamps, the error runs against the finding.</p>
-  <div class="tags"><span>gram vaani / openslr slr118</span><span class="hot">no tts in the path</span><span>pause floor __T_FLOOR__</span><span>one-variable control</span><span>vad true end &plusmn;20ms</span></div>
+  <p class="lede" style="margin-top:1.4rem">The timer made <b>__T_REAL_PAIR_SERVER_EARLY__</b> early decisions; semantic detection made <b>__T_REAL_PAIR_SEMANTIC_EARLY__</b>. The pause-cut column is the important one because a voice message can legitimately contain more than one turn.</p>
+  <p class="sub" style="margin-top:1.2rem">Selection, VAD timing bounds, raw rows, and the older Sarvam control are kept in the <a href="https://github.com/riyadadlani02/asli#real-callers-no-synthesis-anywhere-in-the-path" rel="noopener">repository documentation</a>.</p>
+  <div class="tags"><span>gram vaani / openslr slr118</span><span class="hot">same 20 callers</span><span>0 provider errors</span><span>no tts</span></div>
 </section>
 
 <section class="scene rev" id="line">
   <div class="idx"><b>09</b><span>the line</span></div>
-  <h2>What the recogniser is <span class="q">actually given</span>.</h2>
-  <p class="lede">The same utterance down a real telephony path. Everything above 3.4&nbsp;kHz &mdash; the detail separating one digit word from another &mdash; is gone before any model sees it.</p>
+  <h2>The phone line changes<br><span class="q">what the model hears.</span></h2>
+  <p class="lede">Telephony, noise, and packet loss can blur digit words before the model sees them.</p>
   <div class="grid" id="agrid"></div>
   <div class="tags"><span>8 khz &micro;-law</span><span>babble</span><span>packet loss</span><span>jitter</span><span>measured snr</span><span class="hot">ffmpeg codec path</span></div>
 </section>
@@ -670,8 +651,8 @@ footer b{color:var(--orange)}
 
 <section class="scene rev" id="general">
   <div class="idx"><b>10</b><span>the generalisation</span></div>
-  <h2>Take the microphone away.<br>The measure <span class="q">stays</span>.</h2>
-  <p class="lede">Silent failure is a property of <em>agents</em>, not speech pipelines: when the input was corrupted, did the behaviour show the agent noticed? Same scoring function, pointed at a retrieval pipeline &mdash; no microphone anywhere.</p>
+  <h2>The same safety question<br><span class="q">works beyond voice.</span></h2>
+  <p class="lede">When an input is corrupted, does the agent notice before it acts? We test that on text records too.</p>
 
   <div class="scroll" style="margin-top:1.8rem">
     <table class="tbl" id="textTbl">
@@ -682,19 +663,14 @@ footer b{color:var(--orange)}
 
   <div class="ctrlbox" id="textCtrl"></div>
 
-  <p class="lede" style="margin-top:1.4rem">The last row is the control: authored to be <b>unnoticeable</b>, one digit changed. <b>If it scored the same as the detectable classes, the metric would be reading how often the agent confirms rather than whether it spotted an error.</b> It does not.</p>
-
-  <p class="sub" style="margin-top:1.2rem">Two negatives kept: the prompt-entanglement finding did not replicate (0.750 both stances, same five items), and <code>omission</code> is 0.00 in both &mdash; a missing field is always flagged.</p>
-
-  <div class="tags"><span>113 items</span><span>20 authored records</span><span class="hot">one scoring function</span><span>no audio</span><span>7 offline tests</span></div>
+  <p class="sub" style="margin-top:1.2rem">Controls and negative results are preserved in the repository.</p>
+  <div class="tags"><span>113 items</span><span>20 authored records</span><span class="hot">one safety question</span><span>no audio</span></div>
 </section>
 
 <section class="scene rev" id="ledger">
   <div class="idx"><b>11</b><span>the rest of the ledger</span></div>
-  <h2>Everything else <span class="q">that was measured</span>.</h2>
-  <p class="lede">Results that did not earn a scene of their own. Several are negative,
-  and one is an experiment that failed outright &mdash; kept, because a result you only
-  publish when it agrees with you is not a result.</p>
+  <h2>Other results,<br><span class="q">kept honest.</span></h2>
+  <p class="lede">Extra experiments, including negative results, are listed here instead of hidden.</p>
   <div class="scroll" style="margin-top:1.6rem">
     <table class="tbl" id="ledTbl">
       <thead><tr><th>what</th><th>n</th><th>number</th><th>how to read it</th></tr></thead>
@@ -705,15 +681,15 @@ footer b{color:var(--orange)}
 
 <section class="scene rev" id="honest">
   <div class="idx"><b>12</b><span>read before citing</span></div>
-  <h2>What this <span class="q">is not</span>.</h2>
-  <p class="lede">A benchmark that hides its limits is marketing. These are the ones that change how you read everything above.</p>
+  <h2>What this result<br><span class="q">does not prove.</span></h2>
+  <p class="lede">Read these limits before using the numbers outside this test.</p>
   <div class="cav" id="cav"></div>
 </section>
 
 <section class="scene rev" id="run">
   <div class="idx"><b>13</b><span>the tool</span></div>
-  <h2>Point it at <span class="q">your own</span> agent.</h2>
-  <p class="lede">The harness is the durable artefact; these numbers are just what it found on one afternoon. An adapter is a single method.</p>
+  <h2>Test <span class="q">your own</span> agent.</h2>
+  <p class="lede">The harness is the product. These numbers are one reproducible run.</p>
   <pre><b>uv</b> venv --python 3.12 &amp;&amp; <b>uv</b> pip install -e ".[agent]"
 python tests/test_asli.py                 <span style="color:var(--bone3)"># 17 checks. no keys, no network</span>
 
@@ -2012,7 +1988,7 @@ function report(rows, gateMs, hes){
          "only the requested output mode changed.","hot");
   else if(ok.length>1)
     slog(`every mode behaved the same on this run (${ok.length} calls) — worth noting, `+
-         "the stored matrix over 4 utterances x 2 runs does split.");
+         "the fixed-filler matrix is 4 utterances x 2 placements x 6 runs.");
 }
 
 let liveBusy=false;

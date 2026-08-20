@@ -40,19 +40,20 @@ the default gate: the entity is in the transcript the agent holds at that moment
 **0%** of them, and in the full session transcript in 67%. The value is on the socket —
 just not yet. [The conversation lane](#one-turn-is-not-a-conversation) is below.
 
-The mode split, across 4 utterances × 2 runs with the filler before the entity —
-the smallest sample here, and the direction is what to read, not the rate:
+The fixed-filler mode rerun covers 4 utterances × 2 placements × 6 runs. It does
+**not** reproduce the earlier all-or-nothing mode split, so this table replaces it:
 
-| mode | number survives | |
-|---|---:|---|
-| `verbatim` | **8/8** | native script, spoken form preserved |
-| `transcribe` | 6/8 | native script |
-| `translit` | **0/8** | romanised — entity dropped |
-| `codemix` | **0/8** | romanised — entity dropped |
+| mode | control | hesitation |
+|---|---:|---:|
+| `transcribe` | 18/24 | 12/24 |
+| `verbatim` | 18/24 | 18/24 |
+| `translit` | 12/24 | 12/24 |
+| `codemix` | **24/24** | **24/24** |
 
-On the two shorter utterances the transcript simply ends at the filler, which is
-scored as capitalised content (`Matlab`). This is the part that is a defect rather
-than a setting, and it is [reproducible in one call](#step-3--one-test-call).
+Only `transcribe` changes between the control and hesitation placements. The old claim
+that romanising modes lose every number was based on a 2-run result and does not hold in
+the fixed-filler rerun. That leaves a narrower observation — `transcribe` loses 6 more
+entities after the hesitation — not a mode-wide verdict.
 
 Two things it is **not**. Recognition itself was accurate throughout — the Hinglish,
 the fillers, `1.25 lakh`, `ek karod pachas lakh`, `04032026` all came through. And the
@@ -415,21 +416,23 @@ either path.
 
 ## More results
 
-### Only the romanising output modes lose the number
+### The fixed-filler rerun changes the output-mode conclusion
 
 Same audio, same gate. **Control** puts the filler at the *start* of the sentence
 where it precedes nothing; **hesitation** puts it immediately before the digits,
-where a real speaker hesitates. n = 4 entities × 2 runs.
+where a real speaker hesitates. n = 4 entities × 6 runs.
 
 | mode | control | hesitation | verdict |
 |---|---:|---:|---|
-| `transcribe` | 6/8 | 6/8 | unaffected |
-| `verbatim` | 6/8 | **8/8** | unaffected |
-| `translit` | 4/8 | **0/8** | number lost |
-| `codemix` | 6/8 | **0/8** | number lost |
+| `transcribe` | 18/24 | 12/24 | fewer values after the hesitation |
+| `verbatim` | 18/24 | 18/24 | no placement difference |
+| `translit` | 12/24 | 12/24 | no placement difference |
+| `codemix` | **24/24** | **24/24** | no placement difference |
 
-Native-script output survives a hesitation. The romanising modes drop the entity
-entirely. Example, `translit`:
+No output mode loses every entity in this run. The only placement difference is
+`transcribe` (18/24 → 12/24); the other modes' losses occur equally in both placements.
+That means the earlier explanation in terms of romanisation alone was too strong.
+Example, an earlier `translit` trace still shows how a final can drop the number:
 
 ```
 "The reference is"  +  matlab  +  "eight, double zero, nine"
@@ -651,6 +654,38 @@ spontaneous ten-second voice message *should* be split into several turns, so on
 corpus that number is close to free, which is exactly why the in-hesitation column is
 the one to read.
 
+### The same real callers: silence timer versus semantic turn detection
+
+A separate paired OpenAI replay uses the **same ordered 20 recordings** above, once
+with the 500 ms `server_vad` timer and once with `semantic_vad`. The semantic condition
+does not receive a silence-duration value: the provider chooses how long to wait from
+the audio and words.
+
+| condition | turn ended **inside a hesitation** | any early turn end | rows / errors |
+|---|---:|---:|---:|
+| OpenAI `server_vad`, 500 ms | 20% (4/20) | 75% (15/20) | 20 / 0 |
+| OpenAI `semantic_vad` | **0% (0/20)** | 25% (5/20) | 20 / 0 |
+
+This is the fair answer to “listen for meaning, not only silence” on these callers:
+semantic detection removed the four observed hesitation cuts in this selected sample.
+The broad early-turn column also falls from 15 to 5, but it includes places where a
+voice message may legitimately form more than one turn, so it is supporting context —
+not the main rate. This is n=20 recordings selected for a ≥500 ms pause, not a claim
+about every caller or every language.
+
+```bash
+uv run asli real --corpus corpus/GV_Dev_5h/Audio --agent openai \
+  --turn-detection server_vad --gate 500 --limit 20
+uv run asli real --corpus corpus/GV_Dev_5h/Audio --agent openai \
+  --turn-detection semantic_vad --limit 20
+```
+
+The two separately stamped artefacts are
+`results/real_pir_openai_server_vad.json[l]` and
+`results/real_pir_openai_semantic_vad.json[l]`. A real-caller dry run now re-scores
+stored rows without writing files, so it cannot replace a completed paired result with
+a smaller subset.
+
 **What this cost in rigour, stated rather than hidden.** `true_end_ms` is no longer known
 by construction; it is measured by the same energy VAD that located the pause. In place
 of a promise there are two bounds: a 20 ms analysis frame, and a per-recording spread
@@ -867,9 +902,10 @@ That file *is* the artefact — every number in this README is computed from it.
   event times are quantised to the chunk on which they arrive. It changes which pause a
   cut belongs to, never whether one happened. The `in_pause` column of the stored
   `pir_sweep_sarvam.json` predates this and is the stricter, lower figure.
-- **The mode result is n = 4 entities × 2 runs** at one gate. The direction is
-  consistent and the mechanism is visible in the socket trace, but it wants the full
-  bank before it's a rate.
+- **The fixed-filler mode result is n = 4 entities × 2 placements × 6 runs** at one
+  gate. It overturns the first 2-run direction rather than confirming it: only
+  `transcribe` changes between placements, so the result is a narrow placement effect,
+  not a romanisation verdict.
 
 ### The synthetic-caller gap, and what is left of it
 

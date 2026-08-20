@@ -76,7 +76,7 @@ failures.** Every number below is on `results/verbfinal2.json`.
 |---|---|---|
 | **dangler** (positive control) | 1.00 (n=31) | **0.00 (0/24)** |
 | verb-final | 1.00 (n=31) | 0.077 (2/26) |
-| filler | 1.00 (n=31) | 0.125 (3/21) |
+| filler | 1.00 (n=31) | 0.125 (3/24) |
 
 ## The hypothesis is not supported
 
@@ -106,9 +106,9 @@ English-shaped incompleteness in Hindi perfectly — a genitive or conjunction b
 the pause is never mistaken for an ending. It can do semantic end-of-turn in this
 language, which is the precondition for the question being askable at all.
 
-**Semantic detection takes this failure from 100% to under 10%**, on the same audio,
-the same hesitation and the same nominal gate. That is the largest effect in this
-repository and it is not a failure result.
+**Semantic detection takes this failure from 100% to 0–12.5%**, depending on the
+matched arm, on the same audio, the same hesitation and the same nominal gate. It is a
+large reduction, but not an honest “under 10%” result in every condition.
 
 ## The 19 zero-turn rows are holds, and that is now proven
 
