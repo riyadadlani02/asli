@@ -1,0 +1,3265 @@
+[
+ {
+  "id": "vf-01",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   6200
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1800,
+  "first": "जो मोबाइल नंबर मैंने बैंक में रजिस्टर करवाया था, उसका",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-01",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "जो मोबाइल नंबर मैंने बैंक में रजिस्टर करवाया था, उसका 9877111",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-01",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   6900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1854,
+  "first": "जो मोबाइल नंबर मैंने बैंक में रजिस्टर करवाया था वो है मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-01",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6900
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "जो मोबाइल नंबर मैंने बैंक में रजिस्टर करवाया था वो है मतलब 98 77 111.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-01",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   6300
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1827,
+  "first": "जो मोबाइल नंबर मैंने बैंक में रजिस्टर करवाया था वो है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-01",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6400
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "जो मोबाइल नंबर मैंने बैंक में रजिस्टर करवाया था वो है 9877-111.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-02",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "hain",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4000,
+   6200
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1356,
+  "first": "आपके रिकॉर्ड में मेरे अकाउंट के जो आखिरी पांच अंक हैं, उनका...",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-02",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "hain",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6300
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "आपके रिकॉर्ड में मेरे अकाउंट के जो आखिरी पाँच अंक हैं उनका 40556",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-02",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hain",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4600,
+   6700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1336,
+  "first": "आपके रिकॉर्ड में मेरे अकाउंट के जो आखिरी पांच अंक हैं, वो हैं मतलब",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-02",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hain",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4600,
+   6700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1336,
+  "first": "आपके रिकॉर्ड में मेरे अकाउंट के जो आखिरी पाँच अंक हैं, वो हैं मतलब?",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-02",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hain",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4000,
+   6100
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1309,
+  "first": "आपके रिकॉर्ड में मेरे अकाउंट के जो आखिरी पाँच अंक हैं, वो हैं।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-02",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hain",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6200
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "आपके रिकॉर्ड में मेरे अकाउंट के जो आखिरी पाँच अंक हैं, वो हैं 60556.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-03",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "likh leejiye",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   5600
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1190,
+  "first": "मैंने जो कंप्लेंट दर्ज करवाई थी, उसका रेफरेंस नंबर और",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-03",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "likh leejiye",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6000
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मैंने जो कंप्लेंट दर्ज करवाई थी, उसका रेफरेंस नंबर 8009.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-03",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "likh leejiye",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5100,
+   7200
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1242,
+  "first": "मैंने जो कंप्लेंट दर्ज करवाई थी, उसका रेफरेंस नंबर लिख लीजिए।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-03",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "likh leejiye",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-03",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "likh leejiye",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4500,
+   6600
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1215,
+  "first": "मैंने जो कंप्लेंट दर्ज करवायी थी, उसका रेफरेंस नंबर लिख लीजिए।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-03",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "likh leejiye",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4600,
+   6800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1115,
+  "first": "मैंने जो कंप्लेंट दर्ज करवाई थी, उसका रेफरेंस नंबर लिख लीजिए।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-05",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3800,
+   5400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 794,
+  "first": "बैंक ने मेरे लोन के लिए जो अमाउंट सैंक्शन किया था उसका",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-05",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6700
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "बैंक ने मेरे लोन के लिए जो अमाउंट सैंक्शन किया था उसका साढ़े अठारह लाख.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-05",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4600,
+   6300
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 845,
+  "first": "बैंक ने मेरे लोन के लिए जो अमाउंट सैंक्शन किया था, वो था...",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-05",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6300
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "बैंक ने मेरे लोन के लिए जो अमाउंट सैंक्शन किया था, वो था मतलब साढ़े तीन लाख।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-05",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4000,
+   5700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 818,
+  "first": "बैंक ने मेरे लोन के लिए जो अमाउंट सैंक्शन किया था, वो था",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-05",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7400
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "बैंक ने मेरे लोन के लिए जो अमाउंट सैंक्शन किया था, वो था साढ़े अठारह लाख।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3500,
+   6100
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1791,
+  "first": "मेरी पॉलिसी का जो नंबर आपके सिस्टम में दर्ज है उसका",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6200
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरी पॉलिसी का जो नंबर आपके सिस्टम में दर्ज है, उसका 77712345.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   6800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1778,
+  "first": "मेरी पॉलिसी का जो नंबर आपके सिस्टम में दर्ज है, वो है।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6900
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरी पॉलिसी का जो नंबर आपके सिस्टम में दर्ज है वो है 77712345",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   6200
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1751,
+  "first": "मेरी पॉलिसी का जो नंबर आपके सिस्टम में दर्ज है, वो है.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-06",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6300
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरी पॉलिसी का जो नंबर आपके सिस्टम में दर्ज है वो है 77712345।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-07",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "kiya hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3500,
+   4900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 544,
+  "first": "मैंने अपनी गाड़ी के नुकसान के लिए क्लेम फाइल किया है लेकिन",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-07",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "kiya hai",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-07",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "kiya hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4100,
+   5400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 508,
+  "first": "मैंने अपनी गाड़ी के नुकसान के लिए जो क्लेम फाइल किया है, मतलब...",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-07",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "kiya hai",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-07",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "kiya hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3500,
+   4800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 481,
+  "first": "मैंने अपनी गाड़ी के नुकसान के लिए जो क्लेम फाइल किया है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-07",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "kiya hai",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-08",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "hoga",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5200,
+   8000
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1985,
+  "first": "आपके कंप्यूटर पर मेरा जो कस्टमर आइडेंटिफिकेशन नंबर दिख रहा होगा, उसका...",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-08",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "hoga",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   8400
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "आपके कंप्यूटर पर मेरा जो कस्टमर आइडेंटिफिकेशन नंबर दिख रहा होगा उसका 5540321।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-08",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hoga",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5300,
+   8200
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 2040,
+  "first": "आपके कंप्यूटर पर मेरा जो कस्टमर आइडेंटिफिकेशन नंबर दिख रहा होगा, वो है।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-08",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hoga",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   9100
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "आपके कंप्यूटर पर मेरा जो कस्टमर आइडेंटिफिकेशन नंबर दिख रहा होगा, वो है 5540321.'",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-08",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hoga",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4800,
+   7500
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1913,
+  "first": "आपके कंप्यूटर पर मेरा जो कस्टमर आइडेंटिफिकेशन नंबर दिख रहा होगा, वो है",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-08",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hoga",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7600
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "आपके कंप्यूटर पर मेरा जो कस्टमर आइडेंटिफिकेशन नंबर दिख रहा होगा, वो है 5540321।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-09",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "hui thi",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3700,
+   5800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1272,
+  "first": "मेरे क्रेडिट कार्ड से जो ट्रांजैक्शन पिछले हफ्ते हुई थी, उसकी...",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-09",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "hui thi",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-09",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hui thi",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4800,
+   6900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1226,
+  "first": "मेरे क्रेडिट कार्ड से जो ट्रांजैक्शन पिछले हफ्ते हुई थी, वो थी मतलब...",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-09",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hui thi",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-09",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hui thi",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   6300
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1199,
+  "first": "मेरे क्रेडिट कार्ड से जो ट्रांजैक्शन पिछले हफ्ते हुई थी, वो थी।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-09",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hui thi",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-10",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "diya hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4000,
+   6100
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1224,
+  "first": "सर्विस सेंटर वाले ने मुझे जो टिकट नंबर दिया है उसका",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-10",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "diya hai",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-10",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "diya hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4100,
+   6300
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1314,
+  "first": "सर्विस सेंटर वाले ने मुझे जो टिकट नंबर दिया है वो है मतलब।",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-10",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "diya hai",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-10",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "diya hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3500,
+   5600
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1287,
+  "first": "सर्विस सेंटर वाले ने मुझे जो टिकट नंबर दिया है वो है...",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-10",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "diya hai",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-11",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "bacha hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   5600
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1100,
+  "first": "मेरे होम लोन पर अभी जो प्रिंसिपल अमाउंट बचा है उसका",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-11",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "bacha hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6100
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरे होम लोन पर अभी जो प्रिंसिपल अमाउंट बचा है, उसका बारह लाख पचास हज़ार.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-11",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "bacha hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   6100
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1084,
+  "first": "بارہ لاکھ پچاس ہزار.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-11",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "bacha hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6200
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरे होम लोन पर अभी जो प्रिंसिपल अमाउंट बचा है वो है मतलब बारह लाख पचास हजार.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-11",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "bacha hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   5500
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1057,
+  "first": "मेरे होम लोन पर अभी जो प्रिंसिपल अमाउंट बचा है, वो है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-11",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "bacha hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरे होम लोन पर अभी जो प्रिंसिपल अमाउंट बचा है, वो है बारह लाख पचास हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-12",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "aaya tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3900,
+   6800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 2009,
+  "first": "पेमेंट करने के बाद मेरे फोन पर जो रेफरंस आया था, उसका",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-12",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "aaya tha",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-12",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "aaya tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4400,
+   7200
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1965,
+  "first": "पेमेंट करने के बाद मेरे फोन पर जो रेफरेंस आया था वो है मतलब",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-12",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "aaya tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   8900
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "पेमेंट करने के बाद मेरे फोन पर जो रेफरेंस आया था वो है 918 273645",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-12",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "aaya tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3800,
+   6600
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1938,
+  "first": "पेमेंट करने के बाद मेरे फोन पर जो रेफरेंस आया था वो है:",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-12",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "aaya tha",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-13",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "tay hua hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3900,
+   5400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 718,
+  "first": "फ्लैट खरीदने के लिए हमारे बीच जो सौदा तय हुआ है, उसका",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-13",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "tay hua hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "फ्लैट खरीदने के लिए हमारे बीच जो सौदा तय हुआ है, उसका पेंच साठ लाख.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-13",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "tay hua hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4500,
+   6100
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 810,
+  "first": "फ्लैट खरीदने के लिए हमारे बीच जो सौदा तय हुआ है वो है?",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-13",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "tay hua hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6200
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "फ्लैट खरीदने के लिए हमारे बीच जो सौदा तय हुआ है, वो है मतलब पैंसठ लाख.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-13",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "tay hua hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3900,
+   5500
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 783,
+  "first": "फ्लैट खरीदने के लिए हमारे बीच जो सौदा तय हुआ है, वो है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-13",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "tay hua hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5600
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "फ्लैट खरीदने के लिए हमारे बीच जो सौदा तय हुआ है, वो है पैंतालीस लाख.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-15",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "kat ti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   5400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 924,
+  "first": "हर महीने मेरी सैलरी से जो ईएमआई अपने आप कटती है उसकी?",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-15",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "kat ti hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "हर महीने मेरी सैलरी से जो ईएमआई अपने आप कटती है उसके साढ़े सात हज़ार।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-15",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "kat ti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4600,
+   6400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 909,
+  "first": "हर महीने मेरी सैलरी से जो ईएमआई अपने आप कटती है, वो हैं।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-15",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "kat ti hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6400
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "हर महीने मेरी सैलरी से जो ईएमआई अपने आप कटती है, वो है मतलब साढ़े सात हजार.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-15",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "kat ti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4000,
+   5700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 882,
+  "first": "हर महीने मेरी सैलरी से जो ईएमआई अपने आप कटती है, वो है.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-15",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "kat ti hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5700
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "हर महीने मेरी सैलरी से जो ईएमआई अपने आप कटती है, वो है साढ़े सात हजार.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-16",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "likha hua hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4700,
+   7000
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1455,
+  "first": "मेरे पास जो पुराना पासबुक है, उसमें जो ब्रांच कोड लिखा हुआ है, उसका विवरण",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-16",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "likha hua hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7100
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरे पास जो पुराना पासबुक है, उसमें जो ब्रांच कोड लिखा हुआ है, उसका 300145",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-16",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "likha hua hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5500,
+   7800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1485,
+  "first": "मेरे पास जो पुराना पासबुक है, उसमें जो ब्रांच कोड लिखा हुआ है वो है मतलब?",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-16",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "likha hua hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5500,
+   7800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1485,
+  "first": "मेरे पास जो पुराना पासबुक है, उसमें जो ब्रांच कोड लिखा हुआ है, वो है मतलब",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-16",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "likha hua hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4900,
+   7200
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1458,
+  "first": "मेरे पास जो पुराना पासबुक है, उसमें जो ब्रांच कोड लिखा हुआ है, वो है।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-16",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "likha hua hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7300
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरे पास जो पुराना पासबुक है, उसमें जो ब्रांच कोड लिखा हुआ है, वो है 300145.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-17",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "mila hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4500,
+   6300
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 949,
+  "first": "मेरी टर्म इंश्योरेंस पॉलिसी में जो टोटल कवर मुझे मिला है, उसका",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-17",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "mila hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6400
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरी टर्म इंश्योरेंस पॉलिसी में जो टोटल कवर मुझे मिला है, उसका एक करोड़ बीस लाख।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-17",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "mila hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4800,
+   6600
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 967,
+  "first": "मेरी टर्म इंश्योरेंस पॉलिसी में जो टोटल कवर मुझे मिला है वो है मतलब?",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-17",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "mila hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6800
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरी टर्म इंश्योरेंस पॉलिसी में जो टोटल कवर मुझे मिला है वो है मतलब एक करोड़ बीस लाख.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-17",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "mila hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   6000
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 940,
+  "first": "मेरी टर्म इंश्योरेंस पॉलिसी में जो टोटल कवर मुझे मिला है वो है",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-17",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "mila hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6100
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरी टर्म इंश्योरेंस पॉलिसी में जो टोटल कवर मुझे मिला है, वो है एक करोड़ बीस लाख।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-18",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "batate hain",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4100,
+   5800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 857,
+  "first": "जो एजेंट मेरे घर आए थे वो अपना कोड बताते हैं और",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-18",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "batate hain",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5900
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "जो एजेंट मेरे घर आए थे, वो अपना कोड बताते हैं और 4471।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-18",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "batate hain",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   6100,
+   6800
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "जो एजेंट मेरे घर आए थे, वो अपना कोड हमेशा यहीं बताते हैं, मतलब...",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-18",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "batate hain",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6900
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "जो एजेंट मेरे घर आए थे, वो अपना कोड हमेशा यहीं बताते हैं, मतलब 4471.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-18",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "batate hain",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4400,
+   6100
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 915,
+  "first": "जो एजेंट मेरे घर आए थे, वो अपना कोड हमेशा यहीं बताते हैं।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-18",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "batate hain",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6200
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "जो एजेंट मेरे घर आए थे, वो अपना कोड हमेशा यहीं बताते हैं - 4471.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-19",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "bhara tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4400,
+   6400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1129,
+  "first": "पिछले साल मैंने इनकम टैक्स के रूप में जो पैसा भरा था, उसका",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-19",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "bhara tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6600
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "पिछले साल मैंने इनकम टैक्स के रूप में जो पैसा भरा था, उसका एक लाख पचासी हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-19",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "bhara tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5500,
+   7100
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 749,
+  "first": "पिछले साल मैंने इनकम टैक्स के रूप में जो पैसा भरा था, वो था।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-19",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "bhara tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7300
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "पिछले साल मैंने इनकम टैक्स के रूप में जो पैसा भरा था, वो था मतलब एक लाख पचासी हजार.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-19",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "bhara tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4500,
+   6500
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1122,
+  "first": "पिछले साल मैंने इनकम टैक्स के रूप में जो पैसा भरा था, वो था।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-19",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "bhara tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6600
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "पिछले साल मैंने इनकम टैक्स के रूप में जो पैसा भरा था, वो था एक लाख पचासी हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-21",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "dena padta hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3900,
+   5400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 649,
+  "first": "मुझे हर महीने मकान मालिक को जो किराया देना पड़ता है, उसका",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-21",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "dena padta hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5600
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मुझे हर महीने मकान मालिक को जो किराया देना पड़ता है, उसका बाईस हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-21",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "dena padta hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5000,
+   6500
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 699,
+  "first": "मुझे हर महीने मकान मालिक को जो किराया देना पड़ता है, वो है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-21",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "dena padta hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6900
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मुझे हर महीने मकान मालिक को जो किराया देना पड़ता है, वो है मतलब बाइस हज़ार.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-21",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "dena padta hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4400,
+   5900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 672,
+  "first": "मुझे हर महीने मकान मालिक को जो किराया देना पड़ता है, वो है।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-21",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "dena padta hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6000
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मुझे हर महीने मकान मालिक को जो किराया देना पड़ता है वो है बाइस हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-22",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "khatam hota hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3800,
+   5800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1115,
+  "first": "मेरा डेबिट कार्ड जिन चार अंकों पर ख़ताम होता है, उनका?",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-22",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "khatam hota hai",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-22",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "khatam hota hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4100,
+   5900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1053,
+  "first": "मेरा डेबिट कार्ड जिन चार अंकों पर खत्म होता है वो हैं मतलब।",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-22",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "khatam hota hai",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-22",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "khatam hota hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3500,
+   5400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1026,
+  "first": "मेरा डेबिट कार्ड जिन चार अंकों पर खत्म होता है वो हैं:",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-22",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "khatam hota hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरा डेबिट कार्ड जिन चार अंकों पर समाप्त होता है, वो हैं: 9988.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-23",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "kar di hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4300,
+   5900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 733,
+  "first": "मैंने अपनी बेटी की शादी के लिए जो फिक्स्ड डिपॉजिट कर दी है, उसकी",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-23",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "kar di hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6000
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मैंने अपनी बेटी की शादी के लिए जो फिक्स्ड डिपॉजिट कर दी है, उसकी पाँच लाख",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-23",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "kar di hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4900,
+   6500
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 764,
+  "first": "मैंने अपनी बेटी की शादी के लिए जो फिक्स्ड डिपॉजिट कर दी है, वो है।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-23",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "kar di hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6600
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मैंने अपनी बेटी की शादी के लिए जो फिक्स्ड डिपॉज़िट कर दी है, वो है मतलब पांच लाख.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-23",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "kar di hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4300,
+   5900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 737,
+  "first": "मैंने अपनी बेटी की शादी के लिए जो फिक्स्ड डिपॉजिट कर दी है वो है।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-23",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "kar di hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6000
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मैंने अपनी बेटी की शादी के लिए जो फिक्स्ड डिपॉजिट कर दी है, वो है पांच लाख.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-24",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "note kar leejiye",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4300,
+   6800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1699,
+  "first": "मेरे पिछले एप्लिकेशन का एक्नॉलेजमेंट नंबर नोट कर लीजिए और",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-24",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "note kar leejiye",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   8500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरे पिछले एप्लीकेशन का एक्नॉलेजमेंट नंबर नोट कर लीजिए और १११२२२३३३।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-24",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "note kar leejiye",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5300,
+   7800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1743,
+  "first": "मेरे पिछले एप्लीकेशन का जो एक्नॉलेजमेंट नंबर है वो नोट कर लीजिए।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-24",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "note kar leejiye",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-24",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "note kar leejiye",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4700,
+   7200
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1716,
+  "first": "मेरे पिछले एप्लिकेशन का जो एक्नॉलेजमेंट नंबर है, वो नोट कर लीजिए.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-24",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "note kar leejiye",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4800,
+   8800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1616,
+  "first": "मेरे पिछले एप्लीकेशन का जो एक्नॉलेजमेंट नंबर है, वो नोट कर लीजिए।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-25",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "lagta hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   5500
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1034,
+  "first": "इस ऑपरेशन में अस्पताल का जो कुल खर्चा लगता है उसका",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-25",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "lagta hai",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-25",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "lagta hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4400,
+   6200
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1042,
+  "first": "इस ऑपरेशन में हॉस्पिटल का जो कुल खर्चा लगता है, वो है.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-25",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "lagta hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6200
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "इस ऑपरेशन में हॉस्पिटल का जो कुल खर्चा लगता है, वो है मतलब पचहत्तर हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-25",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "lagta hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3800,
+   5700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1015,
+  "first": "इस ऑपरेशन में हॉस्पिटल का जो कुल खर्चा लगता है, वो है",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-25",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "lagta hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5800
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "इस ऑपरेशन में हॉस्पिटल का जो कुल खर्चा लगता है, वो है पचहत्तर हजार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-28",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "bataya tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5000,
+   7000
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1169,
+  "first": "पिछली बार जिस ऑफिसर से बात हुई थी उसने जो एक्सटेंशन बताया था उसका",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-28",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "bataya tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7200
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "पिछली बार जिस ऑफिसर से बात हुई थी, उसने जो एक्सटेंशन बताया था, उसका 34567.",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-28",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "bataya tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5500,
+   7500
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1185,
+  "first": "पिछली बार जिस ऑफिसर से बात हुई थी उसने जो एक्सटेंशन बताया था वो है मतलब।",
+  "has_answer": true,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-28",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "bataya tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7600
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "पिछली बार जिस ऑफिसर से बात हुई थी उसने जो एक्सटेंशन बताया था वो है मतलब ३४५६७।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-28",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "bataya tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4900,
+   6900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1158,
+  "first": "पिछली बार जिस ऑफिसर से बात हुई थी उसने जो एक्सटेंशन बताया था, वो है।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-28",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "bataya tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7000
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "पिछली बार जिस ऑफिसर से बात हुई थी उसने जो एक्सटेंशन बताया था वो है 34567।",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-29",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "milti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3900,
+   5400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 656,
+  "first": "मुझे हर महीने कंपनी से जो सैलरी अकाउंट में मिलती है, उसकी",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-29",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "milti hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मुझे हर महीने कंपनी से जो सैलरी अकाउंट में मिलती है, उसकी पैंतालीस हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-29",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "milti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4800,
+   6400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 740,
+  "first": "मुझे हर महीने कंपनी से जो सैलरी अकाउंट में मिलती है, वो है मतलब।",
+  "has_answer": false,
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-29",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "milti hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मुझे हर महीने कंपनी से जो सैलरी अकाउंट में मिलती है, वो है मतलब पैंतालीस हज़ार.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-29",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "milti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   5800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 713,
+  "first": "मुझे हर महीने कंपनी से जो सैलरी अकाउंट में मिलती है, वो है.",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-29",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "milti hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6000
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मुझे हर महीने कंपनी से जो सैलरी अकाउंट में मिलती है, वो है पैंतालीस हज़ार।",
+  "has_answer": false,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-30",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "hoti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   7600
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 2563,
+  "first": "मेरे फिक्स्ड डिपॉजिट की जो मैच्योरिटी डेट सिस्टम में होती है, उसकी",
+  "has_answer": true,
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-30",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "hoti hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7700
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरे फिक्स्ड डिपॉजिट की जो मेच्योरिटी डेट सिस्टम में होती है, उसकी 20260415.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-30",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hoti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5000,
+   8500
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 2607,
+  "first": "मेरे फिक्स्ड डिपॉजिट की जो मैच्योरिटी डेट सिस्टम में होती है, वो है।",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-30",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hoti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5200,
+   8700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 2407,
+  "first": "मेरा फिक्स्ड डिपॉजिट की जो मैच्योरिटी डेट सिस्टम में होती है, वो है।",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-30",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hoti hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4400,
+   7800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 2580,
+  "first": "मेरे फिक्स्ड डिपॉजिट की जो मेच्योरिटी डेट सिस्टम में होती है, वो है।",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-30",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hoti hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   8300
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मेरे फिक्स्ड डिपॉजिट की जो मैच्योरिटी डेट सिस्टम में होती है, वो है 20260415.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-31",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "hua tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3400,
+   4900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 616,
+  "first": "पिछले महीने मेरा जो मोबाइल का बिल हुआ था, उसका",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-31",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "hua tha",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-31",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "hua tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   5600
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 515,
+  "first": "पिछले महीने मेरा जो मोबाइल का बिल हुआ था, वो था मतलब",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-31",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "hua tha",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-31",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "hua tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3500,
+   4900
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 588,
+  "first": "पिछले महीने मेरा जो मोबाइल का बिल हुआ था, वो था?",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-31",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "hua tha",
+  "turns": 0,
+  "split": false,
+  "ends": [],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-32",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "jaari kiya hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3800,
+   5800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1149,
+  "first": "कंपनी ने मुझे जो नया एम्प्लॉई कोड जारी किया है उसका",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-32",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "jaari kiya hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6000
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "कंपनी ने मुझे जो नया एम्प्लॉई कोड जारी किया है, उसका 888123.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-32",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "jaari kiya hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   6300
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1227,
+  "first": "कंपनी ने मुझे जो नया इम्प्लॉई कोड जारी किया है वो है मतलब",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-32",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "jaari kiya hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "कंपनी ने मुझे जो नया कर्मचारी कोड जारी किया है, वो है 888123.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-32",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "jaari kiya hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   5600
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1200,
+  "first": "कंपनी ने मुझे जो नया इम्प्लॉई कोड जारी किया है, वो है।",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-32",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "jaari kiya hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5600
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "कंपनी ने मुझे जो नया एम्प्लॉई कोड जारी किया है, वो है 888123.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-33",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "bhara hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4000,
+   5700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 794,
+  "first": "मैंने इस साल अपने बेटे की स्कूल फीस में जो पैसा भरा है, उसका",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-33",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "bhara hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5900
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मैंने इस साल अपने बेटे की स्कूल फीस में जो पैसा भरा है, उसका निन्यानवे हज़ार।",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-33",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "bhara hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5000,
+   6700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 891,
+  "first": "मैंने इस साल अपने बेटे की स्कूल फीस में जो पैसा भरा है, वो है मतलब...",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-33",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "bhara hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6800
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मैंने इस साल अपने बेटे की स्कूल फीस में जो पैसा भरा है, वो है मतलब निन्यानवे हज़ार.",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-33",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "bhara hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4400,
+   6100
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 864,
+  "first": "मैंने इस साल अपने बेटे की स्कूल फीस में जो पैसा भरा है, वो है।",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-33",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "bhara hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6200
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मैंने इस साल अपने बेटे की स्कूल फीस में जो पैसा भरा है वो है निन्यानवे हज़ार.",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-34",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "daala tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5000,
+   7000
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1134,
+  "first": "ऑनलाइन फॉर्म भरते वक्त मैंने जो सिक्योरिटी क्वेश्चन का आंसर डाला था, उसका",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-34",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "daala tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7000
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "ऑनलाइन फॉर्म भरते वक्त मैंने जो सिक्योरिटी क्वेश्चन का आंसर डाला था उसका 10203.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-34",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "daala tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   5300,
+   7400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1266,
+  "first": "ऑनलाइन फॉर्म भरते वक्त मैंने जो सिक्योरिटी क्वेश्चन का आंसर डाला था, वो है.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-34",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "daala tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   7500
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "ऑनलाइन फॉर्म भरते वक्त मैंने जो सिक्योरिटी क्वेश्चन का आंसर डाला था, वो है मतलब 10203.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-34",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "daala tha",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4700,
+   6800
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1239,
+  "first": "ऑनलाइन फॉर्म भरते वक्त मैंने जो सिक्योरिटी क्वेश्चन का उत्तर डाला था, वो है।",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-34",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "daala tha",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6800
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "ऑनलाइन फॉर्म भरते वक्त मैंने जो सिक्योरिटी क्वेश्चन का आंसर डाला था, वो है 10203.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-35",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "chukana hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3700,
+   5400
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 818,
+  "first": "मुझे इस गाड़ी के लोन का जो बकाया अभी चुकाना है उसका?",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-35",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "chukana hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5400
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मुझे इस गाड़ी के लोन का जो बकाया अभी चुकाना है, उसका डेढ़ लाख साठ हजार रुपये है।",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-35",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "chukana hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4200,
+   6000
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 916,
+  "first": "मुझे इस गाड़ी के लोन का जो बकाया भी चुकाना है वो है।",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-35",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "chukana hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6000
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "मुझे इस गाड़ी के लोन का जो बकाया भी चुकाना है वो है, मतलब जो लाख सात हजार।",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-35",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "chukana hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3600,
+   5300
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 889,
+  "first": "मुझे इस गाड़ी के लोन का जो बकाया भी चुकाना है वो है।",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-35",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "chukana hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   3700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 789,
+  "first": "मुझे इस गाड़ी के लोन का जो बकाया भी चुकाना है वो है।",
+  "has_answer": false,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-36",
+  "arm": "dangler",
+  "mode": "server_vad",
+  "verb": "chalta hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3700,
+   5700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": false,
+  "ms_early": 1114,
+  "first": "हमारे ऑफिस का जो लैंडलाइन नंबर अभी चलता है उसका?",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-36",
+  "arm": "dangler",
+  "mode": "semantic_vad",
+  "verb": "chalta hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5700
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "हमारे ऑफिस का जो लैंडलाइन नंबर अभी चलता है, उसका 555000.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-36",
+  "arm": "filler",
+  "mode": "server_vad",
+  "verb": "chalta hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   4300,
+   6300
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1182,
+  "first": "हमारे ऑफिस का जो लैंडलाइन नंबर अभी चलता है वो है? मतलब?",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": true
+ },
+ {
+  "id": "vf-36",
+  "arm": "filler",
+  "mode": "semantic_vad",
+  "verb": "chalta hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   6400
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "हमारे ऑफिस का जो लैंडलाइन नंबर अब भी चलता है वो है, मतलब ट्रिपल फाइव ट्रिपल जीरो।",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-36",
+  "arm": "verb-final",
+  "mode": "server_vad",
+  "verb": "chalta hai",
+  "turns": 2,
+  "split": true,
+  "ends": [
+   3700,
+   5700
+  ],
+  "pir_premature": true,
+  "pir_in_pause": true,
+  "ms_early": 1155,
+  "first": "हमारे ऑफिस का जो लैंडलाइन नंबर अभी चलता है वो है...",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ },
+ {
+  "id": "vf-36",
+  "arm": "verb-final",
+  "mode": "semantic_vad",
+  "verb": "chalta hai",
+  "turns": 1,
+  "split": false,
+  "ends": [
+   5700
+  ],
+  "pir_premature": false,
+  "pir_in_pause": false,
+  "ms_early": null,
+  "first": "हमारे ऑफिस का जो लैंडलाइन नंबर अब भी चलता है वो है: 555000.",
+  "has_answer": true,
+  "error": "",
+  "lexical_would_hold": false
+ }
+]

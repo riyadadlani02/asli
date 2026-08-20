@@ -64,3 +64,81 @@ one call per head and would have caught every problem above before 48 calls were
 4. **n ≥ 30 per arm**, since artifacts will still remove some.
 
 Raw rows: `results/verbfinal.json`. Runner: `run_verbfinal.py`.
+
+---
+
+# Attempt 2 — the redesign, and what it found
+
+186 calls, 31 items surviving pre-flight, three arms, two modes. **Zero call
+failures.** Every number below is on `results/verbfinal2.json`.
+
+| arm | server_vad | semantic_vad |
+|---|---|---|
+| **dangler** (positive control) | 1.00 (n=31) | **0.00 (0/24)** |
+| verb-final | 1.00 (n=31) | 0.077 (2/26) |
+| filler | 1.00 (n=31) | 0.125 (3/21) |
+
+## The hypothesis is not supported
+
+Semantic end-of-turn detection does not have a blind spot specific to verb-final
+constructions. Nothing here reaches significance, and the two arms that were supposed
+to differ are indistinguishable:
+
+| comparison | Fisher exact |
+|---|---|
+| verb-final vs dangler | p = 0.49 |
+| filler vs dangler | p = 0.23 |
+| verb-final vs filler | p = 0.66 |
+| pooled (verb-final + filler) vs dangler | p = 0.17 |
+
+The filler arm — a discourse marker before the pause, no finite verb involved — fails
+at least as often as the verb-final arm. Whatever is happening is not about verb
+position.
+
+## What the design did establish
+
+**The arms are matched stimuli.** `server_vad` splits 1.00 on all three arms, n=31
+each. Identical audio treatment, identical splice, so any semantic_vad difference is
+semantic rather than acoustic. This is what the first attempt could not show.
+
+**The positive control holds outright: 0/24.** Semantic detection handles
+English-shaped incompleteness in Hindi perfectly — a genitive or conjunction before
+the pause is never mistaken for an ending. It can do semantic end-of-turn in this
+language, which is the precondition for the question being askable at all.
+
+**Semantic detection takes this failure from 100% to under 10%**, on the same audio,
+the same hesitation and the same nominal gate. That is the largest effect in this
+repository and it is not a failure result.
+
+## The 19 zero-turn rows are holds, and that is now proven
+
+19 rows returned no turns. All 19 are `semantic_vad`, **none carries an error**, and
+**none has any turn-end event**. No error, no turn end, no transcript: the turn was
+never ended within the stream. The same audio produced turns on every `server_vad`
+row, so the audio is not in question.
+
+They are therefore excluded holds, which makes every semantic_vad rate above an
+**upper bound**. Counting them in would put the arms at 0/30, 2/30 and 3/27.
+
+## One post-hoc observation, labelled as such
+
+Both verb-final splits are imperatives — `likh leejiye` ("write it down"),
+`note kar leejiye` ("note it"). An imperative is a complete speech act, so ending the
+turn there is defensible behaviour rather than a premature cut. Remove those two and
+the verb-final arm is 0/24, identical to the control, leaving the filler arm as the
+only one that fails.
+
+That is subsetting after seeing the data. It is a hypothesis for the next run — that
+the boundary is a completed *speech act* rather than a completed *clause* — and not a
+result of this one.
+
+## Reproducing
+
+```bash
+uv run python experiments/run_verbfinal2.py
+```
+
+Resumes from `results/verbfinal2.json` and reuses the stored pre-flight verdicts.
+Delete `results/verbfinal2_preflight.json` to re-decide the corpus — but note that
+pre-flight is a live call and stochastic, so a fresh one will not select exactly the
+same 31 items.
