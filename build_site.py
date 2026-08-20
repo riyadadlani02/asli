@@ -240,6 +240,19 @@ def subs() -> dict[str, str]:
             f"in {lat['n_complete']} utterances whose true ending we built, so at 95% "
             f"confidence no worse than {lat['fp_upper95']:.1%} &mdash; "
             f"{lat['policy_expected_ms']:.0f}&nbsp;ms a turn against 200."),
+        "__T_POL_NOTE_SHORT__": (
+            f"The rule reads the turn's text, so it inherits what the recogniser did to it: "
+            f"the filler row is {pol['arms'][1]['rescued']}/31 because the recogniser "
+            f"returned <i>matlab</i> that often. One source of truth for the word lists now "
+            f"lives in <code>asli.score</code> &mdash; they had been copied into three files "
+            f"and drifted, and the fused genitives <code>उसका</code>/<code>उसकी</code> were "
+            f"missing, which cost the first row 3/31 instead of "
+            f"{pol['arms'][0]['rescued']}/31."),
+        "__T_LAT_CAV_SHORT__": (
+            f"Every utterance in that corpus ends on a digit or an amount &mdash; the easy "
+            f"case &mdash; so the true rate on open speech will be higher. The real-speech "
+            f"corpus cannot settle it: its recordings are cut mid-phrase, so the rule firing "
+            f"on them is the cut, not an error."),
         "__T_LAT_CAV__": (
             f"Read that bound with its corpus in mind: {lat['corpus_note']}. A digit word is "
             f"never in the list, so this measures the rule on the easy case and the true "
