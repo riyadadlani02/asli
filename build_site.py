@@ -192,6 +192,7 @@ def subs() -> dict[str, str]:
     sem = _semantic_lane()
     pol = _policy_lane()
     lat = json.loads((ROOT / "results/policy_latency.json").read_text())
+    uni = _union()
     sem_sv = sum(a["server_vad"]["n"] for a in sem["arms"])
     sem_worst = max(a["semantic_vad"]["rate"] for a in sem["arms"])
     sem_worst = f"{sem_worst * 100:.0f}%"
@@ -224,6 +225,11 @@ def subs() -> dict[str, str]:
             f"the other participants, not a speaking style. Settling it needs single-speaker "
             f"spontaneous English telephony, or diarisation applied to AMI first. Until then "
             f"the rate above is measured on Hindi and claimed only for Hindi."),
+        "__T_UNION_N__": str(uni["semantic"]),
+        "__T_UNION_K__": str(uni["recovered"]),
+        "__T_UNION_R__": str(uni["union"]),
+        "__T_UNION_TOT__": str(uni["n"]),
+        "__T_UNION_P__": f"not significant (Fisher p = {uni['p']})",
         "__T_LAT__": (
             f"A false hold costs one more endpointing cycle: the turn had already ended "
             f"after {lat['gate_ms']}&nbsp;ms of silence, and holding it open means waiting "
@@ -421,6 +427,31 @@ def _ledger() -> list[dict]:
                     "<code>experiments/verbfinal-README.md</code> rather than deleted, "
                     "because the next person will otherwise build it the same way."},
     ]
+
+
+def _union() -> dict:
+    """Semantic detection and the rule fail on different cases. Does running both help?
+
+    Reported with its p-value because it does not survive one: two events recovered.
+    """
+    import math
+
+    rows = json.loads((ROOT / "results/verbfinal2.json").read_text())
+    ok = [r for r in rows if r["mode"] == "semantic_vad" and r["turns"] > 0 and not r.get("error")]
+    sem = sum(r["split"] for r in ok)
+    uni = sum(r["split"] and not r["lexical_would_hold"] for r in ok)
+    a, b, c, d = uni, len(ok) - uni, sem, len(ok) - sem
+
+    def pr(x):
+        b_, c_, d_ = a + b - x, a + c - x, d - (a - x)
+        if min(b_, c_, d_) < 0:
+            return 0.0
+        return math.comb(a + b, x) * math.comb(c + d, c_) / math.comb(a + b + c + d, a + c)
+
+    p0 = pr(a)
+    p = sum(pr(x) for x in range(min(a + b, a + c) + 1) if pr(x) <= p0 + 1e-12)
+    return {"semantic": sem, "union": uni, "n": len(ok), "recovered": sem - uni,
+            "p": round(p, 3)}
 
 
 def collect() -> dict:
