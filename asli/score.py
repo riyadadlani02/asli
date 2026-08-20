@@ -191,6 +191,13 @@ def normalise(entity_type: str, value: str) -> str:
         bare = re.sub(r"[^\d]", "", stripped.replace(",", ""))
         if bare and not re.search(r"[a-z\u0900-\u097f]", stripped):
             return str(int(bare))
+        # A comma-grouped figure is unambiguous even sitting inside words, and it has to
+        # be read before the word parser gets to it: the tokeniser splits on the commas,
+        # so "18,50,000" arrives as 18, 50, 000 and accumulates to 2300. A vendor that
+        # normalises amounts to figures — Gemini does — had 30 of its 41 apparent entity
+        # failures caused by this and nothing else. "47,500" scored 970.
+        if m := re.search(r"\d{1,3}(?:,\d{2,3})+", stripped):
+            return str(int(m.group(0).replace(",", "")))
         return spoken_amount(v) or (str(int(bare)) if bare else "")
     if entity_type == "date":
         return spoken_date(v) or v

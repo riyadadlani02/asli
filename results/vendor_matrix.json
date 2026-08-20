@@ -5,7 +5,7 @@
   "end_source": "vad",
   "turns": 2,
   "ends": [
-   2500,
+   2600,
    4355
   ],
   "first_turn": "मेरा मोबाइल नंबर है मतलब",
@@ -18,7 +18,7 @@
   "end_source": "vad",
   "turns": 2,
   "ends": [
-   2600,
+   2500,
    4400
   ],
   "first_turn": "मेरा mobile number है",
