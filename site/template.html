@@ -567,6 +567,10 @@ footer b{color:var(--orange)}
   <p class="lede">Everything above measures a silence timer. But one class of turn
   detection does not use a timer at all &mdash; it reads what was said and decides
   whether the sentence could have ended there. <b>__T_SEM_HEAD__</b></p>
+  <p class="sub" style="margin-top:.9rem"><b>This one is not ours.</b> It ships in
+  OpenAI's realtime API and in Gemini Live, and it is measured here because a page that
+  only showed failures would have implied nobody had solved this. Our own rule is the
+  next section, and it is weaker than this in two of three cases.</p>
 
   <div class="scroll" style="margin-top:1.6rem">
     <table class="tbl" id="semTbl">
@@ -597,9 +601,11 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="solution">
-  <div class="idx"><b>06</b><span>the intervention</span></div>
+  <div class="idx"><b>06</b><span>our proposal</span></div>
   <h2>Read the words, <span class="q">not only</span> the silence.</h2>
-  <p class="lede">Raising <code>silence_duration_ms</code> for everyone buys patience at
+  <p class="lede"><b>This is the rule asli proposes</b> &mdash; the one thing on this
+  page that is ours rather than a vendor's, and the reason the rest of it was built.
+  Raising <code>silence_duration_ms</code> for everyone buys patience at
   the cost of latency on <em>every</em> turn of <em>every</em> call, including the ones
   that were already finished. The rule here costs latency only on turns that are
   demonstrably unfinished: <b>some words cannot end a Hindi sentence.</b> When the turn
