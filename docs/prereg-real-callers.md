@@ -57,3 +57,49 @@ n = 20, selected for containing a long pause. It is a recall measurement on a co
 sample and not a population rate. It cannot measure false holds at all — every recording
 in it is a case that *should* be held — so the ≤ 16 ms latency figure gets no support
 here either way.
+
+---
+
+# Result — 2026-08-20
+
+Run against the 20 stored real-caller recordings. No new calls: the transcripts the
+recogniser held at each cut were already in `results/real_pir.jsonl`.
+
+**12 of the 20 were cut off before finishing. The rule fires on 7 of those 12 — 58%,
+95% CI [32%, 81%].**
+
+Against the pre-registration: **7 of 20 recordings, inside the stated 3–9 interval and
+above the point estimate of 5.**
+
+## The prediction was wrong, in the rule's favour
+
+I predicted the real figure would be materially *worse* than the 49% measured on
+authored audio, on the reasoning that placing the hesitation after a watched word
+inflates it. **It is not worse. It is higher — 58% against 49%** — though n = 12 and the
+interval is wide enough to contain both.
+
+Real callers do hesitate on case markers. The seven that fired stopped on
+`को`, `का`, `को`, `तो`, `में`, `यह` and `मतलब` — six postpositions and one filler, with
+no help from us about where to pause.
+
+## The five misses are the ceiling, not noise
+
+| recording | last word | why |
+|---|---|---|
+| 01-00057-03 | `है` | finite verb |
+| 01-00131-02 | `है` | finite verb |
+| 01-00155-01 | `हूँ` | finite verb |
+| 01-00102-02 | `बताया` | verb form |
+| 01-00229-02 | `बार` | content word |
+
+Four of five are verbs. That is the same structural ceiling the verb-final experiment
+found — a finite verb is a legal ending and no word list can fire on one — reached
+independently on real speech, and it is also where `है`/`हैं` turned up as derived
+finality markers at 4× baseline. Three findings, three methods, one conclusion.
+
+## What this does not establish
+
+n = 12 cuts, and the 20 recordings were **selected** for containing a pause of 500 ms or
+more. This is recall on a conditional sample, not a population rate. It measures nothing
+about false holds — every recording here is a case that should be held — so the ≤ 16 ms
+latency figure gets no support from it either way.
