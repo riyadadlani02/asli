@@ -226,7 +226,18 @@ class Interruption:
 # as an elliptical answer ("किसका?" — "राम का"). Both are reported, so the judgement is
 # a number rather than a hidden choice. Not checked by a Hindi linguist: fix by PR.
 DANGLING_STRICT = frozenset("कि क्योंकि इस उस लिए द्वारा अगर जबकि".split())
-DANGLING_MARGINAL = frozenset("का के की को में से ने तक पर तो और यह वह जो".split())
+# The fused genitives belong here for the same reason the bare ones do: उसका is उस + का,
+# and it demands a following noun exactly as का does. Their absence was not a judgement
+# call, it was an oversight — and a measured one. On the verb-final experiment the rule
+# fired on 3 of 31 turns cut after a genuine dangler, because 27 of those turns ended on
+# उसका, उसकी or उनका and nothing in the list matched them.
+DANGLING_MARGINAL = frozenset(
+    "का के की को में से ने तक पर तो और यह वह जो लेकिन "
+    "उसका उसकी उसके उनका उनकी उनके इसका इसकी इसके जिसका जिसकी जिसके".split())
+# Discourse markers. Not case marking — these are the "umm" of Hindi, and a turn ending
+# on one is unfinished for a different reason. The page and the experiments were each
+# carrying their own copy of this set; this is the only one now.
+DANGLING_FILLER = frozenset("मतलब यानी वो वोह ऐसा हाँ हां अच्छा बस अरे".split())
 
 
 def dangling(text: str) -> str:
@@ -242,6 +253,19 @@ def dangling(text: str) -> str:
     last = w[-1].strip("।,.?!\u200d")
     return ("strict" if last in DANGLING_STRICT else
             "marginal" if last in DANGLING_MARGINAL else "")
+
+
+def policy_holds(text: str) -> bool:
+    """Would the shipped turn-taking policy hold this turn open?
+
+    Deliberately wider than `dangling()`: a discourse marker means the speaker is not
+    finished, but it is not case marking, and the `cut_dangling_*` rates must not be
+    inflated by it. So the metric and the intervention are two functions, not one.
+    """
+    w = text.split()
+    if not w:
+        return False
+    return bool(dangling(text)) or w[-1].strip("।,.?!\u200d") in DANGLING_FILLER
 
 
 def pir(spec: CallSpec, result: Result) -> Interruption:

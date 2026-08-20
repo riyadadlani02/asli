@@ -41,14 +41,14 @@ MODES = {"server_vad": {"type": "server_vad", "silence_duration_ms": 500},
 ARMS = ("dangler", "filler", "verb-final")
 GATE = 0.80  # both gates: heads that pre-flight clean, and the dangler control
 
-DANGLING = set("का के की को में से ने तक पर तो और यह वह जो कि क्योंकि इस उस लिए अगर जबकि".split())
-FILLERS = set("मतलब यानी वो ऐसा हाँ".split())
-
-
 def lexical_holds(text: str) -> bool:
-    """The shipped policy's verdict, recorded per row so the data can contradict me."""
-    w = (text or "").strip().split()
-    return bool(w) and w[-1].strip("।,.?!") in DANGLING | FILLERS
+    """The shipped policy's verdict, recorded per row so the data can contradict me.
+
+    Imported, not re-listed. This file used to carry its own copy of the word lists and
+    it had drifted from the one in asli.score — which meant the experiment was scoring a
+    policy that was not the shipped one.
+    """
+    return score.policy_holds(text or "")
 
 
 def to_native(pcm: np.ndarray) -> np.ndarray:

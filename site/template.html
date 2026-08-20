@@ -596,8 +596,41 @@ footer b{color:var(--orange)}
   <div class="tags"><span>__T_SEM_N__ calls</span><span>0 failures</span><span class="hot">control 0/24</span><span>3 arms</span><span>one model, one language</span></div>
 </section>
 
+<section class="scene rev" id="solution">
+  <div class="idx"><b>06</b><span>the intervention</span></div>
+  <h2>Read the words, <span class="q">not only</span> the silence.</h2>
+  <p class="lede">Raising <code>silence_duration_ms</code> for everyone buys patience at
+  the cost of latency on <em>every</em> turn of <em>every</em> call, including the ones
+  that were already finished. The rule here costs latency only on turns that are
+  demonstrably unfinished: <b>some words cannot end a Hindi sentence.</b> When the turn
+  ends on one, it is not an ending &mdash; hold it open and merge what follows.</p>
+  <p class="lede" style="margin-top:.9rem">Hindi marks grammatical relations
+  <em>after</em> the word, so the token left hanging at a mid-phrase pause is a case
+  marker or a conjunction. It reads only the turn's own text, which a live system holds
+  at that same instant, so this is a faithful replay of something implementable in real
+  time &mdash; not a hindsight edit.</p>
+
+  <div class="scroll" style="margin-top:1.6rem">
+    <table class="tbl" id="polTbl">
+      <thead><tr><th>where the hesitation falls</th><th>turns the timer cut</th><th>rule holds</th><th>still cut</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <p class="lede" style="margin-top:1.4rem"><b>The last row is the ceiling, and it is
+  structural.</b> A finite verb is a legal ending, so no lexical rule can fire there
+  &mdash; the rule cannot see that the speaker had more to say. That is not a tuning
+  problem and no word list fixes it. It is also the exact case semantic detection is
+  for, which is why both belong on this page.</p>
+
+  <div class="ctrlbox" id="polCtrl"></div>
+
+  <p class="sub" style="margin-top:1.2rem">__T_POL_NOTE__</p>
+  <div class="tags"><span>same 186 calls</span><span class="hot">verb-final residual 1.00</span><span>no added latency on finished turns</span><span>replayed, not hindsight</span></div>
+</section>
+
 <section class="scene rev" id="conv">
-  <div class="idx"><b>06</b><span>after the interruption</span></div>
+  <div class="idx"><b>07</b><span>after the interruption</span></div>
   <h2>One turn is not <span class="q">a conversation</span>.</h2>
   <p class="lede">Being cut off is the first half of the failure. She keeps talking &mdash; the number is still coming &mdash; while the agent is already composing a reply to a question she had not finished. Three things then decide the call, and all three are timestamps we already hold.</p>
   <div class="scroll" style="margin-top:1.6rem">
@@ -618,7 +651,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="real">
-  <div class="idx"><b>07</b><span>real callers</span></div>
+  <div class="idx"><b>08</b><span>real callers</span></div>
   <h2>Real audio says <span class="q">something else</span>.</h2>
   <p class="lede">Every number above rides on a synthesised caller, so the acoustics and the placement of the hesitation are ours. PIR does not need that: it needs only the moment speech ended, and no known entity &mdash; so real recordings can drive it directly. __T_REAL_N__ unscripted Hindi telephone recordings that already carry a mid-utterance pause of 500&nbsp;ms or more, streamed as they were recorded, at the default gate.</p>
   <div class="scroll" style="margin-top:1.6rem">
@@ -633,7 +666,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="line">
-  <div class="idx"><b>08</b><span>the line</span></div>
+  <div class="idx"><b>09</b><span>the line</span></div>
   <h2>What the recogniser is <span class="q">actually given</span>.</h2>
   <p class="lede">The same utterance down a real telephony path. Everything above 3.4&nbsp;kHz &mdash; the detail separating one digit word from another &mdash; is gone before any model sees it.</p>
   <div class="grid" id="agrid"></div>
@@ -642,7 +675,7 @@ footer b{color:var(--orange)}
 
 
 <section class="scene rev" id="general">
-  <div class="idx"><b>09</b><span>the generalisation</span></div>
+  <div class="idx"><b>10</b><span>the generalisation</span></div>
   <h2>Take the microphone away.<br>The measure <span class="q">stays</span>.</h2>
   <p class="lede">Silent failure is a property of <em>agents</em>, not of speech pipelines: when the input was corrupted, did the behaviour show the agent noticed? That question survives losing the audio. The same scoring function, pointed at a retrieval pipeline &mdash; authored records, an authored corruption, no microphone anywhere.</p>
 
@@ -662,15 +695,29 @@ footer b{color:var(--orange)}
   <div class="tags"><span>113 items</span><span>20 authored records</span><span class="hot">one scoring function</span><span>no audio</span><span>7 offline tests</span></div>
 </section>
 
+<section class="scene rev" id="ledger">
+  <div class="idx"><b>11</b><span>the rest of the ledger</span></div>
+  <h2>Everything else <span class="q">that was measured</span>.</h2>
+  <p class="lede">Results that did not earn a scene of their own. Several are negative,
+  and one is an experiment that failed outright &mdash; kept, because a result you only
+  publish when it agrees with you is not a result.</p>
+  <div class="scroll" style="margin-top:1.6rem">
+    <table class="tbl" id="ledTbl">
+      <thead><tr><th>what</th><th>n</th><th>number</th><th>how to read it</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
 <section class="scene rev" id="honest">
-  <div class="idx"><b>10</b><span>read before citing</span></div>
+  <div class="idx"><b>12</b><span>read before citing</span></div>
   <h2>What this <span class="q">is not</span>.</h2>
   <p class="lede">A benchmark that hides its limits is marketing. These are the ones that change how you read everything above.</p>
   <div class="cav" id="cav"></div>
 </section>
 
 <section class="scene rev" id="run">
-  <div class="idx"><b>11</b><span>the tool</span></div>
+  <div class="idx"><b>13</b><span>the tool</span></div>
   <h2>Point it at <span class="q">your own</span> agent.</h2>
   <p class="lede">The harness is the durable artefact; these numbers are just what it found on one afternoon. An adapter is a single method.</p>
   <pre><b>uv</b> venv --python 3.12 &amp;&amp; <b>uv</b> pip install -e ".[agent]"
@@ -942,6 +989,26 @@ function sweep(){
     '<div class="hot"><span>the undetectable control</span><b>'+T.careful.sfr_undetectable.toFixed(2)+"</b></div>"+
     '<div><span>clean accuracy, both stances</span><b>'+T.careful.clean_accuracy.toFixed(2)+"</b></div>";
 })();
+
+/* the intervention */
+(function(){
+  const P=D.policy, NAME={dangler:"after a case marker or conjunction",
+    filler:"after a discourse marker <span class=\"sub2\">matlab</span>",
+    "verb-final":"after a finite verb <span class=\"sub2\">a legal ending</span>"};
+  document.querySelector("#polTbl tbody").innerHTML=P.arms.map(a=>
+    `<tr><td>${NAME[a.arm]}</td><td>${a.cuts}</td><td><b>${a.rescued}</b></td>`+
+    `<td class="${a.residual?"no":""}"><b>${a.residual===null?"&mdash;":a.residual.toFixed(2)}</b></td></tr>`).join("");
+  document.querySelector("#polCtrl").innerHTML=
+    `<div><span>cuts the rule holds</span><b>${P.arms.reduce((s,a)=>s+a.rescued,0)}/${P.arms.reduce((s,a)=>s+a.cuts,0)}</b></div>`+
+    '<div class="hot"><span>verb-final, unreachable</span><b>0/31</b></div>'+
+    `<div><span>cuts semantic detection still made</span><b>${P.sem_residual}</b></div>`+
+    `<div><span>of those, the rule holds</span><b>${P.sem_rescued}</b></div>`;
+})();
+
+/* the rest of the ledger */
+document.querySelector("#ledTbl tbody").innerHTML=D.ledger.map(r=>
+  `<tr><td>${r.what}</td><td>${r.n}</td><td><b>${r.value}</b></td>`+
+  `<td class="sub" style="max-width:26rem">${r.reading}</td></tr>`).join("");
 
 /* the semantic lane */
 (function(){
