@@ -427,6 +427,14 @@ footer b{color:var(--orange)}
   <p class="lede">Indian callers hesitate mid-sentence &mdash; <em>matlab</em>, the verbal equivalent of &ldquo;umm&rdquo;. The gap splits her turn. The partials carry all seven digits; the final that lands 105&nbsp;ms later ends at <em>matlab</em> and reports that it covered the whole turn. <b>One call reproduces it</b> &mdash; <a href="#trace">the socket trace is below</a>, message by message.</p>
   <p class="lede" style="margin-top:1rem">How often is a caller in a position to hit this? Measured, not assumed: in 1,788 unscripted Hindi telephone recordings, <b>__T_CALLS500__ carry a hesitation long enough to end the turn early at the documented default</b> &mdash; and streaming twenty of them at that default, <b>__T_REALHEAD__</b>. And when the turn does end early, an agent replying at that moment has the account number in <b>__T_FIRSTTURN__ of calls</b> &mdash; while the session transcript has it.</p>
   <p class="sub" style="margin-top:1rem;max-width:56ch"><b>Two things this is not:</b> recognition was accurate throughout, and the endpointing gate is a documented setting doing what it is told. Neither is the finding &mdash; <a href="#trace">the dropped entity</a> and <a href="#conv">what the agent is holding when it answers</a> are.</p>
+  <div class="box" style="margin-top:1.6rem">
+    <b>If you change one thing, change this.</b> Of the four transcription modes, only
+    <code>verbatim</code> keeps the number through a hesitation &mdash; <b>8/8</b>. The two
+    that romanise numerals lose it <b>every time, 0/8</b>, because the vendor's numeral
+    normaliser runs before you ever see the text. One setting, measured, no code.
+    <a href="#modes">The grid is section 01.</a>
+  </div>
+
   <div class="tags"><span class="hot">__T_CALLS500__ of real callers</span><span>real audio, no tts</span><span>one call reproduces it</span><span>entity at first reply __T_FIRSTTURN__</span><span>translit 0/8 (n=8)</span></div>
   <p class="sub" style="margin-top:1.6rem">Built by <a href="https://github.com/riyadadlani02" rel="noopener">riyadadlani02</a> &middot; <a href="https://github.com/riyadadlani02/asli" rel="noopener">github.com/riyadadlani02/asli</a> &middot; MIT &middot; corrections and adapters welcome by issue or PR</p>
 </section>
@@ -581,10 +589,11 @@ footer b{color:var(--orange)}
   <p class="lede" style="margin-top:.6rem">__T_LAT__</p>
   <div class="scroll" style="margin-top:1.2rem">
     <table class="tbl" id="latTbl">
-      <thead><tr><th>approach</th><th>turns that pay</th><th>added latency per turn</th></tr></thead>
+      <thead><tr><th>approach</th><th>callers cut off</th><th>added latency, every turn</th><th>fits a 50&nbsp;ms budget?</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
+  <p class="lede" style="margin-top:1.2rem">__T_BUDGET_NOTE__</p>
   <p class="sub" style="margin-top:1rem">__T_LAT_CAV_SHORT__</p>
 
   <p class="sub" style="margin-top:1rem">__T_POL_NOTE_SHORT__</p>
@@ -993,11 +1002,11 @@ function sweep(){
 /* what the rule costs */
 (function(){
   const L=D.latency;
-  document.querySelector("#latTbl tbody").innerHTML=
-    `<tr><td>move <code>silence_duration_ms</code> to 700</td><td class="no"><b>every turn</b></td>`+
-    `<td class="no"><b>${L.gate_raise_ms} ms</b></td></tr>`+
-    `<tr><td>hold on a word that cannot end the sentence</td><td>only turns it fires on</td>`+
-    `<td><b>&le; ${L.policy_expected_ms.toFixed(0)} ms</b> <span class="sub2">fp &le; ${(L.fp_upper95*100).toFixed(1)}%</span></td></tr>`;
+  const B=D.budget;
+  document.querySelector("#latTbl tbody").innerHTML=B.map(r=>
+    `<tr><td>${r.label}</td><td class="${r.cut_pct>10?"no":""}">${r.cut}</td>`+
+    `<td class="${r.ms>50?"no":""}"><b>${r.ms}</b></td>`+
+    `<td class="${r.fits?"":"no"}"><b>${r.fits?"yes":"no"}</b></td></tr>`).join("");
 })();
 
 /* the rest of the ledger */
