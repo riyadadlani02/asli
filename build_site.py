@@ -191,6 +191,7 @@ def subs() -> dict[str, str]:
     eng = json.loads((ROOT / "results/pause_fit_english.json").read_text())
     sem = _semantic_lane()
     pol = _policy_lane()
+    lat = json.loads((ROOT / "results/policy_latency.json").read_text())
     sem_sv = sum(a["server_vad"]["n"] for a in sem["arms"])
     sem_worst = max(a["semantic_vad"]["rate"] for a in sem["arms"])
     sem_worst = f"{sem_worst * 100:.0f}%"
@@ -223,6 +224,27 @@ def subs() -> dict[str, str]:
             f"the other participants, not a speaking style. Settling it needs single-speaker "
             f"spontaneous English telephony, or diarisation applied to AMI first. Until then "
             f"the rate above is measured on Hindi and claimed only for Hindi."),
+        "__T_LAT__": (
+            f"A false hold costs one more endpointing cycle: the turn had already ended "
+            f"after {lat['gate_ms']}&nbsp;ms of silence, and holding it open means waiting "
+            f"that out again. So the rule's expected cost is its false-positive rate times "
+            f"{lat['gate_ms']}&nbsp;ms, and <b>it would have to wrongly hold "
+            f"{lat['breakeven_fp']:.0%} of finished turns before it cost more than simply "
+            f"moving the gate to 700&nbsp;ms</b>. Measured: {lat['false_holds']} false holds "
+            f"in {lat['n_complete']} utterances whose true ending we built, so at 95% "
+            f"confidence no worse than {lat['fp_upper95']:.1%} &mdash; "
+            f"{lat['policy_expected_ms']:.0f}&nbsp;ms a turn against 200."),
+        "__T_LAT_CAV__": (
+            f"Read that bound with its corpus in mind: {lat['corpus_note']}. A digit word is "
+            f"never in the list, so this measures the rule on the easy case and the true "
+            f"rate on open-ended speech will be higher. <b>The real-speech corpus cannot "
+            f"settle it and was not used.</b> Its entries are fixed-length segments that "
+            f"end mid-phrase &mdash; <span class=\"deva\">\u0905\u0917\u0930</span>, "
+            f"<span class=\"deva\">\u0915\u0940</span>, "
+            f"<span class=\"deva\">\u0932\u0947\u0915\u093f\u0928</span> &mdash; so the "
+            f"rule firing on them is the recording being cut, not the rule being wrong. "
+            f"Scoring against them would have produced a 19.9% false-positive rate that is "
+            f"nothing of the kind."),
         "__T_POL_NOTE__": (
             f"The rule fires on the turn's own text, so it inherits whatever the "
             f"recogniser did to that text. That is the whole of the filler row: the head "
@@ -410,6 +432,7 @@ def collect() -> dict:
     d["lanes"] = _lane_results()
     d["semantic"] = _semantic_lane()
     d["policy"] = _policy_lane()
+    d["latency"] = json.loads((ROOT / "results/policy_latency.json").read_text())
     d["ledger"] = _ledger()
     d["sample"] = _score_sample(json.loads((ROOT / "results/sample_call.json").read_text()))
     d["hero"] = {k: v for k, v in json.loads((ROOT / "results/hero_wave.json").read_text()).items()

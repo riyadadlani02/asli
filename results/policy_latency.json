@@ -1,0 +1,13 @@
+{
+ "n_complete": 93,
+ "false_holds": 0,
+ "fp_rate": 0.0,
+ "fp_upper95": 0.0317,
+ "gate_ms": 500,
+ "policy_expected_ms": 15.8,
+ "gate_raise_ms": 200,
+ "breakeven_fp": 0.4,
+ "gate_raise_calls_helped": 0.1734,
+ "gate_raise_calls_helped_at_default": 0.4256,
+ "corpus_note": "every utterance here ends on an entity (digits or an amount), which is the easiest ending for the rule to get right"
+}
