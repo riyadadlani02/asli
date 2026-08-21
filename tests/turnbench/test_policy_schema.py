@@ -76,3 +76,18 @@ def test_policy_artifact_rejects_the_unversioned_constant_rate_proxy():
             yield_threshold=0.2, hold_threshold=0.8, grace_ms=150, hard_deadline_ms=800,
             train_source_recording_ids=("call-1",), calibration_source_recording_ids=("call-2",),
         )
+
+
+def test_policy_feature_rejects_the_unversioned_constant_rate_proxy():
+    """Fails if a v2 feature row can claim the former constant-rate semantics."""
+    with pytest.raises(SchemaError, match="current versioned proxy"):
+        PolicyFeature(
+            decision_id="d1", recording_id="clip-1", source_recording_id="call-1",
+            language="Hindi", condition="Near field", export_fingerprint="e" * 64,
+            extractor_config={"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1},
+            audio_fingerprint="a" * 64, pause_ms=600,
+            trailing_energy=0.25, trailing_energy_slope=-0.1,
+            trailing_speech_ms=740, local_speech_rate_hz=4.0,
+            semantic_status="absent", semantic_outcome=None,
+            semantic_endpoint_offset_ms=None,
+        )
