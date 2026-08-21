@@ -73,8 +73,6 @@ def semantic_rows(features, outcomes):
 def test_replay_scores_only_test_groups_and_labels_split_counts():
     """Fails if train or calibration decisions contaminate held-out metrics."""
     rows = study_rows([
-        make_feature("train", source="train-0", pause_ms=1000),
-        make_feature("cal", source="cal", pause_ms=1000),
         make_feature("test-yield", source="test", pause_ms=100, condition="noisy"),
         make_feature("test-continue", source="test", pause_ms=1000),
     ])

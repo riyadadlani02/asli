@@ -109,7 +109,7 @@ class PolicyFeature:
     def __post_init__(self) -> None:
         for name in ("decision_id", "recording_id", "source_recording_id", "language", "condition", "export_fingerprint", "audio_fingerprint"):
             _text(getattr(self, name), name)
-        _config(self.extractor_config)
+        _portable_extractor_config(self.extractor_config)
         for name in ("pause_ms", "trailing_speech_ms"):
             _integer(getattr(self, name), name)
         for name in ("trailing_energy", "trailing_energy_slope", "local_speech_rate_hz"):
