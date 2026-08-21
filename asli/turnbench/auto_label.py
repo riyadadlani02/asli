@@ -48,14 +48,13 @@ class OpenAISemanticObserver:
 
     def observe(self, pcm: np.ndarray, rate: int, language: str | None) -> EndpointObservation:
         self.adapter.rate = rate
-        if language is not None:
-            self.adapter.lang = language.split("-")[0]
+        self.adapter.lang = language.split("-")[0] if language is not None else None
         spec = CallSpec(
             id="turnbench-semantic-observation",
             segments=[],
             entity_type="turnbench",
             canonical="",
-            lang=language or self.adapter.lang,
+            lang=language or "",
         )
         try:
             result = asyncio.run(self.adapter.run(pcm, spec))

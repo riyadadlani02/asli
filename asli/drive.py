@@ -338,11 +338,14 @@ class OpenAIWS:
     def session_update_payload(self) -> dict[str, object]:
         """Build the documented general-Realtime setup for either turn detector."""
         turn_detection = {**self.turn_detection_payload(), "create_response": False}
+        transcription: dict[str, object] = {"model": self.model}
+        if self.lang is not None:
+            transcription["language"] = self.lang
         return {"type": "session.update", "session": {
             "type": "realtime",
             "audio": {"input": {
                 "format": {"type": "audio/pcm", "rate": self.NATIVE_RATE},
-                "transcription": {"model": self.model, "language": self.lang},
+                "transcription": transcription,
                 "turn_detection": turn_detection,
             }},
         }}
