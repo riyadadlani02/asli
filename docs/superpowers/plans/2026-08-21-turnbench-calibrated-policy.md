@@ -246,7 +246,8 @@ def extract_policy_features(
 ) -> list[PolicyFeature]:
     # Index optional AutoPrediction rows by decision_id, reject duplicate/extra IDs,
     # reject candidate/prediction run/config mixtures through existing validators,
-    # Calculate SHA-256 from sample rate plus complete PCM for audio_fingerprint.
+    # Calculate SHA-256 from sample rate plus only PCM through observation_end_ms
+    # for audio_fingerprint; never read, hash, or inspect later audio.
     # Record the canonical export fingerprint and fixed extractor config in each
     # output row, then return rows sorted by decision_id.
 ~~~
