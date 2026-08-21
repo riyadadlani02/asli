@@ -76,7 +76,7 @@ def _resolved_revision(rows: object) -> str:
     """Read the Hub commit retained by datasets without another Hub request."""
 
     def find(value: object, depth: int = 0) -> str | None:
-        if depth > 3:
+        if depth > 5:
             return None
         if isinstance(value, str):
             match = re.search(r"(?<![0-9a-f])([0-9a-f]{40})(?![0-9a-f])", value)
@@ -85,6 +85,12 @@ def _resolved_revision(rows: object) -> str:
             return None
         if isinstance(value, Mapping):
             for nested in value.values():
+                resolved = find(nested, depth + 1)
+                if resolved:
+                    return resolved
+            return None
+        if isinstance(value, (list, tuple)):
+            for nested in value:
                 resolved = find(nested, depth + 1)
                 if resolved:
                     return resolved
