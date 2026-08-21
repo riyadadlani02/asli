@@ -15,14 +15,16 @@ from asli.turnbench.policy_schema import PolicyFeature, PolicySplit
 
 def make_feature(
     decision_id, *, source, pause_ms=600, energy=0.25, slope=-0.1,
-    speech_rate=4.0, semantic_outcome="continue",
+    speech_rate=4.0, semantic_outcome="continue", extractor_config=None,
 ):
     semantic_status = "available" if semantic_outcome is not None else "absent"
     return PolicyFeature(
         decision_id=decision_id, recording_id=f"recording-{source}",
         source_recording_id=source, language="Hindi", condition="clean",
         export_fingerprint="e" * 64,
-        extractor_config={"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1},
+        extractor_config=extractor_config or {
+            "frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1,
+        },
         audio_fingerprint="a" * 64, pause_ms=pause_ms,
         trailing_energy=energy, trailing_energy_slope=slope,
         trailing_speech_ms=740, local_speech_rate_hz=speech_rate,
@@ -147,6 +149,32 @@ def test_fit_rejects_features_outside_the_declared_split():
 
     with pytest.raises(ValueError, match="feature group absent from split: unknown"):
         fit_policy([feature], [], split, language="Hindi")
+
+
+@pytest.mark.parametrize("forbidden_key", ["api_key", "audio_path"])
+def test_fit_rejects_nonportable_extractor_configuration(forbidden_key):
+    """Fails if a secret or local path can be copied into a policy artifact."""
+    config = {
+        "frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1,
+        forbidden_key: "must-not-be-portable",
+    }
+    features = [
+        make_feature("train-continue", source="train-a", extractor_config=config),
+        make_feature("train-yield", source="train-b", extractor_config=config),
+        make_feature("calibration", source="cal-a", extractor_config=config),
+        make_feature("test", source="test-a", extractor_config=config),
+    ]
+    split = explicit_split(train=("train-a", "train-b"), calibration=("cal-a",), test=("test-a",))
+
+    with pytest.raises(ValueError, match="nonportable extractor configuration"):
+        fit_policy(
+            features,
+            [
+                make_reference(features[0], "continue"), make_reference(features[1], "yield"),
+                make_reference(features[2], "continue"), make_reference(features[3], "yield"),
+            ],
+            split, language="Hindi",
+        )
 
 
 def test_calibration_uses_the_lowest_thresholds_on_a_utility_tie():
