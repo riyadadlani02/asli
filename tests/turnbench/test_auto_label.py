@@ -149,6 +149,22 @@ def test_predict_candidate_normalizes_config_with_report_rules(candidate):
     assert prediction.config == {"nested": [1, {"value": 2.5}]}
 
 
+def test_predict_candidate_can_omit_the_provider_language_hint(candidate):
+    seen = {}
+
+    prediction = predict_candidate(
+        candidate,
+        read_audio=lambda _: (np.zeros(10_000, dtype=np.int16), 1000),
+        observe=lambda _pcm, _rate, language: (
+            seen.setdefault("language", language) or EndpointObservation(None, False, None)
+        ),
+        run_id="r1", agent="openai", model="m", config={}, provider_language=None,
+    )
+
+    assert seen["language"] is None
+    assert prediction.outcome == "continue"
+
+
 def test_semantic_observer_sets_adapter_language_for_each_candidate_window():
     class FakeAdapter:
         def __init__(self, **kwargs):
