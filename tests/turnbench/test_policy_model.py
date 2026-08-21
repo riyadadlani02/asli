@@ -171,30 +171,35 @@ def test_fit_rejects_declared_ghost_source_groups():
 
 
 @pytest.mark.parametrize("forbidden_key", ["api_key", "audio_path"])
-def test_fit_rejects_nonportable_extractor_configuration(forbidden_key):
-    """Fails if a secret or local path can be copied into a policy artifact."""
+def test_a_nonportable_extractor_configuration_cannot_be_constructed(forbidden_key):
+    """Fails if a secret or local path can be copied into a policy artifact.
+
+    The guard is at construction, not at fit: a PolicyFeature carrying a secret cannot
+    be brought into existence, so no later code path has to remember to check. The
+    message names the offending key, because an unexpected key and a stale proxy version
+    are not the same problem and only one of them leaks something.
+    """
     config = {
         "frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1,
         "speech_rate_proxy": "voiced_onsets_per_observed_second.v1",
         forbidden_key: "must-not-be-portable",
     }
-    features = [
-        make_feature("train-continue", source="train-a", extractor_config=config),
-        make_feature("train-yield", source="train-b", extractor_config=config),
-        make_feature("calibration", source="cal-a", extractor_config=config),
-        make_feature("test", source="test-a", extractor_config=config),
-    ]
-    split = explicit_split(train=("train-a", "train-b"), calibration=("cal-a",), test=("test-a",))
 
-    with pytest.raises(ValueError, match="nonportable extractor configuration"):
-        fit_policy(
-            features,
-            [
-                make_reference(features[0], "continue"), make_reference(features[1], "yield"),
-                make_reference(features[2], "continue"), make_reference(features[3], "yield"),
-            ],
-            split, language="Hindi",
-        )
+    with pytest.raises(ValueError, match=f"nonportable extractor configuration: unexpected key\\(s\\) {forbidden_key}"):
+        make_feature("train-continue", source="train-a", extractor_config=config)
+
+
+def test_a_stale_proxy_version_is_reported_as_a_version_problem():
+    """Fails if a stale config and a leaked key report the same thing.
+
+    Both are refused. Only one of them is a secret leaving the machine, and the two
+    messages have to be told apart by whoever reads the failure.
+    """
+    for stale in ({"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1,
+                   "speech_rate_proxy": "words_per_second.v0"},
+                  {"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1}):
+        with pytest.raises(ValueError, match="current versioned proxy"):
+            make_feature("train-continue", source="train-a", extractor_config=stale)
 
 
 def test_calibration_counts_uncertain_true_yields_as_waits():

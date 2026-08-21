@@ -70,7 +70,19 @@ def _config(value: object) -> dict[str, object]:
 
 
 def _portable_extractor_config(value: object) -> dict[str, object]:
+    """Pin the config to the published set, and say which way it failed.
+
+    An unexpected key and a stale proxy version both make an artifact unusable, but only
+    one of them is a secret or a local path riding along into something shareable. Both
+    reported the same message, which buried the case that matters.
+    """
     config = _config(value)
+    if extra := sorted(set(config) - set(POLICY_EXTRACTOR_CONFIG)):
+        raise SchemaError(
+            "nonportable extractor configuration: unexpected key(s) " + ", ".join(extra))
+    # A missing key is a version problem, not a portability one: a config without
+    # speech_rate_proxy is precisely the former constant-rate shape, so it belongs with
+    # the stale-version message rather than under a generic "missing key".
     if set(config) != set(POLICY_EXTRACTOR_CONFIG):
         raise SchemaError("extractor_config must use the current versioned proxy")
     for name, expected in POLICY_EXTRACTOR_CONFIG.items():
