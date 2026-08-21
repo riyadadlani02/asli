@@ -1,7 +1,10 @@
 import inspect
+import io
 import json
 import socket
+import sys
 import tomllib
+import wave
 from pathlib import Path
 
 import numpy as np
@@ -266,6 +269,64 @@ def test_diarbench_decoder_audio_downmixes_channel_first_without_torch_import(mo
     assert mono_pcm.tolist() == [1000, 3000, 5000]
 
 
+def test_diarbench_raw_wav_bytes_decode_without_torchcodec():
+    samples = np.array([[1000, 3000], [3000, 5000], [5000, 7000]], dtype="<i2")
+    encoded = io.BytesIO()
+    with wave.open(encoded, "wb") as handle:
+        handle.setnchannels(2)
+        handle.setsampwidth(2)
+        handle.setframerate(16_000)
+        handle.writeframes(samples.tobytes())
+
+    pcm, rate = turnbench_cli._decoded_audio(
+        {"audio": {"bytes": encoded.getvalue(), "path": "hindi_001.wav"}},
+        sample_id="raw-wav-sample",
+    )
+
+    assert rate == 16_000
+    assert pcm.tolist() == [2000, 4000, 6000]
+
+
+def test_diarbench_loader_disables_datasets_audio_decoder(monkeypatch):
+    seen = {}
+
+    class Rows:
+        _ex_iterable = type(
+            "Iterable",
+            (),
+            {"kwargs": {"files": ["hf://dataset@" + "a" * 40 + "/Hindi/test.parquet"]}},
+        )()
+
+        def cast_column(self, name, feature):
+            seen["cast"] = (name, feature.decode)
+            return self
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            raise StopIteration
+
+    rows = Rows()
+
+    class Audio:
+        def __init__(self, *, decode):
+            self.decode = decode
+
+    monkeypatch.setitem(sys.modules, "datasets", type("Datasets", (), {
+        "Audio": Audio,
+        "load_dataset": staticmethod(lambda *args, **kwargs: rows),
+    })())
+
+    loaded = turnbench_cli._load_diarbench_rows(
+        dataset="sarvamai/indic-diarbench", requested_revision="main",
+        config="Hindi", split="test", streaming=True, limit=1,
+    )
+
+    assert seen["cast"] == ("audio", False)
+    assert loaded.resolved_revision == "a" * 40
+
+
 def test_diarbench_export_never_pulls_more_than_limit_stream_rows(tmp_path, monkeypatch):
     class TrackingRows:
         def __init__(self):
@@ -513,11 +574,11 @@ def test_score_neither_imports_datasets_nor_uses_network(tmp_path, fixture_paths
     assert main(_score_args(fixture_paths, tmp_path / "report.json")) == 0
 
 
-def test_diarbench_extra_uses_datasets_coupled_audio_dependencies():
+def test_diarbench_extra_uses_the_dataset_reader_without_a_native_decoder():
     metadata = tomllib.loads(Path("pyproject.toml").read_text())
     dependencies = metadata["project"]["optional-dependencies"]["diarbench"]
 
-    assert dependencies == ["datasets[audio]>=4.0"]
+    assert dependencies == ["datasets>=4.0"]
 
 
 def test_export_filters_binary_references_without_candidates_before_compare(tmp_path, monkeypatch):

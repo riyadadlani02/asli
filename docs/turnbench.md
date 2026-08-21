@@ -104,11 +104,9 @@ Install the dataset reader only when using the export command:
 pip install 'asli[diarbench]'
 ```
 
-That extra uses Datasets' upstream-coupled audio dependencies, including the
-compatible decoder runtime required by current audio features. Export accepts
-both the legacy decoded `array`/`sampling_rate` mapping and current
-`AudioDecoder` values without importing PyTorch itself; decoder audio is
-downmixed from channel-first samples.
+Export requests the public dataset's raw WAV bytes, avoiding a local FFmpeg or
+PyTorch decoder requirement. It validates and decodes standard 16-bit WAV
+audio locally before writing the bounded export.
 
 Start with a deliberately bounded Hindi sample. `--language`, positive
 `--limit`, and both pause bounds are required, so this cannot silently download

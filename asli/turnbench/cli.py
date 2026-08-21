@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import shutil
@@ -12,6 +13,7 @@ from dataclasses import dataclass
 from itertools import chain, islice
 from pathlib import Path
 import re
+import wave
 from uuid import uuid4
 
 import numpy as np
@@ -131,6 +133,7 @@ def _load_diarbench_rows(
         dataset, name=config, revision=requested_revision, split=split,
         streaming=streaming,
     )
+    rows = rows.cast_column("audio", datasets.Audio(decode=False))
     return DiarBenchLoad(islice(rows, limit), _resolved_revision(rows))
 
 
@@ -229,9 +232,26 @@ def _effective_provider_language(language: str) -> str | None:
 def _decoded_audio(row: Mapping[str, object], *, sample_id: str) -> tuple[np.ndarray, int]:
     audio = row.get("audio")
     channel_first = False
+    raw_pcm = False
     if isinstance(audio, Mapping):
-        values = audio.get("array")
-        rate = audio.get("sampling_rate")
+        encoded = audio.get("bytes")
+        if isinstance(encoded, (bytes, bytearray)):
+            try:
+                with wave.open(io.BytesIO(encoded), "rb") as handle:
+                    if handle.getcomptype() != "NONE" or handle.getsampwidth() != 2:
+                        raise ValueError
+                    rate = handle.getframerate()
+                    channels = handle.getnchannels()
+                    values = np.frombuffer(handle.readframes(handle.getnframes()), dtype="<i2")
+                    if channels > 1:
+                        values = values.reshape(-1, channels).mean(axis=1)
+                    raw_pcm = True
+            except (EOFError, ValueError, wave.Error):
+                raise ValueError(f"{sample_id}: audio.bytes must be uncompressed 16-bit WAV") from None
+            channel_first = False
+        else:
+            values = audio.get("array")
+            rate = audio.get("sampling_rate")
     else:
         decode = getattr(audio, "get_all_samples", None)
         if not callable(decode):
@@ -249,7 +269,7 @@ def _decoded_audio(row: Mapping[str, object], *, sample_id: str) -> tuple[np.nda
         raise ValueError(f"{sample_id}: audio sampling rate must be a positive integer")
     try:
         values = np.asarray(values)
-        normalized_float = np.issubdtype(values.dtype, np.floating)
+        normalized_float = np.issubdtype(values.dtype, np.floating) and not raw_pcm
         if values.ndim == 2:
             values = values.mean(axis=0 if channel_first else 1)
         if values.ndim != 1 or not len(values) or not np.isfinite(values).all():
