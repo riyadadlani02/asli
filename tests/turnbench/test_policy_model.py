@@ -11,6 +11,7 @@ from asli.turnbench.policy_model import (
     make_group_split,
 )
 from asli.turnbench.policy_schema import PolicyFeature, PolicySplit
+from asli.turnbench.schema import SchemaError
 
 
 def make_feature(
@@ -178,23 +179,8 @@ def test_fit_rejects_nonportable_extractor_configuration(forbidden_key):
         "speech_rate_proxy": "voiced_onsets_per_observed_second.v1",
         forbidden_key: "must-not-be-portable",
     }
-    features = [
-        make_feature("train-continue", source="train-a", extractor_config=config),
-        make_feature("train-yield", source="train-b", extractor_config=config),
-        make_feature("calibration", source="cal-a", extractor_config=config),
-        make_feature("test", source="test-a", extractor_config=config),
-    ]
-    split = explicit_split(train=("train-a", "train-b"), calibration=("cal-a",), test=("test-a",))
-
-    with pytest.raises(ValueError, match="nonportable extractor configuration"):
-        fit_policy(
-            features,
-            [
-                make_reference(features[0], "continue"), make_reference(features[1], "yield"),
-                make_reference(features[2], "continue"), make_reference(features[3], "yield"),
-            ],
-            split, language="Hindi",
-        )
+    with pytest.raises(SchemaError, match="extractor_config must use the current versioned proxy"):
+        make_feature("train-continue", source="train-a", extractor_config=config)
 
 
 def test_calibration_counts_uncertain_true_yields_as_waits():

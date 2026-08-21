@@ -208,22 +208,24 @@ def _policy_fixture_files(tmp_path, group_count):
 
 
 def test_policy_fit_rejects_two_source_recordings_before_writing_an_artifact(
-    tmp_path, monkeypatch,
+    tmp_path, monkeypatch, capsys,
 ):
     features, _ = _policy_fixture_files(tmp_path, group_count=2)
     output = tmp_path / "split.json"
 
-    with pytest.raises(SystemExit, match="20 independent source recordings"):
+    with pytest.raises(SystemExit) as error:
         main([
             "policy", "split", "--features", str(features),
             "--language", "Hindi", "--seed", "7", "--out", str(output),
         ])
 
+    assert error.value.code == 2
+    assert "asli-turnbench: error: language Hindi requires 20 independent source recordings" in capsys.readouterr().err
     assert not output.exists()
 
 
 def test_policy_fit_rejects_an_underpowered_handcrafted_split_before_writing(
-    tmp_path,
+    tmp_path, capsys,
 ):
     features, references = _policy_fixture_files(tmp_path, group_count=3)
     split = tmp_path / "split.json"
@@ -236,17 +238,19 @@ def test_policy_fit_rejects_an_underpowered_handcrafted_split_before_writing(
         test_source_recording_ids=("source-2",),
     ))
 
-    with pytest.raises(SystemExit, match="20 independent source recordings"):
+    with pytest.raises(SystemExit) as error:
         main([
             "policy", "fit", "--features", str(features),
             "--references", str(references), "--split", str(split),
             "--language", "Hindi", "--out", str(output),
         ])
 
+    assert error.value.code == 2
+    assert "asli-turnbench: error: language Hindi requires 20 independent source recordings" in capsys.readouterr().err
     assert not output.exists()
 
 
-def test_policy_fit_rejects_features_that_do_not_match_supplied_split(tmp_path):
+def test_policy_fit_rejects_features_that_do_not_match_supplied_split(tmp_path, capsys):
     features, references = _policy_fixture_files(tmp_path, group_count=20)
     split = tmp_path / "split.json"
     output = tmp_path / "policy.json"
@@ -258,17 +262,19 @@ def test_policy_fit_rejects_features_that_do_not_match_supplied_split(tmp_path):
         test_source_recording_ids=("missing-source",),
     ))
 
-    with pytest.raises(SystemExit, match="feature source recording IDs must exactly match split"):
+    with pytest.raises(SystemExit) as error:
         main([
             "policy", "fit", "--features", str(features),
             "--references", str(references), "--split", str(split),
             "--language", "Hindi", "--out", str(output),
         ])
 
+    assert error.value.code == 2
+    assert "asli-turnbench: error: feature source recording IDs must exactly match split" in capsys.readouterr().err
     assert not output.exists()
 
 
-def test_policy_replay_rejects_ghost_split_groups_without_replacing_output(tmp_path):
+def test_policy_replay_rejects_ghost_split_groups_without_replacing_output(tmp_path, capsys):
     """Fails if a handcrafted replay can add absent source groups to an artifact study."""
     features, references = _policy_fixture_files(tmp_path, group_count=20)
     split, policy, report = tmp_path / "split.json", tmp_path / "policy.json", tmp_path / "report.json"
@@ -288,12 +294,14 @@ def test_policy_replay_rejects_ghost_split_groups_without_replacing_output(tmp_p
     ))
     report.write_text("preserve me")
 
-    with pytest.raises(SystemExit, match="feature source recording IDs must exactly match split"):
+    with pytest.raises(SystemExit) as error:
         main([
             "policy", "replay", "--features", str(features), "--references", str(references),
             "--split", str(split), "--policy", str(policy), "--out", str(report),
         ])
 
+    assert error.value.code == 2
+    assert "asli-turnbench: error: feature source recording IDs must exactly match split" in capsys.readouterr().err
     assert report.read_text() == "preserve me"
 
 
