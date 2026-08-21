@@ -72,6 +72,13 @@ def _strings(value: object, name: str) -> tuple[str, ...]:
     return result
 
 
+def _raw_strings(value: object, name: str) -> tuple[str, ...]:
+    """Validate the JSON wire representation before converting it to a tuple."""
+    if not isinstance(value, list):
+        raise SchemaError(f"{name} must be a list")
+    return _strings(value, name)
+
+
 @dataclass(frozen=True)
 class PolicyFeature:
     decision_id: str; recording_id: str; source_recording_id: str; language: str; condition: str
@@ -130,7 +137,7 @@ class PolicySplit:
     def from_dict(cls, row):
         expected = {"schema", "seed", "language", "train_source_recording_ids", "calibration_source_recording_ids", "test_source_recording_ids"}; _fields(row, expected)
         if row["schema"] != cls.schema: raise SchemaError(f"schema must be {cls.schema}")
-        return cls(row["seed"], row["language"], tuple(row["train_source_recording_ids"]), tuple(row["calibration_source_recording_ids"]), tuple(row["test_source_recording_ids"]))
+        return cls(row["seed"], row["language"], _raw_strings(row["train_source_recording_ids"], "train_source_recording_ids"), _raw_strings(row["calibration_source_recording_ids"], "calibration_source_recording_ids"), _raw_strings(row["test_source_recording_ids"], "test_source_recording_ids"))
     def to_dict(self): return {"schema": self.schema, "seed": self.seed, "language": self.language, "train_source_recording_ids": list(self.train_source_recording_ids), "calibration_source_recording_ids": list(self.calibration_source_recording_ids), "test_source_recording_ids": list(self.test_source_recording_ids)}
 
 
@@ -160,7 +167,7 @@ class PolicyArtifact:
     def from_dict(cls, row):
         expected = {"schema", "policy_id", "language", "feature_schema", "export_fingerprint", "extractor_config", "coefficients", "means", "scales", "yield_threshold", "hold_threshold", "grace_ms", "hard_deadline_ms", "train_source_recording_ids", "calibration_source_recording_ids"}; _fields(row, expected)
         if row["schema"] != cls.schema: raise SchemaError(f"schema must be {cls.schema}")
-        return cls(row["policy_id"], row["language"], row["feature_schema"], row["export_fingerprint"], row["extractor_config"], tuple(row["coefficients"]), tuple(row["means"]), tuple(row["scales"]), row["yield_threshold"], row["hold_threshold"], row["grace_ms"], row["hard_deadline_ms"], tuple(row["train_source_recording_ids"]), tuple(row["calibration_source_recording_ids"]))
+        return cls(row["policy_id"], row["language"], row["feature_schema"], row["export_fingerprint"], row["extractor_config"], tuple(row["coefficients"]), tuple(row["means"]), tuple(row["scales"]), row["yield_threshold"], row["hold_threshold"], row["grace_ms"], row["hard_deadline_ms"], _raw_strings(row["train_source_recording_ids"], "train_source_recording_ids"), _raw_strings(row["calibration_source_recording_ids"], "calibration_source_recording_ids"))
     def to_dict(self): return {"schema": self.schema, **{name: (list(getattr(self, name)) if name in {"coefficients", "means", "scales", "train_source_recording_ids", "calibration_source_recording_ids"} else getattr(self, name)) for name in ("policy_id", "language", "feature_schema", "export_fingerprint", "extractor_config", "coefficients", "means", "scales", "yield_threshold", "hold_threshold", "grace_ms", "hard_deadline_ms", "train_source_recording_ids", "calibration_source_recording_ids")}}
 
 
