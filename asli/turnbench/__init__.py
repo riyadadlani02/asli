@@ -46,6 +46,8 @@ from .policy_schema import (
     read_policy_artifact, read_policy_features, read_policy_split,
     write_policy_artifact, write_policy_features, write_policy_split,
 )
+from .policy_runtime import decide_policy, probability_continue
+from .policy_report import replay_policy
 
 __all__ = [
     "Annotation",
@@ -91,4 +93,5 @@ __all__ = [
     "PolicyArtifact", "PolicyDecision", "PolicyFeature", "PolicySplit",
     "read_policy_artifact", "read_policy_features", "read_policy_split",
     "write_policy_artifact", "write_policy_features", "write_policy_split",
+    "decide_policy", "probability_continue", "replay_policy",
 ]
