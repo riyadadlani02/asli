@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+import asli.turnbench.policy_features as policy_features
 from asli.turnbench.auto_report import DiarBenchExportProvenance
 from asli.turnbench.auto_schema import AutoPrediction, DiarBenchCandidate
 from asli.turnbench.policy_features import extract_policy_features
@@ -67,6 +68,49 @@ def test_feature_extraction_uses_only_audio_before_observation_boundary():
     assert rows[0].semantic_status == "absent"
 
 
+def test_default_wav_reader_never_requests_audio_after_observation_boundary(
+    tmp_path, monkeypatch,
+):
+    """Fails if the default WAV reader decodes samples past the feature window."""
+    path = tmp_path / "fixture.wav"
+    pcm = np.concatenate([np.full(1600, 1000, np.int16), np.full(800, 30000, np.int16)])
+    with policy_features.wave.open(str(path), "wb") as output:
+        output.setnchannels(1)
+        output.setsampwidth(2)
+        output.setframerate(1000)
+        output.writeframes(pcm.tobytes())
+
+    original_open = policy_features.wave.open
+    requested_frames = []
+
+    class ReaderSpy:
+        def __init__(self, source):
+            self.source = source
+
+        def __enter__(self):
+            self.source.__enter__()
+            return self
+
+        def __exit__(self, *args):
+            return self.source.__exit__(*args)
+
+        def readframes(self, count):
+            requested_frames.append(count)
+            return self.source.readframes(count)
+
+        def __getattr__(self, name):
+            return getattr(self.source, name)
+
+    monkeypatch.setattr(
+        policy_features.wave, "open", lambda *args, **kwargs: ReaderSpy(original_open(*args, **kwargs)),
+    )
+    extract_policy_features(
+        [make_candidate(audio_path=str(path))], export_provenance=provenance(),
+    )
+
+    assert requested_frames == [1600]
+
+
 def test_feature_extraction_keeps_unavailable_semantic_evidence_unavailable():
     """Fails if unavailable semantic evidence is fabricated as a decision."""
     rows = extract_policy_features(
@@ -126,4 +170,3 @@ def test_feature_extraction_is_sorted_and_carries_yield_offset():
     assert [row.decision_id for row in rows] == ["a", "z"]
     assert rows[0].semantic_endpoint_offset_ms == 200
     assert rows[0].semantic_outcome == "yield"
-
