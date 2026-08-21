@@ -4,6 +4,7 @@ from asli.turnbench.policy_schema import (
     POLICY_FEATURE_SCHEMA,
     PolicyArtifact,
     PolicyFeature,
+    PolicySplit,
 )
 from asli.turnbench.schema import SchemaError
 
@@ -36,3 +37,26 @@ def test_policy_artifact_rejects_reversed_threshold_band():
             hold_threshold=0.2, grace_ms=150, hard_deadline_ms=800,
             train_source_recording_ids=("call-1",), calibration_source_recording_ids=("call-2",),
         )
+
+
+def test_policy_split_rejects_non_array_source_recording_ids():
+    with pytest.raises(SchemaError, match="train_source_recording_ids must be a list"):
+        PolicySplit.from_dict({
+            "schema": "turnbench.policy_split.v1", "seed": 1, "language": "Hindi",
+            "train_source_recording_ids": "call-1",
+            "calibration_source_recording_ids": ["call-2"],
+            "test_source_recording_ids": ["call-3"],
+        })
+
+
+def test_policy_artifact_rejects_non_array_source_recording_ids():
+    row = {
+        "schema": "turnbench.policy_artifact.v1", "policy_id": "p1", "language": "Hindi",
+        "feature_schema": POLICY_FEATURE_SCHEMA, "export_fingerprint": "e" * 64,
+        "extractor_config": {}, "coefficients": [0.1] * 7, "means": [0.0] * 7,
+        "scales": [1.0] * 7, "yield_threshold": 0.2, "hold_threshold": 0.8,
+        "grace_ms": 150, "hard_deadline_ms": 800,
+        "train_source_recording_ids": "call-1", "calibration_source_recording_ids": ["call-2"],
+    }
+    with pytest.raises(SchemaError, match="train_source_recording_ids must be a list"):
+        PolicyArtifact.from_dict(row)
