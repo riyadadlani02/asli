@@ -40,6 +40,12 @@ from .schema import (
     write_jsonl,
 )
 from .score import DecisionScore, aggregate, bootstrap_by_recording, nearest_rank, score_decision
+from .policy_schema import (
+    POLICY_ARTIFACT_SCHEMA, POLICY_DECISION_SCHEMA, POLICY_FEATURE_SCHEMA, POLICY_SPLIT_SCHEMA,
+    PolicyArtifact, PolicyDecision, PolicyFeature, PolicySplit,
+    read_policy_artifact, read_policy_features, read_policy_split,
+    write_policy_artifact, write_policy_features, write_policy_split,
+)
 
 __all__ = [
     "Annotation",
@@ -81,4 +87,8 @@ __all__ = [
     "write_references",
     "validate_auto_join",
     "validate_export_candidates",
+    "POLICY_ARTIFACT_SCHEMA", "POLICY_DECISION_SCHEMA", "POLICY_FEATURE_SCHEMA", "POLICY_SPLIT_SCHEMA",
+    "PolicyArtifact", "PolicyDecision", "PolicyFeature", "PolicySplit",
+    "read_policy_artifact", "read_policy_features", "read_policy_split",
+    "write_policy_artifact", "write_policy_features", "write_policy_split",
 ]
