@@ -16,6 +16,12 @@ from .auto_schema import (
     write_predictions,
     write_references,
 )
+from .auto_report import (
+    EXPORT_PROVENANCE_SCHEMA,
+    DiarBenchExportProvenance,
+    compare_auto_predictions,
+    validate_auto_join,
+)
 from .diarbench import convert_diarbench_sample
 from .report import score_inputs
 from .schema import (
@@ -41,8 +47,10 @@ __all__ = [
     "DecisionLabel",
     "DecisionScore",
     "DiarBenchCandidate",
+    "DiarBenchExportProvenance",
     "DiarBenchReference",
     "EVENT_SCHEMA",
+    "EXPORT_PROVENANCE_SCHEMA",
     "LABEL_SCHEMA",
     "ProviderTrace",
     "PauseCandidate",
@@ -57,6 +65,7 @@ __all__ = [
     "aggregate",
     "bootstrap_by_recording",
     "convert_diarbench_sample",
+    "compare_auto_predictions",
     "extract_candidates",
     "nearest_rank",
     "read_jsonl",
@@ -69,4 +78,5 @@ __all__ = [
     "write_candidates",
     "write_predictions",
     "write_references",
+    "validate_auto_join",
 ]
