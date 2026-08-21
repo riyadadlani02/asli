@@ -178,3 +178,46 @@ asli-turnbench auto compare \
 
 No DiarBench automatic-agreement result has been published. This lane does not
 change the existing Hindi study, its score, or any public-site claim.
+
+## Calibrated policy lane
+
+The calibrated policy lane is a separate, local-only pipeline for extracting
+bounded audio features, making source-recording splits, fitting an artifact,
+and replaying it against offline human-timing references. Use the module entry
+point so the commands run from the locked project environment:
+
+```bash
+uv run --locked --no-sync python -m asli.turnbench.cli policy features \
+  --candidates /tmp/diarbench-hindi/candidates.jsonl \
+  --manifest /tmp/diarbench-hindi/manifest.json \
+  --semantic /tmp/asli-auto.jsonl \
+  --out /tmp/policy-features.jsonl
+
+uv run --locked --no-sync python -m asli.turnbench.cli policy split \
+  --features /tmp/policy-features.jsonl --language Hindi --seed 42 \
+  --out /tmp/policy-split.json
+
+uv run --locked --no-sync python -m asli.turnbench.cli policy fit \
+  --features /tmp/policy-features.jsonl \
+  --references /tmp/diarbench-hindi/references.jsonl \
+  --split /tmp/policy-split.json --language Hindi \
+  --out /tmp/policy.json
+
+uv run --locked --no-sync python -m asli.turnbench.cli policy replay \
+  --features /tmp/policy-features.jsonl \
+  --references /tmp/diarbench-hindi/references.jsonl \
+  --split /tmp/policy-split.json --policy /tmp/policy.json \
+  --semantic /tmp/asli-auto.jsonl --out /tmp/policy-report.json
+```
+
+`--semantic` is optional completed local input; labels are offline-only. No
+policy command reads an API key or calls a provider. The current Hindi export
+has only two independent source recordings, so `policy split` deliberately
+fails its 20-source minimum and cannot support fitting or a generalisation
+claim.
+
+A policy is a win only on independent held-out source recordings when all four
+constraints hold: continuation recall is at least 0.80, unnecessary-hold rate
+is at most 0.20, coverage is at least 0.95, and utility is strictly higher than
+both always-yield and the complete semantic baseline. Do not publish a policy
+result until an independent held-out run meets every one of those constraints.
