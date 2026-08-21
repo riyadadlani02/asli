@@ -36,6 +36,27 @@ def read_audio(path: Path) -> tuple[np.ndarray, int]:
         return np.frombuffer(source.readframes(source.getnframes()), dtype=dtype).copy(), source.getframerate()
 
 
+_DEFAULT_READ_AUDIO = read_audio
+
+
+def _read_audio_through(path: Path, observation_end_ms: int) -> tuple[np.ndarray, int]:
+    """Decode no more WAV audio than is visible to one candidate."""
+    with wave.open(str(path), "rb") as source:
+        if source.getnchannels() != 1:
+            raise ValueError("audio must be mono PCM WAV")
+        if source.getcomptype() != "NONE":
+            raise ValueError("audio must be uncompressed PCM WAV")
+        width = source.getsampwidth()
+        dtype = {1: np.uint8, 2: "<i2", 4: "<i4"}.get(width)
+        if dtype is None:
+            raise ValueError("audio sample width must be 8, 16, or 32 bits")
+        rate = source.getframerate()
+        end_frame = _sample_index(observation_end_ms, rate)
+        if source.getnframes() < end_frame:
+            raise ValueError("audio does not reach observation_end_ms")
+        return np.frombuffer(source.readframes(end_frame), dtype=dtype).copy(), rate
+
+
 def _sample_index(milliseconds: int, rate: int) -> int:
     return milliseconds * rate // 1000
 
@@ -145,7 +166,12 @@ def extract_policy_features(
     export_fingerprint = _fingerprint(export_provenance.to_dict())
     rows: list[PolicyFeature] = []
     for decision_id, candidate in candidate_rows.items():
-        pcm, rate = read_audio(Path(candidate.audio_path))
+        if read_audio is _DEFAULT_READ_AUDIO:
+            pcm, rate = _read_audio_through(
+                Path(candidate.audio_path), candidate.observation_end_ms,
+            )
+        else:
+            pcm, rate = read_audio(Path(candidate.audio_path))
         speech_pcm, _pause_pcm = _slice_candidate_audio(candidate, pcm, rate)
         bounded_pcm = np.asarray(pcm)[:_sample_index(candidate.observation_end_ms, rate)]
         energy, slope, speech_ms, rate_hz = _trailing_features(speech_pcm, rate)
