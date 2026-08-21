@@ -16,6 +16,7 @@ agent = ["openai>=1.40"]
 
 [project.scripts]
 asli = "asli.cli:main"
+asli-turnbench = "asli.turnbench.cli:main"
 
 [build-system]
 requires = ["hatchling"]
