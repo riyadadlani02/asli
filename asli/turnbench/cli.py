@@ -507,3 +507,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, TypeError, ValueError) as exc:
         parser.error(str(exc))
     return 0
+
+
+if __name__ == "__main__":
+    main()

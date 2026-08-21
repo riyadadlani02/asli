@@ -2,6 +2,7 @@ import inspect
 import io
 import json
 import socket
+import subprocess
 import sys
 import tomllib
 import wave
@@ -76,6 +77,19 @@ def test_score_command_writes_deterministic_report(tmp_path, fixture_paths):
 
 def test_existing_asli_cli_has_no_turnbench_subcommand():
     assert "turnbench" not in inspect.getsource(asli.cli.main)
+
+
+def test_module_entrypoint_invokes_turnbench_cli():
+    result = subprocess.run(
+        [sys.executable, "-m", "asli.turnbench.cli", "--help"],
+        cwd=Path(__file__).parents[2],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "usage: asli-turnbench" in result.stdout
 
 
 def test_unknown_trace_decision_is_rejected(tmp_path, fixture_paths, capsys):
