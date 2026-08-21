@@ -1,0 +1,5 @@
+{"schema":"turnbench.event.v1","run_id":"fixture-run","decision_id":"hi-continue","provider":"fixture","status":"ok","error":null,"events":[{"kind":"speech_started","t_ms":1000},{"kind":"agent_first_audio","t_ms":1300}]}
+{"schema":"turnbench.event.v1","run_id":"fixture-run","decision_id":"ta-yield","provider":"fixture","status":"ok","error":null,"events":[{"kind":"speech_started","t_ms":2000},{"kind":"agent_first_audio","t_ms":2300}]}
+{"schema":"turnbench.event.v1","run_id":"fixture-run","decision_id":"hi-overlap","provider":"fixture","status":"ok","error":null,"events":[{"kind":"agent_first_audio","t_ms":1250}]}
+{"schema":"turnbench.event.v1","run_id":"fixture-run","decision_id":"ta-unclear","provider":"fixture","status":"ok","error":null,"events":[{"kind":"agent_first_audio","t_ms":2250}]}
+{"schema":"turnbench.event.v1","run_id":"fixture-run","decision_id":"hi-timeout","provider":"fixture","status":"timeout","error":"deadline exceeded","events":[]}
