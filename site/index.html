@@ -709,6 +709,34 @@ echo "SARVAM_API_KEY=..." &gt;&gt; .env
   <div class="box" style="margin-top:1.6rem"><b>Kept separate from this study.</b> It uses local fixtures and recorded event streams&mdash;no provider calls, no cross-language leaderboard, and no claimed results until matched data arrives.</div>
   <div class="tags"><span>offline fixtures</span><span>strict timing checks</span><span class="hot">macro by language</span></div>
   <p class="sub" style="margin-top:1.6rem"><a href="turnbench-overview.pdf" target="_blank" rel="noopener">Read the TurnBench overview (PDF).</a> <a href="turnbench.md">Technical documentation.</a></p>
+
+  <div class="scroll" style="margin-top:1.6rem">
+    <table class="tbl">
+      <thead><tr><th>gate a run must clear</th><th>required</th><th>status</th></tr></thead>
+      <tbody>
+        <tr><td>continuation recall</td><td>&ge; 80%</td><td class="no">not met</td></tr>
+        <tr><td>unnecessary-hold rate on true yields</td><td>&le; 20%</td><td class="no">not measured</td></tr>
+        <tr><td>prediction coverage</td><td>&ge; 95%</td><td class="no">not measured</td></tr>
+        <tr><td>beats <code>always_yield</code> <em>and</em> semantic VAD</td><td>both</td><td class="no">not met</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="lede" style="margin-top:1.4rem"><b>No accuracy figure appears here, and that
+  is the finding.</b> On a synthetic run the rule that simply replies immediately every
+  time &mdash; <code>always_yield</code> &mdash; scores <b>1.00 accuracy</b>, and the
+  evaluator still returns <code>policy_win: false</code>. One accuracy number is
+  satisfiable by the worst possible turn-taking behaviour, so publishing one would
+  measure nothing. The four gates exist because of exactly that.</p>
+
+  <p class="sub" style="margin-top:1.2rem">The blocker is data, not code. A fit needs
+  <b>20 independent source recordings</b> and the Hindi export has <b>two</b> &mdash;
+  run, and the guard exits without writing an artifact. The same shortage blocks the
+  prosody experiment: <code>corpus/GV_Dev_5h</code> is 1,885 fixed-length segments cut
+  mid-phrase, so it supplies &ldquo;the speaker continued&rdquo; abundantly and
+  &ldquo;the speaker finished&rdquo; almost never.</p>
+
+  <div class="tags"><span>three-state policy</span><span>group-held-out</span><span class="hot">no policy win found</span><span>2 of 20 recordings</span><span>308 tests</span></div>
 </section>
 </div>
 
