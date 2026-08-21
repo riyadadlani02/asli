@@ -299,13 +299,35 @@ class OpenAIWS:
 
     def __init__(self, *, language_code: str = "hi", model: str = "gpt-4o-transcribe",
                  rate: int = SAMPLE_RATE, silence_duration_ms: int | None = None,
-                 turn_detection: str = "server_vad", **params):
+                 turn_detection: str = "server_vad", trailing_silence_ms: int = 2500,
+                 require_endpoint_timestamps: bool = False, **params):
         self.rate, self.model = rate, model
         self.lang = language_code.split("-")[0]
         self.gate = silence_duration_ms or 500
         if turn_detection not in {"server_vad", "semantic_vad"}:
             raise ValueError(f"unsupported OpenAI turn detection: {turn_detection}")
+        if (isinstance(trailing_silence_ms, bool) or
+                not isinstance(trailing_silence_ms, int) or trailing_silence_ms < 0):
+            raise ValueError("trailing_silence_ms must be a non-negative integer")
         self.turn_detection = turn_detection
+        self.trailing_silence_ms = trailing_silence_ms
+        self.require_endpoint_timestamps = require_endpoint_timestamps
+        self.missing_endpoint_timestamp = False
+
+    @staticmethod
+    def _endpoint_timestamp(message: dict[str, object]) -> int | None:
+        timestamp = message.get("audio_end_ms")
+        if isinstance(timestamp, bool) or not isinstance(timestamp, int):
+            return None
+        return timestamp
+
+    def _speech_stopped_timestamp(
+        self, message: dict[str, object], *, sent_ms: int
+    ) -> int | None:
+        """Keep legacy sent-audio timing unless strict observation requests provider time."""
+        if self.require_endpoint_timestamps:
+            return self._endpoint_timestamp(message)
+        return sent_ms
 
     def turn_detection_payload(self) -> dict[str, object]:
         """Return the provider payload without exposing a semantic mode as a timer."""
@@ -344,11 +366,15 @@ class OpenAIWS:
         import websockets
 
         audio = self._to_native(pcm)
-        # a silence timer needs a tail longer than its own gate to close the last turn
-        audio = np.concatenate([audio, np.zeros(int(self.NATIVE_RATE * 2.5), np.int16)])
+        if self.trailing_silence_ms:
+            audio = np.concatenate([
+                audio,
+                np.zeros(self.NATIVE_RATE * self.trailing_silence_ms // 1000, np.int16),
+            ])
         events: list[Event] = []
         finals: list[str] = []
         sent_ms = 0
+        self.missing_endpoint_timestamp = False
         try:
             async with websockets.connect(
                 self.URL, additional_headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
@@ -376,12 +402,19 @@ class OpenAIWS:
                         msg = json.loads(raw)
                         ty = msg.get("type", "")
                         if "speech_stopped" in ty:
-                            events.append(Event("speech_end", sent_ms))
+                            endpoint_ms = self._speech_stopped_timestamp(msg, sent_ms=sent_ms)
+                            if endpoint_ms is None:
+                                if self.require_endpoint_timestamps:
+                                    self.missing_endpoint_timestamp = True
+                                else:
+                                    events.append(Event("speech_end", sent_ms))
+                            else:
+                                events.append(Event("speech_end", endpoint_ms))
                         elif "transcription" in ty and "completed" in ty:
                             text = msg.get("transcript", "")
                             finals.append(text)
                             events.append(Event("transcript", sent_ms, text))
-                            if finals:
+                            if finals and not self.require_endpoint_timestamps:
                                 return
                         elif ty == "error":
                             raise RuntimeError(str(msg.get("error", {}))[:200])
@@ -392,9 +425,12 @@ class OpenAIWS:
                 except asyncio.TimeoutError:
                     pass
                 finally:
-                    sender.cancel()
-                    with suppress(asyncio.CancelledError):
+                    if self.require_endpoint_timestamps:
                         await sender
+                    else:
+                        sender.cancel()
+                        with suppress(asyncio.CancelledError):
+                            await sender
         except Exception as exc:
             return Result(spec_id=spec.id, adapter=self.name, events=events,
                           transcript=" ".join(finals), error=f"{type(exc).__name__}: {exc}")
