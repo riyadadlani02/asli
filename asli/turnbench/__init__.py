@@ -20,6 +20,7 @@ from .auto_report import (
     EXPORT_PROVENANCE_SCHEMA,
     DiarBenchExportProvenance,
     compare_auto_predictions,
+    validate_export_candidates,
     validate_auto_join,
 )
 from .diarbench import convert_diarbench_sample
@@ -79,4 +80,5 @@ __all__ = [
     "write_predictions",
     "write_references",
     "validate_auto_join",
+    "validate_export_candidates",
 ]

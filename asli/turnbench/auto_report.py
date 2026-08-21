@@ -148,6 +148,36 @@ def _sorted_json(value: object) -> object:
     return value
 
 
+def validate_export_candidates(
+    candidates: Iterable[DiarBenchCandidate],
+    *,
+    export_provenance: DiarBenchExportProvenance,
+) -> dict[str, DiarBenchCandidate]:
+    """Validate candidate-only inputs against the export manifest."""
+
+    if not isinstance(export_provenance, DiarBenchExportProvenance):
+        raise ValueError("export_provenance must be a DiarBenchExportProvenance")
+    indexed = _unique_by_decision_id(candidates, DiarBenchCandidate, "candidates")
+    validated = {
+        key: value for key, value in indexed.items() if isinstance(value, DiarBenchCandidate)
+    }
+    requested_languages = set(export_provenance.requested_languages)
+    for decision_id, candidate in validated.items():
+        if candidate.language not in requested_languages:
+            raise ValueError(f"candidate language not requested: {decision_id}")
+        pause_ms = candidate.observation_end_ms - candidate.previous_speech_end_ms
+        if not export_provenance.min_pause_ms <= pause_ms <= export_provenance.max_pause_ms:
+            raise ValueError(f"candidate pause outside export bounds: {decision_id}")
+        expected_context_start = max(
+            0, candidate.previous_speech_end_ms - export_provenance.context_ms
+        )
+        if candidate.context_start_ms != expected_context_start:
+            raise ValueError(
+                f"candidate context does not match export provenance: {decision_id}"
+            )
+    return {key: validated[key] for key in sorted(validated)}
+
+
 def validate_auto_join(
     candidates: Iterable[DiarBenchCandidate],
     references: Iterable[DiarBenchReference],
@@ -160,8 +190,8 @@ def validate_auto_join(
     if not isinstance(export_provenance, DiarBenchExportProvenance):
         raise ValueError("export_provenance must be a DiarBenchExportProvenance")
 
-    candidate_rows = _unique_by_decision_id(
-        candidates, DiarBenchCandidate, "candidates"
+    candidates_by_id = validate_export_candidates(
+        candidates, export_provenance=export_provenance
     )
     reference_rows = _unique_by_decision_id(
         references, DiarBenchReference, "references"
@@ -170,11 +200,6 @@ def validate_auto_join(
         predictions, AutoPrediction, "predictions"
     )
 
-    candidates_by_id = {
-        key: value
-        for key, value in candidate_rows.items()
-        if isinstance(value, DiarBenchCandidate)
-    }
     references_by_id = {
         key: value
         for key, value in reference_rows.items()
@@ -220,25 +245,9 @@ def validate_auto_join(
         if decision_id not in candidates_by_id:
             raise ValueError(f"prediction missing candidate: {decision_id}")
 
-    requested_languages = set(export_provenance.requested_languages)
     for decision_id, reference in references_by_id.items():
-        if reference.candidate.language not in requested_languages:
+        if reference.candidate.language not in export_provenance.requested_languages:
             raise ValueError(f"candidate language not requested: {decision_id}")
-    for decision_id, candidate in candidates_by_id.items():
-        pause_ms = candidate.observation_end_ms - candidate.previous_speech_end_ms
-        if not (
-            export_provenance.min_pause_ms
-            <= pause_ms
-            <= export_provenance.max_pause_ms
-        ):
-            raise ValueError(f"candidate pause outside export bounds: {decision_id}")
-        expected_context_start = max(
-            0, candidate.previous_speech_end_ms - export_provenance.context_ms
-        )
-        if candidate.context_start_ms != expected_context_start:
-            raise ValueError(
-                f"candidate context does not match export provenance: {decision_id}"
-            )
 
     ordered_predictions = [predictions_by_id[key] for key in sorted(predictions_by_id)]
     run_id: str | None = None

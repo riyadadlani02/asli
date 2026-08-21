@@ -41,6 +41,7 @@ def convert_diarbench_sample(
         raise ValueError("context_ms must be a non-negative integer")
 
     sample_id = _text(row.get("sample_id"), "sample_id")
+    source_recording_id = _text(row.get("recording_id", sample_id), "recording_id")
     language = _text(row.get("language"), "language")
     condition = _text(row.get("condition", "diarbench"), "condition")
     audio_path = _text(audio_path, "audio_path")
@@ -78,7 +79,7 @@ def convert_diarbench_sample(
         candidate = DiarBenchCandidate(
             decision_id=decision_id,
             recording_id=sample_id,
-            source_recording_id=sample_id,
+            source_recording_id=source_recording_id,
             audio_path=audio_path,
             language=language,
             condition=condition,

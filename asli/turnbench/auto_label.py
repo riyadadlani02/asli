@@ -14,6 +14,9 @@ from .auto_schema import AutoPrediction, DiarBenchCandidate
 from .report import _normalize_config
 
 
+_CANDIDATE_LANGUAGE = object()
+
+
 @dataclass(frozen=True)
 class EndpointObservation:
     """The provider-only outcome of observing one bounded audio window."""
@@ -40,18 +43,19 @@ class OpenAISemanticObserver:
             require_endpoint_timestamps=True,
         )
 
-    def __call__(self, pcm: np.ndarray, rate: int, language: str) -> EndpointObservation:
+    def __call__(self, pcm: np.ndarray, rate: int, language: str | None) -> EndpointObservation:
         return self.observe(pcm, rate, language)
 
-    def observe(self, pcm: np.ndarray, rate: int, language: str) -> EndpointObservation:
+    def observe(self, pcm: np.ndarray, rate: int, language: str | None) -> EndpointObservation:
         self.adapter.rate = rate
-        self.adapter.lang = language.split("-")[0]
+        if language is not None:
+            self.adapter.lang = language.split("-")[0]
         spec = CallSpec(
             id="turnbench-semantic-observation",
             segments=[],
             entity_type="turnbench",
             canonical="",
-            lang=language,
+            lang=language or self.adapter.lang,
         )
         try:
             result = asyncio.run(self.adapter.run(pcm, spec))
@@ -91,11 +95,12 @@ def predict_candidate(
     candidate: DiarBenchCandidate,
     *,
     read_audio: Callable[[str], tuple[np.ndarray, int]],
-    observe: Callable[[np.ndarray, int, str], EndpointObservation],
+    observe: Callable[[np.ndarray, int, str | None], EndpointObservation],
     run_id: str,
     agent: str,
     model: str,
     config: Mapping[str, object],
+    provider_language: str | None | object = _CANDIDATE_LANGUAGE,
 ) -> AutoPrediction:
     """Predict from audio ending exactly at the candidate observation boundary."""
 
@@ -116,7 +121,8 @@ def predict_candidate(
         )
 
     try:
-        observation = observe(window, rate, candidate.language)
+        language = candidate.language if provider_language is _CANDIDATE_LANGUAGE else provider_language
+        observation = observe(window, rate, language)
     except Exception:
         return _unavailable(
             candidate, run_id=run_id, agent=agent, model=model,
