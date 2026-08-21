@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from asli.spec import Result
+from asli.drive import OpenAIWS
 from asli.turnbench.auto_label import (
     EndpointObservation,
     OpenAISemanticObserver,
@@ -188,3 +189,20 @@ def test_semantic_observer_sets_adapter_language_for_each_candidate_window():
     assert observation == EndpointObservation(None, False, None)
     assert observer.adapter.session_payload == {"language": "ta"}
     assert observer.adapter.rate == 1000
+
+
+def test_semantic_observer_omits_language_hint_without_changing_default_adapter_behavior():
+    class PayloadAdapter(OpenAIWS):
+        async def run(self, pcm, spec):
+            self.payload = self.session_update_payload()
+            return Result(spec_id=spec.id, adapter="fake")
+
+    observer = OpenAISemanticObserver(adapter_factory=PayloadAdapter)
+    observer(np.zeros(100, dtype=np.int16), 1000, None)
+    no_hint = observer.adapter.payload["session"]["audio"]["input"]["transcription"]
+    observer(np.zeros(100, dtype=np.int16), 1000, "ta")
+    mapped = observer.adapter.payload["session"]["audio"]["input"]["transcription"]
+
+    assert no_hint == {"model": "gpt-4o-transcribe"}
+    assert mapped == {"model": "gpt-4o-transcribe", "language": "ta"}
+    assert OpenAIWS().session_update_payload()["session"]["audio"]["input"]["transcription"]["language"] == "hi"
