@@ -13,6 +13,7 @@ dependencies = [
 
 [project.optional-dependencies]
 agent = ["openai>=1.40"]
+diarbench = ["datasets>=4.0"]
 
 [project.scripts]
 asli = "asli.cli:main"

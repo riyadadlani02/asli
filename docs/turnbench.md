@@ -88,3 +88,144 @@ one scoring invocation must share one `run_id`; it identifies that whole
 provider run, not an individual decision. The scorer validates IDs, provider
 provenance, and run consistency before reporting. Adapters belong outside v1's
 offline fixture command.
+
+## Optional DiarBench automatic-agreement lane
+
+This separate, opt-in lane compares ASLI's automatic decision with an
+**observed speaker-continuation** reference derived from Indic DiarBench's
+human-verified speaker timing. It does not claim that DiarBench annotators
+labelled a speaker's hidden intent: the same speaker at the earliest next event
+means `continue`, while a different speaker means `yield`. Co-starts, active
+overlap, and no reliable next event remain explicit excluded references.
+
+Install the dataset reader only when using the export command:
+
+```bash
+pip install 'asli[diarbench]'
+```
+
+Export requests the public dataset's raw WAV bytes, avoiding a local FFmpeg or
+PyTorch decoder requirement. It validates and decodes standard 16-bit WAV
+audio locally before writing the bounded export.
+
+Start with a deliberately bounded Hindi sample. `--language`, positive
+`--limit`, and both pause bounds are required, so this cannot silently download
+the full corpus. Export selects that language's public DiarBench configuration,
+streams its `test` split, and stops at the requested limit before materializing
+audio. It maps public `annotated_transcript` timing rows into the label-free
+candidate/reference contract, retaining each `sample_id` as the unique record
+and shared `recording_id` as the source-recording group. The export writes
+decoded WAV files, candidates, timing references, and a versioned
+`manifest.json` atomically under `--out-dir`. The manifest records the resolved
+immutable dataset commit SHA, never the mutable requested `main` alias.
+Only binary timing references that meet the explicit positive pause bounds are
+exported as automatic candidates; `overlap` and `unclear` references remain for
+coverage, while out-of-bound binary timing rows are omitted so the exported
+three-way comparison closes exactly.
+
+```bash
+asli-turnbench diarbench export \
+  --language Hindi --limit 25 \
+  --min-pause-ms 300 --max-pause-ms 2000 \
+  --context-ms 5000 \
+  --out-dir /tmp/diarbench-hindi
+```
+
+Automatic labeling consumes candidates and their audio only; it never accepts
+or reads the reference JSONL. It observes the preceding context and natural
+pause, ending exactly at each candidate's observation boundary. This command
+makes paid external OpenAI API calls and requires runtime credentials through
+the existing OpenAI adapter. It fails before any provider connection if
+`OPENAI_API_KEY` is missing or blank, and it also verifies that every candidate
+was exported with the supplied `--context-ms`. By default it reads the export
+`manifest.json` alongside `--candidates` (or use `--manifest PATH`) so this
+check also holds for candidates whose context is clamped at recording start. Do
+not run it in CI or tests, and review provider pricing before use.
+
+The real-time `gpt-realtime` session makes each semantic-VAD decision. The
+required `--model` is recorded separately as the transcription model. Prediction
+provenance also records semantic VAD, auto eagerness, `create_response: false`,
+strict provider timestamps, zero tail, and the effective ISO-639-1 language
+hint. DiarBench configuration names are full language names: supported
+ISO-639-1 hints (for example Hindi `hi` and Tamil `ta`) are sent; languages
+without a code omit the optional hint rather than sending a full name.
+
+```bash
+asli-turnbench auto label \
+  --candidates /tmp/diarbench-hindi/candidates.jsonl \
+  --agent openai --model gpt-4o-transcribe --context-ms 5000 \
+  --manifest /tmp/diarbench-hindi/manifest.json \
+  --out /tmp/asli-auto.jsonl
+```
+
+Comparison requires the three local record files. By default it reads the
+versioned `manifest.json` next to `--candidates`; pass `--manifest PATH` only
+when that deterministic sibling location is not appropriate. It closes the
+three-way ID and provenance join before writing a deterministic JSON report.
+The report includes binary agreement accuracy, continue precision/recall/F1,
+coverage and unavailable counts, language/condition/source-recording groups,
+and timestamped endpoint-observation error. That endpoint field is an error
+against the observed preceding-speech boundary, not a subjective response-time
+or a claim about speaker intent.
+
+```bash
+asli-turnbench auto compare \
+  --candidates /tmp/diarbench-hindi/candidates.jsonl \
+  --references /tmp/diarbench-hindi/references.jsonl \
+  --predictions /tmp/asli-auto.jsonl \
+  --out /tmp/asli-auto-accuracy.json
+```
+
+No DiarBench automatic-agreement result has been published. This lane does not
+change the existing Hindi study, its score, or any public-site claim.
+
+## Calibrated policy lane
+
+The calibrated policy lane is a separate, local-only pipeline for extracting
+bounded audio features, making source-recording splits, fitting an artifact,
+and replaying it against offline human-timing references. Use the module entry
+point so the commands run from the locked project environment:
+
+```bash
+uv run --locked --no-sync python -m asli.turnbench.cli policy features \
+  --candidates /tmp/diarbench-hindi/candidates.jsonl \
+  --manifest /tmp/diarbench-hindi/manifest.json \
+  --semantic /tmp/asli-auto.jsonl \
+  --out /tmp/policy-features.jsonl
+
+uv run --locked --no-sync python -m asli.turnbench.cli policy split \
+  --features /tmp/policy-features.jsonl --language Hindi --seed 42 \
+  --out /tmp/policy-split.json
+
+uv run --locked --no-sync python -m asli.turnbench.cli policy fit \
+  --features /tmp/policy-features.jsonl \
+  --references /tmp/diarbench-hindi/references.jsonl \
+  --split /tmp/policy-split.json --language Hindi \
+  --out /tmp/policy.json
+
+uv run --locked --no-sync python -m asli.turnbench.cli policy replay \
+  --features /tmp/policy-features.jsonl \
+  --references /tmp/diarbench-hindi/references.jsonl \
+  --split /tmp/policy-split.json --policy /tmp/policy.json \
+  --semantic /tmp/asli-auto.jsonl --out /tmp/policy-report.json
+```
+
+`--semantic` is optional completed local input; labels are offline-only. No
+policy command reads an API key or calls a provider. The current Hindi export
+has only two independent source recordings, so `policy split`, fitting, and
+replay deliberately fail their 20-source minimum and cannot support fitting or
+a generalisation claim. Replay also requires the actual feature source IDs to
+exactly match the declared train, calibration, and test groups before it writes
+any report.
+
+The v2 policy-feature schema records the fixed
+`voiced_onsets_per_observed_second.v1` local-rate proxy. It counts contiguous
+voiced 20 ms regions per visible trailing-window second, using only audio before
+the observation boundary. Artifacts accept only this versioned extractor
+configuration, so older constant-rate features cannot be mixed silently.
+
+A policy is a win only on independent held-out source recordings when all four
+constraints hold: continuation recall is at least 0.80, unnecessary-hold rate
+is at most 0.20, coverage is at least 0.95, and utility is strictly higher than
+both always-yield and the complete semantic baseline. Do not publish a policy
+result until an independent held-out run meets every one of those constraints.
