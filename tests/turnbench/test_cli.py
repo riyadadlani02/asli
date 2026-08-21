@@ -24,7 +24,12 @@ from asli.turnbench.auto_schema import (
     write_predictions,
     write_references,
 )
-from asli.turnbench.policy_schema import PolicyFeature, write_policy_features
+from asli.turnbench.policy_schema import (
+    PolicyFeature,
+    PolicySplit,
+    write_policy_features,
+    write_policy_split,
+)
 from asli.turnbench.cli import main
 from asli.synth import write_wav
 
@@ -216,12 +221,69 @@ def test_policy_fit_rejects_two_source_recordings_before_writing_an_artifact(
     assert not output.exists()
 
 
+def test_policy_fit_rejects_an_underpowered_handcrafted_split_before_writing(
+    tmp_path,
+):
+    features, references = _policy_fixture_files(tmp_path, group_count=3)
+    split = tmp_path / "split.json"
+    output = tmp_path / "policy.json"
+    write_policy_split(split, PolicySplit(
+        seed=7,
+        language="Hindi",
+        train_source_recording_ids=("source-0",),
+        calibration_source_recording_ids=("source-1",),
+        test_source_recording_ids=("source-2",),
+    ))
+
+    with pytest.raises(SystemExit, match="20 independent source recordings"):
+        main([
+            "policy", "fit", "--features", str(features),
+            "--references", str(references), "--split", str(split),
+            "--language", "Hindi", "--out", str(output),
+        ])
+
+    assert not output.exists()
+
+
+def test_policy_fit_rejects_features_that_do_not_match_supplied_split(tmp_path):
+    features, references = _policy_fixture_files(tmp_path, group_count=20)
+    split = tmp_path / "split.json"
+    output = tmp_path / "policy.json"
+    write_policy_split(split, PolicySplit(
+        seed=7,
+        language="Hindi",
+        train_source_recording_ids=tuple(f"source-{index}" for index in range(18)),
+        calibration_source_recording_ids=("source-18",),
+        test_source_recording_ids=("missing-source",),
+    ))
+
+    with pytest.raises(SystemExit, match="feature source recording IDs must exactly match split"):
+        main([
+            "policy", "fit", "--features", str(features),
+            "--references", str(references), "--split", str(split),
+            "--language", "Hindi", "--out", str(output),
+        ])
+
+    assert not output.exists()
+
+
 def test_policy_commands_do_not_construct_a_live_observer(tmp_path, monkeypatch):
     monkeypatch.setattr(
         turnbench_cli, "AUTO_OBSERVER_FACTORY", lambda **_: pytest.fail("no provider call")
     )
     features, references = _policy_fixture_files(tmp_path, group_count=20)
+    semantic = tmp_path / "semantic.jsonl"
     split, policy, report = tmp_path / "split.json", tmp_path / "policy.json", tmp_path / "report.json"
+    write_predictions(semantic, [
+        AutoPrediction(
+            decision_id=f"d{index}", run_id="semantic-run", agent="fixture",
+            model="fixture", config={"mode": "semantic_vad"}, status="available",
+            outcome="continue" if index % 5 == 0 else "yield",
+            endpoint_ms=None if index % 5 == 0 else 1001,
+            unavailable_reason=None,
+        )
+        for index in range(20)
+    ])
 
     assert main([
         "policy", "split", "--features", str(features), "--language", "Hindi",
@@ -233,12 +295,14 @@ def test_policy_commands_do_not_construct_a_live_observer(tmp_path, monkeypatch)
     ]) == 0
     assert main([
         "policy", "replay", "--features", str(features), "--references", str(references),
-        "--split", str(split), "--policy", str(policy), "--out", str(report),
+        "--split", str(split), "--policy", str(policy), "--semantic", str(semantic),
+        "--out", str(report),
     ]) == 0
     result = json.loads(report.read_text())
 
     assert result["report"]["policy_win"] is False
     assert result["report"]["test"]["source_recording_n"] == 4
+    assert result["report"]["semantic_baseline"]["source_recording_n"] == 4
 
 
 def test_only_validated_score_inputs_is_public_report_api():
