@@ -106,8 +106,35 @@ def test_replay_requires_complete_compatible_semantic_predictions():
         make_feature("test-yield", source="test", pause_ms=100),
         make_feature("test-continue", source="test", pause_ms=1000),
     ]
-    with pytest.raises(ValueError, match="semantic predictions must cover every test feature"):
+    with pytest.raises(ValueError, match="semantic prediction IDs must exactly match test features"):
         replay_policy(rows, [make_reference(rows[0], "yield"), make_reference(rows[1], "continue")], split(), make_artifact(), semantic_predictions=semantic_rows(rows[:1], ["yield"]))
+
+
+def test_replay_rejects_a_held_out_binary_reference_without_a_feature():
+    """Fails if an unmatched held-out label can be excluded before a win decision."""
+    feature = make_feature("test-yield", source="test", pause_ms=100)
+    missing_feature = make_feature("test-missing", source="test", pause_ms=100)
+
+    with pytest.raises(ValueError, match="held-out binary reference IDs do not match test features"):
+        replay_policy(
+            [feature], [make_reference(feature, "yield"), make_reference(missing_feature, "yield")],
+            split(), make_artifact(), semantic_predictions=semantic_rows([feature], ["yield"]),
+        )
+
+
+@pytest.mark.parametrize("leaking_source", ["train", "cal"])
+def test_replay_rejects_semantic_predictions_outside_the_held_out_test_set(leaking_source):
+    """Fails if train or calibration semantic rows can enter a held-out baseline."""
+    test_feature = make_feature("test-yield", source="test", pause_ms=100)
+    leaking_feature = make_feature(f"{leaking_source}-yield", source=leaking_source, pause_ms=100)
+
+    with pytest.raises(ValueError, match="semantic prediction IDs must exactly match test features"):
+        replay_policy(
+            [test_feature, leaking_feature],
+            [make_reference(test_feature, "yield"), make_reference(leaking_feature, "yield")],
+            split(), make_artifact(),
+            semantic_predictions=semantic_rows([test_feature, leaking_feature], ["yield", "yield"]),
+        )
 
 
 def test_insufficient_runtime_coverage_prevents_a_policy_win():
