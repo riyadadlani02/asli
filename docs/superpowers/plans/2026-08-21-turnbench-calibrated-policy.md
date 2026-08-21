@@ -15,7 +15,7 @@
 - Preserve ASLI's existing Hindi telephone study, TurnBench provider-trace lane, and public site.
 - Use human-timing references only for offline fitting, calibration, and replay; runtime decisions receive only features and policy artifacts.
 - Group every split by exact \`source_recording_id\`; no group may appear in more than one split.
-- Public policy fitting rejects fewer than 20 independent source recordings for a requested language.
+- Policy fitting and replay reject fewer than 20 independent source recordings for a requested language; feature source IDs must exactly equal every declared split group.
 - A held-out \`policy_win\` requires continuation recall >= 0.80, unnecessary-hold rate <= 0.20, coverage >= 0.95, and utility strictly better than both baselines.
 - Never call an external provider from a policy command; semantic observations are optional completed input files.
 - All new persistent rows/artifacts are strict, versioned JSON/JSONL; they contain no audio bytes, paths, labels, credentials, or model secrets.
@@ -60,7 +60,8 @@ def test_policy_feature_round_trips_without_a_label_or_audio_path():
     row = PolicyFeature(
         decision_id="d1", recording_id="clip-1", source_recording_id="call-1",
         language="Hindi", condition="Near field", export_fingerprint="e" * 64,
-        extractor_config={"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1},
+        extractor_config={"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1,
+                          "speech_rate_proxy": "voiced_onsets_per_observed_second.v1"},
         audio_fingerprint="a" * 64, pause_ms=600,
         trailing_energy=0.25, trailing_energy_slope=-0.1,
         trailing_speech_ms=740, local_speech_rate_hz=4.0,
@@ -87,7 +88,7 @@ def test_policy_artifact_rejects_reversed_threshold_band():
 
 - [ ] **Step 2: Run the contract test to verify it fails**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_schema.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_schema.py -q\`
 Expected: FAIL because \`policy_schema\` and its record types do not exist.
 
 - [ ] **Step 3: Implement strict records and file I/O**
@@ -95,7 +96,7 @@ Expected: FAIL because \`policy_schema\` and its record types do not exist.
 Create the following fixed schemas and validate exact fields with the existing \`SchemaError\` and strict JSONL reader/writer pattern:
 
 ~~~python
-POLICY_FEATURE_SCHEMA = "turnbench.policy_feature.v1"
+POLICY_FEATURE_SCHEMA = "turnbench.policy_feature.v2"
 POLICY_SPLIT_SCHEMA = "turnbench.policy_split.v1"
 POLICY_ARTIFACT_SCHEMA = "turnbench.policy_artifact.v1"
 POLICY_DECISION_SCHEMA = "turnbench.policy_decision.v1"
@@ -158,7 +159,7 @@ Require finite numeric features, positive finite scales, \`0 <= yield_threshold 
 
 - [ ] **Step 4: Run schema tests to verify they pass**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_schema.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_schema.py -q\`
 Expected: PASS, including malformed JSON, unknown field, non-finite number, overlap, and unavailable-record cases.
 
 - [ ] **Step 5: Export only the stable record API**
@@ -167,7 +168,7 @@ Add the four record types, four schema constants, and readers/writers to \`asli.
 
 - [ ] **Step 6: Run the relevant regression suite**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_schema.py tests/turnbench/test_auto_report.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_schema.py tests/turnbench/test_auto_report.py -q\`
 Expected: PASS.
 
 - [ ] **Step 7: Commit the self-contained contract**
@@ -218,7 +219,7 @@ def test_feature_extraction_keeps_unavailable_semantic_evidence_unavailable():
 
 - [ ] **Step 2: Run feature tests to verify they fail**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_features.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_features.py -q\`
 Expected: FAIL because \`extract_policy_features\` does not exist.
 
 - [ ] **Step 3: Implement fixed local feature extraction**
@@ -236,7 +237,9 @@ def _trailing_features(speech_pcm: np.ndarray, rate: int) -> tuple[float, float,
     # Use 20 ms frames from only the last 1000 ms of preceding speech.
     # A voiced frame has RMS >= 10% of the maximum RMS in that preceding slice.
     # Return normalized final-frame RMS, final-minus-first RMS slope,
-    # voiced duration in milliseconds, and voiced-frame count / voiced seconds.
+    # voiced duration in milliseconds, and contiguous voiced-region onsets per
+    # visible trailing-window second. Version this fixed proxy as
+    # voiced_onsets_per_observed_second.v1 in extractor_config.
 
 def extract_policy_features(
     candidates: Iterable[DiarBenchCandidate], *,
@@ -256,12 +259,12 @@ The extractor must use \`candidate.previous_speech_end_ms\` and \`candidate.obse
 
 - [ ] **Step 4: Run feature tests to verify they pass**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_features.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_features.py -q\`
 Expected: PASS, including no look-ahead audio, duplicate semantic ID, truncated audio, zero-energy audio, and deterministic sorted output.
 
 - [ ] **Step 5: Run the affected offline suite**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_features.py tests/turnbench/test_auto_label.py tests/turnbench/test_cli.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_features.py tests/turnbench/test_auto_label.py tests/turnbench/test_cli.py -q\`
 Expected: PASS.
 
 - [ ] **Step 6: Commit the extractor**
@@ -311,12 +314,12 @@ def test_fit_uses_train_groups_not_test_labels():
 
 - [ ] **Step 2: Run model tests to verify they fail**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_model.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_model.py -q\`
 Expected: FAIL because group split and fitting functions do not exist.
 
 - [ ] **Step 3: Implement deterministic source-group splitting**
 
-Use sorted unique source groups, \`random.Random(seed).shuffle(groups)\`, and a 60%/20%/remaining allocation with at least one group per partition. Reject a language with fewer than \`minimum_group_count\` groups; public CLI always uses 20. Reject duplicate decision IDs, mixed languages, and any feature group absent from the split.
+Use sorted unique source groups, \`random.Random(seed).shuffle(groups)\`, and a 60%/20%/remaining allocation with at least one group per partition. Reject a language with fewer than \`minimum_group_count\` groups; public CLI always uses 20. Reject duplicate decision IDs, mixed languages, and any mismatch between actual feature source IDs and the full declared split-group union.
 
 - [ ] **Step 4: Implement train-only logistic fitting and calibration**
 
@@ -348,11 +351,11 @@ def fit_policy(
     # normalisation values. The intercept has mean 0 and scale 1.
 ~~~
 
-Encode semantic evidence without labels: \`semantic_yield_signal\` is 1 only for an available semantic yield, while \`semantic_available_signal\` is 1 for either available semantic outcome. Compute calibration probabilities only for calibration groups. Enumerate \`yield_threshold\` from 0.05 through 0.45 and \`hold_threshold\` from 0.55 through 0.95 in 0.05 steps. Keep only \`yield_threshold < hold_threshold\`; choose the pair with maximal \`4 * continuation_recall - unnecessary_hold_rate - 0.0005 * grace_ms\`, with lexicographic low thresholds as deterministic tie-breaker. Store \`grace_ms=150\` and \`hard_deadline_ms=800\`, the matching export fingerprint, and the matching extractor configuration in the artifact.
+Encode semantic evidence without labels: \`semantic_yield_signal\` is 1 only for an available semantic yield, while \`semantic_available_signal\` is 1 for either available semantic outcome. Compute calibration probabilities only for calibration groups. Enumerate \`yield_threshold\` from 0.05 through 0.45 and \`hold_threshold\` from 0.55 through 0.95 in 0.05 steps. Classify each calibration row exactly like replay: \`yield\` at or below the yield threshold, \`hold\` at or above the hold threshold, and \`uncertain\` otherwise. Treat both hold and uncertain as non-yield on true yields, score \`4 * continuation_recall - unnecessary_hold_rate - 0.0005 * uncertain_n * grace_ms\`, and choose the highest-utility band meeting continuation-recall >= 0.80 and unnecessary-hold rate <= 0.20. Use lexicographic low thresholds for deterministic ties; if no band meets both constraints, deterministically choose the highest-utility band from all candidates. Store \`grace_ms=150\` and \`hard_deadline_ms=800\`, the matching export fingerprint, and the matching extractor configuration in the artifact.
 
 - [ ] **Step 5: Run model tests to verify they pass**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_model.py tests/turnbench/test_policy_schema.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_model.py tests/turnbench/test_policy_schema.py -q\`
 Expected: PASS, including fewer-than-20 rejection, stable seed, source-group isolation, zero-scale normalization, no test-label influence, and deterministic threshold choice.
 
 - [ ] **Step 6: Commit the model and calibration**
@@ -375,7 +378,7 @@ git commit -m "feat: fit calibrated TurnBench policy"
 - Consumes one \`PolicyFeature\` and \`PolicyArtifact\`.
 - Produces \`decide_policy(feature, artifact) -> PolicyDecision\`.
 - Produces \`replay_policy(features, references, split, artifact, *, semantic_predictions=()) -> dict[str, object]\`.
-- Replay uses only \`split.test_source_recording_ids\`; it must not score train or calibration groups.
+- Replay uses only \`split.test_source_recording_ids\`; it must not score train or calibration groups. Before any report, it requires at least 20 actual source recordings and exact equality between their IDs and the full split-group union.
 
 - [ ] **Step 1: Write failing runtime and win-gate tests**
 
@@ -406,7 +409,7 @@ def test_high_accuracy_policy_is_not_a_win_when_it_interrupts_too_often():
 
 - [ ] **Step 2: Run runtime/report tests to verify they fail**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_runtime.py tests/turnbench/test_policy_report.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_runtime.py tests/turnbench/test_policy_report.py -q\`
 Expected: FAIL because runtime and replay modules do not exist.
 
 - [ ] **Step 3: Implement the label-free action seam**
@@ -442,12 +445,12 @@ Treat both \`hold\` and \`uncertain\` as non-yield. Add \`uncertain_n\` and \`ad
 
 - [ ] **Step 5: Run runtime/report tests to verify they pass**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_runtime.py tests/turnbench/test_policy_report.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_runtime.py tests/turnbench/test_policy_report.py -q\`
 Expected: PASS, including artifact mismatch, no reference in runtime, test-only scoring, missing semantic baseline prevents a win, unsafe high-accuracy failure, insufficient coverage failure, and successful held-out synthetic win.
 
 - [ ] **Step 6: Run the policy regression suite**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_schema.py tests/turnbench/test_policy_features.py tests/turnbench/test_policy_model.py tests/turnbench/test_policy_runtime.py tests/turnbench/test_policy_report.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_policy_schema.py tests/turnbench/test_policy_features.py tests/turnbench/test_policy_model.py tests/turnbench/test_policy_runtime.py tests/turnbench/test_policy_report.py -q\`
 Expected: PASS.
 
 - [ ] **Step 7: Commit runtime and report**
@@ -488,7 +491,8 @@ def _policy_fixture_files(tmp_path, group_count):
             decision_id=candidate.decision_id, recording_id=candidate.recording_id,
             source_recording_id=candidate.source_recording_id, language="Hindi",
             condition="fixture", export_fingerprint="e" * 64,
-            extractor_config={"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1},
+            extractor_config={"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1,
+                              "speech_rate_proxy": "voiced_onsets_per_observed_second.v1"},
             audio_fingerprint=f"{index:064x}", pause_ms=1000 if continuation else 300,
             trailing_energy=0.1, trailing_energy_slope=0.0, trailing_speech_ms=500,
             local_speech_rate_hz=4.0, semantic_status="absent", semantic_outcome=None,
@@ -534,7 +538,7 @@ def test_policy_commands_do_not_construct_a_live_observer(tmp_path, monkeypatch)
 
 - [ ] **Step 2: Run CLI tests to verify they fail**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_cli.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_cli.py -q\`
 Expected: FAIL because the \`policy\` parser and handlers do not exist.
 
 - [ ] **Step 3: Add command parsing and atomic handlers**
@@ -555,14 +559,14 @@ Use existing \`_atomic_text\` for JSON reports and an analogous atomic JSONL wri
 Export \`extract_policy_features\`, \`make_group_split\`, \`fit_policy\`, \`decide_policy\`, and \`replay_policy\` from \`asli.turnbench\`. Add a concise \`Calibrated policy lane\` section to \`docs/turnbench.md\` that:
 
 - shows the four local commands using \`uv run --locked --no-sync python -m asli.turnbench.cli\`;
-- says the current 2-source Hindi export fails the 20-source fitting minimum by design;
+- says the current 2-source Hindi export fails the 20-source fitting and replay minimum by design;
 - states that labels are offline-only and no policy command uses a provider/API key;
 - defines a win using all four held-out constraints; and
 - forbids publishing a result until an independent held-out run meets those constraints.
 
 - [ ] **Step 5: Run CLI and documentation regression tests**
 
-Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_cli.py tests/turnbench/test_policy_report.py -q\`  
+Run: \`uv run --offline --locked --with pytest python -m pytest tests/turnbench/test_cli.py tests/turnbench/test_policy_report.py -q\`
 Expected: PASS.
 
 - [ ] **Step 6: Run full verification**

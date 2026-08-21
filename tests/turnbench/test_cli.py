@@ -191,7 +191,8 @@ def _policy_fixture_files(tmp_path, group_count):
             decision_id=candidate.decision_id, recording_id=candidate.recording_id,
             source_recording_id=candidate.source_recording_id, language="Hindi",
             condition="fixture", export_fingerprint="e" * 64,
-            extractor_config={"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1},
+            extractor_config={"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1,
+                              "speech_rate_proxy": "voiced_onsets_per_observed_second.v1"},
             audio_fingerprint=f"{index:064x}", pause_ms=1000 if continuation else 300,
             trailing_energy=0.1, trailing_energy_slope=0.0, trailing_speech_ms=500,
             local_speech_rate_hz=4.0, semantic_status="absent", semantic_outcome=None,
@@ -265,6 +266,35 @@ def test_policy_fit_rejects_features_that_do_not_match_supplied_split(tmp_path):
         ])
 
     assert not output.exists()
+
+
+def test_policy_replay_rejects_ghost_split_groups_without_replacing_output(tmp_path):
+    """Fails if a handcrafted replay can add absent source groups to an artifact study."""
+    features, references = _policy_fixture_files(tmp_path, group_count=20)
+    split, policy, report = tmp_path / "split.json", tmp_path / "policy.json", tmp_path / "report.json"
+    assert main([
+        "policy", "split", "--features", str(features), "--language", "Hindi",
+        "--seed", "7", "--out", str(split),
+    ]) == 0
+    assert main([
+        "policy", "fit", "--features", str(features), "--references", str(references),
+        "--split", str(split), "--language", "Hindi", "--out", str(policy),
+    ]) == 0
+    valid = turnbench_cli.read_policy_split(split)
+    write_policy_split(split, PolicySplit(
+        valid.seed, valid.language, valid.train_source_recording_ids,
+        valid.calibration_source_recording_ids,
+        (*valid.test_source_recording_ids, "ghost-test"),
+    ))
+    report.write_text("preserve me")
+
+    with pytest.raises(SystemExit, match="feature source recording IDs must exactly match split"):
+        main([
+            "policy", "replay", "--features", str(features), "--references", str(references),
+            "--split", str(split), "--policy", str(policy), "--out", str(report),
+        ])
+
+    assert report.read_text() == "preserve me"
 
 
 def test_policy_commands_do_not_construct_a_live_observer(tmp_path, monkeypatch):

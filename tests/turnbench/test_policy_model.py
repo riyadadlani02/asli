@@ -24,6 +24,7 @@ def make_feature(
         export_fingerprint="e" * 64,
         extractor_config=extractor_config or {
             "frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1,
+            "speech_rate_proxy": "voiced_onsets_per_observed_second.v1",
         },
         audio_fingerprint="a" * 64, pause_ms=pause_ms,
         trailing_energy=energy, trailing_energy_slope=slope,
@@ -147,8 +148,26 @@ def test_fit_rejects_features_outside_the_declared_split():
     feature = make_feature("unknown", source="unknown")
     split = explicit_split(train=("train-a",), calibration=("cal-a",), test=("test-a",))
 
-    with pytest.raises(ValueError, match="feature group absent from split: unknown"):
+    with pytest.raises(ValueError, match="feature source recording IDs must exactly match split"):
         fit_policy([feature], [], split, language="Hindi")
+
+
+def test_fit_rejects_declared_ghost_source_groups():
+    """Fails if handcrafted split provenance can name sources with no features."""
+    features = [
+        make_feature("train", source="train"),
+        make_feature("cal", source="cal"),
+        make_feature("test", source="test"),
+    ]
+    split = explicit_split(
+        train=("train", "ghost-train"), calibration=("cal",), test=("test",),
+    )
+
+    with pytest.raises(ValueError, match="feature source recording IDs must exactly match split"):
+        fit_policy(
+            features, [make_reference(feature, "continue") for feature in features],
+            split, language="Hindi",
+        )
 
 
 @pytest.mark.parametrize("forbidden_key", ["api_key", "audio_path"])
@@ -156,6 +175,7 @@ def test_fit_rejects_nonportable_extractor_configuration(forbidden_key):
     """Fails if a secret or local path can be copied into a policy artifact."""
     config = {
         "frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1,
+        "speech_rate_proxy": "voiced_onsets_per_observed_second.v1",
         forbidden_key: "must-not-be-portable",
     }
     features = [
@@ -177,8 +197,8 @@ def test_fit_rejects_nonportable_extractor_configuration(forbidden_key):
         )
 
 
-def test_calibration_uses_the_lowest_thresholds_on_a_utility_tie():
-    """Fails if calibration is nondeterministic when several bands score equally."""
+def test_calibration_counts_uncertain_true_yields_as_waits():
+    """Fails if an uncertain true yield is free during threshold selection."""
     rows = [
         make_feature("continue", source="cal-a"),
         make_feature("yield", source="cal-b"),
@@ -187,4 +207,4 @@ def test_calibration_uses_the_lowest_thresholds_on_a_utility_tie():
 
     assert calibrate_thresholds(
         {"continue": 0.60, "yield": 0.20}, references, {"continue", "yield"},
-    ) == (0.05, 0.55)
+    ) == (0.20, 0.55)
