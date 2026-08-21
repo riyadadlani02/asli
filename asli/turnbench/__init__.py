@@ -48,6 +48,8 @@ from .policy_schema import (
 )
 from .policy_runtime import decide_policy, probability_continue
 from .policy_report import replay_policy
+from .policy_features import extract_policy_features
+from .policy_model import fit_policy, make_group_split
 
 __all__ = [
     "Annotation",
@@ -94,4 +96,5 @@ __all__ = [
     "read_policy_artifact", "read_policy_features", "read_policy_split",
     "write_policy_artifact", "write_policy_features", "write_policy_split",
     "decide_policy", "probability_continue", "replay_policy",
+    "extract_policy_features", "make_group_split", "fit_policy",
 ]

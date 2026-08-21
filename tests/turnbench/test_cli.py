@@ -24,6 +24,7 @@ from asli.turnbench.auto_schema import (
     write_predictions,
     write_references,
 )
+from asli.turnbench.policy_schema import PolicyFeature, write_policy_features
 from asli.turnbench.cli import main
 from asli.synth import write_wav
 
@@ -168,6 +169,76 @@ def test_report_docs_distinguish_macro_and_micro_denominators():
     assert "Micro and grouped availability rates use that summary's `trace_n`" in docs
     assert "macro `overall` rates use their corresponding `*_language_n`" in docs
     assert "uncertainty for `micro_overall[\"pir\"]`, never `overall[\"pir\"]`" in docs
+
+
+def _policy_fixture_files(tmp_path, group_count):
+    candidates, features, references = [], [], []
+    for index in range(group_count):
+        candidate = DiarBenchCandidate(
+            decision_id=f"d{index}", recording_id=f"clip-{index}",
+            source_recording_id=f"source-{index}", audio_path=f"audio/{index}.wav",
+            language="Hindi", condition="fixture", target_speaker_id="caller",
+            context_start_ms=0, previous_speech_end_ms=1000, observation_end_ms=1600,
+        )
+        continuation = index % 5 == 0
+        candidates.append(candidate)
+        features.append(PolicyFeature(
+            decision_id=candidate.decision_id, recording_id=candidate.recording_id,
+            source_recording_id=candidate.source_recording_id, language="Hindi",
+            condition="fixture", export_fingerprint="e" * 64,
+            extractor_config={"frame_ms": 20, "lookback_ms": 1000, "voice_ratio": 0.1},
+            audio_fingerprint=f"{index:064x}", pause_ms=1000 if continuation else 300,
+            trailing_energy=0.1, trailing_energy_slope=0.0, trailing_speech_ms=500,
+            local_speech_rate_hz=4.0, semantic_status="absent", semantic_outcome=None,
+            semantic_endpoint_offset_ms=None,
+        ))
+        references.append(DiarBenchReference(
+            candidate, "continue" if continuation else "yield", REFERENCE_SOURCE, None,
+        ))
+    feature_path, reference_path = tmp_path / "features.jsonl", tmp_path / "references.jsonl"
+    write_policy_features(feature_path, features)
+    write_references(reference_path, references)
+    return feature_path, reference_path
+
+
+def test_policy_fit_rejects_two_source_recordings_before_writing_an_artifact(
+    tmp_path, monkeypatch,
+):
+    features, _ = _policy_fixture_files(tmp_path, group_count=2)
+    output = tmp_path / "split.json"
+
+    with pytest.raises(SystemExit, match="20 independent source recordings"):
+        main([
+            "policy", "split", "--features", str(features),
+            "--language", "Hindi", "--seed", "7", "--out", str(output),
+        ])
+
+    assert not output.exists()
+
+
+def test_policy_commands_do_not_construct_a_live_observer(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        turnbench_cli, "AUTO_OBSERVER_FACTORY", lambda **_: pytest.fail("no provider call")
+    )
+    features, references = _policy_fixture_files(tmp_path, group_count=20)
+    split, policy, report = tmp_path / "split.json", tmp_path / "policy.json", tmp_path / "report.json"
+
+    assert main([
+        "policy", "split", "--features", str(features), "--language", "Hindi",
+        "--seed", "7", "--out", str(split),
+    ]) == 0
+    assert main([
+        "policy", "fit", "--features", str(features), "--references", str(references),
+        "--split", str(split), "--language", "Hindi", "--out", str(policy),
+    ]) == 0
+    assert main([
+        "policy", "replay", "--features", str(features), "--references", str(references),
+        "--split", str(split), "--policy", str(policy), "--out", str(report),
+    ]) == 0
+    result = json.loads(report.read_text())
+
+    assert result["report"]["policy_win"] is False
+    assert result["report"]["test"]["source_recording_n"] == 4
 
 
 def test_only_validated_score_inputs_is_public_report_api():

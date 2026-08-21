@@ -36,6 +36,15 @@ from .auto_schema import (
     write_references,
 )
 from .diarbench import convert_diarbench_sample
+from .policy_features import extract_policy_features
+from .policy_model import fit_policy, make_group_split
+from .policy_report import replay_policy
+from .policy_schema import (
+    PolicyFeature,
+    read_policy_artifact,
+    read_policy_features,
+    read_policy_split,
+)
 from .report import score_inputs
 from .schema import (
     DecisionLabel,
@@ -181,6 +190,32 @@ def _parser() -> argparse.ArgumentParser:
     compare.add_argument("--predictions", type=Path, required=True)
     compare.add_argument("--manifest", type=Path)
     compare.add_argument("--out", type=Path, required=True)
+
+    policy = commands.add_parser("policy", help="fit and replay a local calibrated policy")
+    policy_commands = policy.add_subparsers(dest="policy_command", required=True)
+    features = policy_commands.add_parser("features", help="extract local policy features")
+    features.add_argument("--candidates", type=Path, required=True)
+    features.add_argument("--manifest", type=Path)
+    features.add_argument("--semantic", type=Path)
+    features.add_argument("--out", type=Path, required=True)
+    split = policy_commands.add_parser("split", help="make a grouped local policy split")
+    split.add_argument("--features", type=Path, required=True)
+    split.add_argument("--language", required=True)
+    split.add_argument("--seed", type=int, required=True)
+    split.add_argument("--out", type=Path, required=True)
+    fit = policy_commands.add_parser("fit", help="fit a local calibrated policy")
+    fit.add_argument("--features", type=Path, required=True)
+    fit.add_argument("--references", type=Path, required=True)
+    fit.add_argument("--split", type=Path, required=True)
+    fit.add_argument("--language", required=True)
+    fit.add_argument("--out", type=Path, required=True)
+    replay = policy_commands.add_parser("replay", help="replay a local calibrated policy")
+    replay.add_argument("--features", type=Path, required=True)
+    replay.add_argument("--references", type=Path, required=True)
+    replay.add_argument("--split", type=Path, required=True)
+    replay.add_argument("--policy", type=Path, required=True)
+    replay.add_argument("--semantic", type=Path)
+    replay.add_argument("--out", type=Path, required=True)
     return parser
 
 
@@ -200,6 +235,15 @@ def _atomic_text(path: Path, payload: str) -> None:
 
 
 def _atomic_predictions(path: Path, rows: Iterable[AutoPrediction]) -> None:
+    payload = "".join(
+        json.dumps(row.to_dict(), sort_keys=True, allow_nan=False) + "\n"
+        for row in sorted(rows, key=lambda row: row.decision_id)
+    )
+    _atomic_text(path, payload)
+
+
+def _atomic_policy_features(path: Path, rows: Iterable[PolicyFeature]) -> None:
+    """Write sorted feature JSONL through the same atomic output seam as reports."""
     payload = "".join(
         json.dumps(row.to_dict(), sort_keys=True, allow_nan=False) + "\n"
         for row in sorted(rows, key=lambda row: row.decision_id)
@@ -477,6 +521,67 @@ def _compare_auto(args: argparse.Namespace) -> None:
     _atomic_text(args.out, json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n")
 
 
+def _policy_features(args: argparse.Namespace) -> None:
+    manifest = _read_manifest(args.manifest or args.candidates.parent / "manifest.json")
+    semantic_predictions = read_predictions(args.semantic) if args.semantic else ()
+    features = extract_policy_features(
+        read_candidates(args.candidates),
+        export_provenance=manifest,
+        semantic_predictions=semantic_predictions,
+    )
+    _atomic_policy_features(args.out, features)
+
+
+def _policy_split(args: argparse.Namespace) -> None:
+    if not args.language.strip():
+        raise ValueError("--language must be non-empty")
+    features = read_policy_features(args.features)
+    source_recording_count = len({
+        feature.source_recording_id
+        for feature in features
+        if feature.language == args.language
+    })
+    if source_recording_count < 20:
+        raise ValueError(
+            f"language {args.language} requires 20 independent source recordings"
+        )
+    split = make_group_split(features, language=args.language, seed=args.seed)
+    _atomic_text(
+        args.out,
+        json.dumps(split.to_dict(), indent=2, sort_keys=True, allow_nan=False) + "\n",
+    )
+
+
+def _policy_fit(args: argparse.Namespace) -> None:
+    if not args.language.strip():
+        raise ValueError("--language must be non-empty")
+    artifact = fit_policy(
+        read_policy_features(args.features),
+        read_references(args.references),
+        read_policy_split(args.split),
+        language=args.language,
+    )
+    _atomic_text(
+        args.out,
+        json.dumps(artifact.to_dict(), indent=2, sort_keys=True, allow_nan=False) + "\n",
+    )
+
+
+def _policy_replay(args: argparse.Namespace) -> None:
+    semantic_predictions = read_predictions(args.semantic) if args.semantic else ()
+    report = replay_policy(
+        read_policy_features(args.features),
+        read_references(args.references),
+        read_policy_split(args.split),
+        read_policy_artifact(args.policy),
+        semantic_predictions=semantic_predictions,
+    )
+    _atomic_text(
+        args.out,
+        json.dumps({"report": report}, indent=2, sort_keys=True, allow_nan=False) + "\n",
+    )
+
+
 def _score(args: argparse.Namespace) -> None:
     config = _decode_strict_json(args.config_json)
     if not isinstance(config, dict):
@@ -500,6 +605,15 @@ def main(argv: list[str] | None = None) -> int:
             _score(args)
         elif args.command == "diarbench":
             _export_diarbench(args)
+        elif args.command == "policy":
+            if args.policy_command == "features":
+                _policy_features(args)
+            elif args.policy_command == "split":
+                _policy_split(args)
+            elif args.policy_command == "fit":
+                _policy_fit(args)
+            else:
+                _policy_replay(args)
         elif args.auto_command == "label":
             _label_auto(args)
         else:
