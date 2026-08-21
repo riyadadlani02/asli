@@ -25,6 +25,11 @@ _BINARY_OUTCOMES = {"continue", "yield"}
 _POLICY_ID = "turnbench.calibrated_logistic.v1"
 _GRACE_MS = 150
 _HARD_DEADLINE_MS = 800
+_PORTABLE_EXTRACTOR_CONFIG = {
+    "frame_ms": 20,
+    "lookback_ms": 1000,
+    "voice_ratio": 0.1,
+}
 
 
 def _sigmoid(value: np.ndarray) -> np.ndarray:
@@ -36,6 +41,13 @@ def _config_key(config: dict[str, object]) -> str:
 
 
 def _portable_config(config: dict[str, object]) -> dict[str, object]:
+    """Allow only the extractor's fixed numeric configuration in artifacts."""
+    if set(config) != set(_PORTABLE_EXTRACTOR_CONFIG):
+        raise ValueError("nonportable extractor configuration")
+    for name, expected in _PORTABLE_EXTRACTOR_CONFIG.items():
+        value = config[name]
+        if type(value) is not type(expected) or value != expected:
+            raise ValueError("nonportable extractor configuration")
     return json.loads(_config_key(config))
 
 
