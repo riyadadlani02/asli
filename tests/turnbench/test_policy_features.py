@@ -144,6 +144,31 @@ def test_feature_extraction_zero_energy_has_finite_zero_features():
     assert row.local_speech_rate_hz == 0.0
 
 
+def test_feature_extraction_uses_a_varying_no_lookahead_onset_rate():
+    """Fails if non-silent temporal patterns collapse to the same speech-rate value."""
+    steady = np.concatenate([np.full(800, 1000, np.int16), np.zeros(800, np.int16)])
+    alternating = np.concatenate([
+        np.tile(np.concatenate([np.full(20, 1000, np.int16), np.zeros(20, np.int16)]), 20),
+        np.zeros(800, np.int16),
+    ])
+    candidate = make_candidate()
+
+    steady_rate = extract_policy_features(
+        [candidate], export_provenance=provenance(), read_audio=lambda _: (steady, 1000),
+    )[0].local_speech_rate_hz
+    alternating_rate = extract_policy_features(
+        [candidate], export_provenance=provenance(), read_audio=lambda _: (alternating, 1000),
+    )[0].local_speech_rate_hz
+    post_boundary_rate = extract_policy_features(
+        [candidate], export_provenance=provenance(),
+        read_audio=lambda _: (np.concatenate([steady, alternating[:800]]), 1000),
+    )[0].local_speech_rate_hz
+
+    assert steady_rate == 1.25
+    assert alternating_rate == 25.0
+    assert post_boundary_rate == steady_rate
+
+
 def test_feature_extraction_rejects_duplicate_semantic_ids():
     """Fails if ambiguous optional semantic evidence is silently selected."""
     with pytest.raises(ValueError, match="duplicate prediction decision_id: d1"):

@@ -47,8 +47,9 @@ offline fitting, calibration, and evaluation; the live policy reads only audio
 and optional provider observations.
 
 Every split is grouped by "source_recording_id". All candidates from a source
-recording belong to exactly one of train, calibration, or test. A command must
-fail before fitting when fewer than 20 independent source recordings are
+recording belong to exactly one of train, calibration, or test. Feature source
+IDs must exactly equal the union of every declared split group. Fitting and
+replay/report commands must fail when fewer than 20 independent source recordings are
 available for a requested language; the current Hindi export has two source
 recordings and is therefore smoke-test-only. It cannot support a generalisation
 claim or an 80% result.
@@ -67,22 +68,28 @@ from the candidate's bounded audio window:
 
 - current pause length;
 - trailing voiced-frame energy and energy slope;
-- trailing speech duration and local speaking rate; and
+- trailing speech duration and a voiced-onset rate per visible second; and
 - optional semantic endpoint evidence from a prediction record.
 
 The initial extractor uses NumPy and WAV inputs already produced by the export;
-it introduces no speech-recognition model or new runtime credential. Features
-are versioned and include the extractor configuration and source audio identity
-in each offline row.
+it introduces no speech-recognition model or new runtime credential. The
+versioned `voiced_onsets_per_observed_second.v1` proxy counts contiguous voiced
+regions (20 ms RMS frames at least 10% of the visible-window maximum) per
+visible trailing-window second. Features use the v2 feature schema and include
+this fixed extractor configuration and source audio identity in each offline row.
 
 ### Probability model and calibration
 
 "asli.turnbench.policy_model" will fit a small regularised logistic model using
 only train groups. It returns P(continue) with a model/version fingerprint.
 Threshold selection uses only calibration groups and chooses an explicit
-"hold", "yield", and "uncertain" band. It minimises a declared utility function
-whose interruption cost exceeds the cost of a bounded wait, subject to the
-success constraints above. The fitted coefficients, normalisation statistics,
+"hold", "yield", and "uncertain" band. Calibration uses replay's actions
+exactly: `p <= yield_threshold` yields, `p >= hold_threshold` holds, and the
+remaining rows are uncertain. It scores `4 * continuation_recall -
+unnecessary_hold_rate - 0.0005 * uncertain_n * grace_ms`, treating uncertain
+true yields as waits. It first selects among bands meeting the continuation and
+wait limits; if none qualify, it deterministically falls back to the highest
+utility band. The fitted coefficients, normalisation statistics,
 thresholds, grace interval, and training provenance form one immutable policy
 artifact.
 
@@ -104,7 +111,8 @@ wait. It does not invent a resumed utterance or claim a provider response time.
 
 "asli.turnbench.policy_report" joins candidates, human-timing references,
 features, and policy decisions by decision ID. It fails closed on missing,
-duplicate, cross-run, cross-language, or group-leaking rows. It reports:
+duplicate, cross-run, cross-language, group-leaking, under-20-source, or
+incomplete split-provenance rows. It reports:
 
 - continuation recall and premature-yield count/rate;
 - unnecessary-hold count/rate for true yields;
@@ -114,9 +122,10 @@ duplicate, cross-run, cross-language, or group-leaking rows. It reports:
 - the declared utility score; and
 - micro and macro summaries by language, condition, and source recording.
 
-The report labels train, calibration, and held-out-test group counts. It refuses
-to emit "policy_win: true" unless the held-out split meets every success
-constraint.
+The report labels train, calibration, and held-out-test group counts. It
+refuses to return any report unless the features cover exactly every split group
+and the study has at least 20 independent sources; it refuses to emit
+"policy_win: true" unless the held-out split meets every success constraint.
 
 ## CLI and artifacts
 

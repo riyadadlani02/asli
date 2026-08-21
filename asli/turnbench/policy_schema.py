@@ -10,10 +10,16 @@ from typing import Iterable, Literal, Mapping
 
 from .schema import SchemaError, read_jsonl, write_jsonl
 
-POLICY_FEATURE_SCHEMA = "turnbench.policy_feature.v1"
+POLICY_FEATURE_SCHEMA = "turnbench.policy_feature.v2"
 POLICY_SPLIT_SCHEMA = "turnbench.policy_split.v1"
 POLICY_ARTIFACT_SCHEMA = "turnbench.policy_artifact.v1"
 POLICY_DECISION_SCHEMA = "turnbench.policy_decision.v1"
+POLICY_EXTRACTOR_CONFIG: dict[str, object] = {
+    "frame_ms": 20,
+    "lookback_ms": 1000,
+    "voice_ratio": 0.1,
+    "speech_rate_proxy": "voiced_onsets_per_observed_second.v1",
+}
 
 
 def _fields(row: Mapping[str, object], expected: set[str]) -> None:
@@ -61,6 +67,16 @@ def _config(value: object) -> dict[str, object]:
             raise SchemaError(f"{name} must contain only JSON values")
     check(value, "extractor_config")
     return value
+
+
+def _portable_extractor_config(value: object) -> dict[str, object]:
+    config = _config(value)
+    if set(config) != set(POLICY_EXTRACTOR_CONFIG):
+        raise SchemaError("extractor_config must use the current versioned proxy")
+    for name, expected in POLICY_EXTRACTOR_CONFIG.items():
+        if type(config[name]) is not type(expected) or config[name] != expected:
+            raise SchemaError("extractor_config must use the current versioned proxy")
+    return config
 
 
 def _strings(value: object, name: str) -> tuple[str, ...]:
@@ -149,7 +165,7 @@ class PolicyArtifact:
     train_source_recording_ids: tuple[str, ...]; calibration_source_recording_ids: tuple[str, ...]
     schema = POLICY_ARTIFACT_SCHEMA
     def __post_init__(self) -> None:
-        _text(self.policy_id, "policy_id"); _text(self.language, "language"); _text(self.feature_schema, "feature_schema"); _text(self.export_fingerprint, "export_fingerprint"); _config(self.extractor_config)
+        _text(self.policy_id, "policy_id"); _text(self.language, "language"); _text(self.feature_schema, "feature_schema"); _text(self.export_fingerprint, "export_fingerprint"); _portable_extractor_config(self.extractor_config)
         if self.feature_schema != POLICY_FEATURE_SCHEMA: raise SchemaError(f"feature_schema must be {POLICY_FEATURE_SCHEMA}")
         for name in ("coefficients", "means", "scales"):
             value = getattr(self, name)

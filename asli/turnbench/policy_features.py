@@ -12,14 +12,10 @@ import numpy as np
 
 from .auto_report import DiarBenchExportProvenance, validate_export_candidates
 from .auto_schema import AutoPrediction, DiarBenchCandidate
-from .policy_schema import PolicyFeature
+from .policy_schema import POLICY_EXTRACTOR_CONFIG, PolicyFeature
 
 
-_EXTRACTOR_CONFIG: dict[str, object] = {
-    "frame_ms": 20,
-    "lookback_ms": 1000,
-    "voice_ratio": 0.1,
-}
+_EXTRACTOR_CONFIG = POLICY_EXTRACTOR_CONFIG
 
 
 def read_audio(path: Path) -> tuple[np.ndarray, int]:
@@ -85,7 +81,11 @@ def _pcm_scale(pcm: np.ndarray) -> float:
 
 
 def _trailing_features(speech_pcm: np.ndarray, rate: int) -> tuple[float, float, int, float]:
-    """Calculate bounded voiced-frame features from preceding speech only."""
+    """Calculate bounded voiced-frame features from preceding speech only.
+
+    ``local_speech_rate_hz`` is the v1 voiced-onset proxy: the number of
+    contiguous voiced regions per visible second in the trailing lookback.
+    """
     lookback = min(len(speech_pcm), _sample_index(1000, rate))
     samples = np.asarray(speech_pcm[-lookback:])
     frame_samples = _sample_index(20, rate)
@@ -102,9 +102,12 @@ def _trailing_features(speech_pcm: np.ndarray, rate: int) -> tuple[float, float,
     scale = _pcm_scale(samples)
     final_energy = float(rms[-1] / scale)
     energy_slope = float((rms[-1] - rms[0]) / scale)
-    voiced_count = int(np.count_nonzero(rms >= maximum * 0.1))
+    voiced = rms >= maximum * 0.1
+    voiced_count = int(np.count_nonzero(voiced))
     voiced_ms = voiced_count * 20
-    speech_rate = voiced_count / (voiced_ms / 1000) if voiced_ms else 0.0
+    voiced_onsets = int(np.count_nonzero(voiced & np.concatenate(([True], ~voiced[:-1]))))
+    visible_seconds = frame_count * 20 / 1000
+    speech_rate = voiced_onsets / visible_seconds if visible_seconds else 0.0
     return final_energy, energy_slope, voiced_ms, speech_rate
 
 

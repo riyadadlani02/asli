@@ -60,8 +60,6 @@ def _index_features(features: Iterable[PolicyFeature], split: PolicySplit, artif
             raise ValueError(f"duplicate feature decision_id: {feature.decision_id}")
         if feature.language != split.language:
             raise ValueError(f"feature language does not match split: {feature.decision_id}")
-        if feature.source_recording_id not in groups:
-            raise ValueError(f"feature group absent from split: {feature.source_recording_id}")
         if feature.schema != artifact.feature_schema:
             raise ValueError(f"feature schema does not match artifact: {feature.decision_id}")
         if feature.export_fingerprint != artifact.export_fingerprint:
@@ -69,6 +67,11 @@ def _index_features(features: Iterable[PolicyFeature], split: PolicySplit, artif
         if _config_key(feature.extractor_config) != _config_key(artifact.extractor_config):
             raise ValueError(f"feature extractor config does not match artifact: {feature.decision_id}")
         indexed[feature.decision_id] = feature
+    feature_groups = {feature.source_recording_id for feature in indexed.values()}
+    if feature_groups != groups:
+        raise ValueError("feature source recording IDs must exactly match split")
+    if len(feature_groups) < 20:
+        raise ValueError("replay requires 20 independent source recordings")
     return {decision_id: indexed[decision_id] for decision_id in sorted(indexed)}
 
 
@@ -207,12 +210,12 @@ def _failed_constraints(
         failed.append("unnecessary_hold_rate")
     if coverage is None or coverage < 0.95:
         failed.append("coverage_rate")
-    if semantic is None:
-        failed.append("semantic_baseline")
-        return failed
     utility = policy["utility"]
     if utility is None or always_yield["utility"] is None or utility <= always_yield["utility"]:
         failed.append("utility_over_always_yield")
+    if semantic is None:
+        failed.append("semantic_baseline")
+        return failed
     if utility is None or semantic["utility"] is None or utility <= semantic["utility"]:
         failed.append("utility_over_semantic_baseline")
     return failed

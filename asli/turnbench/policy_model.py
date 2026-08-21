@@ -10,7 +10,10 @@ from collections.abc import Iterable, Mapping
 import numpy as np
 
 from .auto_schema import DiarBenchReference
-from .policy_schema import POLICY_FEATURE_SCHEMA, PolicyArtifact, PolicyFeature, PolicySplit
+from .policy_schema import (
+    POLICY_EXTRACTOR_CONFIG, POLICY_FEATURE_SCHEMA, PolicyArtifact, PolicyFeature,
+    PolicySplit,
+)
 
 
 MODEL_FEATURES = (
@@ -25,11 +28,7 @@ _BINARY_OUTCOMES = {"continue", "yield"}
 _POLICY_ID = "turnbench.calibrated_logistic.v1"
 _GRACE_MS = 150
 _HARD_DEADLINE_MS = 800
-_PORTABLE_EXTRACTOR_CONFIG = {
-    "frame_ms": 20,
-    "lookback_ms": 1000,
-    "voice_ratio": 0.1,
-}
+_PORTABLE_EXTRACTOR_CONFIG = POLICY_EXTRACTOR_CONFIG
 
 
 def _sigmoid(value: np.ndarray) -> np.ndarray:
@@ -113,9 +112,9 @@ def _validate_split_membership(rows: list[PolicyFeature], split: PolicySplit, la
     groups = set(split.train_source_recording_ids)
     groups.update(split.calibration_source_recording_ids)
     groups.update(split.test_source_recording_ids)
-    for row in rows:
-        if row.source_recording_id not in groups:
-            raise ValueError(f"feature group absent from split: {row.source_recording_id}")
+    feature_groups = {row.source_recording_id for row in rows}
+    if feature_groups != groups:
+        raise ValueError("feature source recording IDs must exactly match split")
 
 
 def _validate_feature_provenance(rows: list[PolicyFeature]) -> tuple[str, dict[str, object]]:
@@ -204,28 +203,41 @@ def calibrate_thresholds(
 
     continue_count = sum(outcome == "continue" for _, outcome in selected)
     yield_count = len(selected) - continue_count
-    best: tuple[float, float] | None = None
-    best_score: float | None = None
+    candidates: list[tuple[float, float, float, bool]] = []
     for yield_tick in range(5, 46, 5):
         yield_threshold = yield_tick / 100
         for hold_tick in range(55, 96, 5):
             hold_threshold = hold_tick / 100
+            actions = [
+                "yield" if probability <= yield_threshold
+                else "hold" if probability >= hold_threshold
+                else "uncertain"
+                for probability, _ in selected
+            ]
             protected_continuations = sum(
-                outcome == "continue" and probability > yield_threshold
-                for probability, outcome in selected
+                outcome == "continue" and action != "yield"
+                for action, (_, outcome) in zip(actions, selected, strict=True)
             )
             unnecessary_holds = sum(
-                outcome == "yield" and probability >= hold_threshold
-                for probability, outcome in selected
+                outcome == "yield" and action != "yield"
+                for action, (_, outcome) in zip(actions, selected, strict=True)
             )
+            uncertain_n = actions.count("uncertain")
             continuation_recall = protected_continuations / continue_count if continue_count else 0.0
             unnecessary_hold_rate = unnecessary_holds / yield_count if yield_count else 0.0
-            score = 4 * continuation_recall - unnecessary_hold_rate - 0.0005 * _GRACE_MS
-            if best_score is None or score > best_score:
-                best_score = score
-                best = (yield_threshold, hold_threshold)
-    assert best is not None
-    return best
+            score = 4 * continuation_recall - unnecessary_hold_rate - 0.0005 * uncertain_n * _GRACE_MS
+            eligible = continuation_recall >= 0.80 and unnecessary_hold_rate <= 0.20
+            candidates.append((score, yield_threshold, hold_threshold, eligible))
+
+    eligible_candidates = [candidate for candidate in candidates if candidate[3]]
+    # If no calibration band satisfies both hard safety/wait limits, retain the
+    # deterministic highest-utility fallback rather than silently changing them.
+    ranked = eligible_candidates or candidates
+    score, yield_threshold, hold_threshold, _ = min(
+        ranked, key=lambda candidate: (-candidate[0], candidate[1], candidate[2]),
+    )
+    del score
+    return yield_threshold, hold_threshold
 
 
 def fit_policy(

@@ -212,9 +212,17 @@ uv run --locked --no-sync python -m asli.turnbench.cli policy replay \
 
 `--semantic` is optional completed local input; labels are offline-only. No
 policy command reads an API key or calls a provider. The current Hindi export
-has only two independent source recordings, so `policy split` deliberately
-fails its 20-source minimum and cannot support fitting or a generalisation
-claim.
+has only two independent source recordings, so `policy split`, fitting, and
+replay deliberately fail their 20-source minimum and cannot support fitting or
+a generalisation claim. Replay also requires the actual feature source IDs to
+exactly match the declared train, calibration, and test groups before it writes
+any report.
+
+The v2 policy-feature schema records the fixed
+`voiced_onsets_per_observed_second.v1` local-rate proxy. It counts contiguous
+voiced 20 ms regions per visible trailing-window second, using only audio before
+the observation boundary. Artifacts accept only this versioned extractor
+configuration, so older constant-rate features cannot be mixed silently.
 
 A policy is a win only on independent held-out source recordings when all four
 constraints hold: continuation recall is at least 0.80, unnecessary-hold rate
