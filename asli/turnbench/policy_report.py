@@ -97,7 +97,7 @@ def _same_identity(feature: PolicyFeature, reference: DiarBenchReference) -> boo
 
 def _validate_semantic_predictions(
     semantic_predictions: Iterable[AutoPrediction],
-    feature_ids: set[str],
+    test_feature_ids: set[str],
 ) -> dict[str, AutoPrediction] | None:
     rows = list(semantic_predictions)
     if not rows:
@@ -109,8 +109,6 @@ def _validate_semantic_predictions(
             raise ValueError("semantic_predictions must contain AutoPrediction records")
         if prediction.decision_id in indexed:
             raise ValueError(f"duplicate semantic prediction decision_id: {prediction.decision_id}")
-        if prediction.decision_id not in feature_ids:
-            raise ValueError(f"semantic prediction missing feature: {prediction.decision_id}")
         value = (
             prediction.run_id,
             prediction.agent,
@@ -122,6 +120,8 @@ def _validate_semantic_predictions(
         elif value != provenance:
             raise ValueError("mixed semantic prediction provenance is not allowed")
         indexed[prediction.decision_id] = prediction
+    if set(indexed) != test_feature_ids:
+        raise ValueError("semantic prediction IDs must exactly match test features")
     return {decision_id: indexed[decision_id] for decision_id in sorted(indexed)}
 
 
@@ -236,6 +236,15 @@ def replay_policy(
         raise ValueError("split has no test features")
 
     references_by_id = _index_references(references)
+    test_feature_ids = {feature.decision_id for feature in test_features}
+    binary_test_reference_ids = {
+        decision_id
+        for decision_id, reference in references_by_id.items()
+        if reference.outcome in _BINARY_OUTCOMES
+        and reference.candidate.source_recording_id in test_groups
+    }
+    if binary_test_reference_ids != test_feature_ids:
+        raise ValueError("held-out binary reference IDs do not match test features")
     test_rows: list[tuple[PolicyFeature, DiarBenchReference, _ReplayDecision]] = []
     for feature in test_features:
         reference = references_by_id.get(feature.decision_id)
@@ -261,12 +270,9 @@ def replay_policy(
     ]
     always_yield_summary = _summary(always_yield_rows, grace_ms=artifact.grace_ms)
 
-    predictions_by_id = _validate_semantic_predictions(semantic_predictions, set(features_by_id))
+    predictions_by_id = _validate_semantic_predictions(semantic_predictions, test_feature_ids)
     semantic_summary: dict[str, object] | None = None
     if predictions_by_id is not None:
-        test_ids = {feature.decision_id for feature in test_features}
-        if not test_ids <= set(predictions_by_id):
-            raise ValueError("semantic predictions must cover every test feature")
         semantic_rows = []
         for feature, reference, _ in policy_rows:
             prediction = predictions_by_id[feature.decision_id]

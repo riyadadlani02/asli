@@ -59,3 +59,11 @@ def test_probability_rejects_language_mismatch_before_scoring():
     """Fails if a Hindi artifact can silently score another language."""
     with pytest.raises(ValueError, match="language mismatch"):
         probability_continue(make_feature(language="Tamil"), make_artifact())
+
+
+def test_runtime_marks_an_uncomputably_large_schema_valid_pause_unavailable():
+    """Fails if runtime arithmetic can escape instead of producing an unavailable decision."""
+    decision = decide_policy(make_feature(pause_ms=10 ** 1000), make_artifact())
+
+    assert decision.status == "unavailable"
+    assert decision.action is None

@@ -71,7 +71,7 @@ def decide_policy(feature: PolicyFeature, artifact: PolicyArtifact) -> PolicyDec
     """Choose hold, yield, or uncertain without reading offline references."""
     try:
         probability = probability_continue(feature, artifact)
-    except (TypeError, ValueError) as exc:
+    except (ArithmeticError, TypeError, ValueError) as exc:
         return _unavailable_decision(feature, artifact, str(exc).replace(" ", "_"))
 
     if probability <= artifact.yield_threshold:
