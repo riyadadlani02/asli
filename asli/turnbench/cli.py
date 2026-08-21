@@ -41,6 +41,7 @@ from .policy_model import fit_policy, make_group_split
 from .policy_report import replay_policy
 from .policy_schema import (
     PolicyFeature,
+    PolicySplit,
     read_policy_artifact,
     read_policy_features,
     read_policy_split,
@@ -555,10 +556,25 @@ def _policy_split(args: argparse.Namespace) -> None:
 def _policy_fit(args: argparse.Namespace) -> None:
     if not args.language.strip():
         raise ValueError("--language must be non-empty")
+    features = read_policy_features(args.features)
+    split = read_policy_split(args.split)
+    language_features = [feature for feature in features if feature.language == args.language]
+    source_recording_ids = {
+        feature.source_recording_id for feature in language_features
+    }
+    if len(source_recording_ids) < 20:
+        raise ValueError(
+            f"language {args.language} requires 20 independent source recordings"
+        )
+    split_source_recording_ids = set(split.train_source_recording_ids)
+    split_source_recording_ids.update(split.calibration_source_recording_ids)
+    split_source_recording_ids.update(split.test_source_recording_ids)
+    if source_recording_ids != split_source_recording_ids:
+        raise ValueError("feature source recording IDs must exactly match split")
     artifact = fit_policy(
-        read_policy_features(args.features),
+        features,
         read_references(args.references),
-        read_policy_split(args.split),
+        split,
         language=args.language,
     )
     _atomic_text(
@@ -567,12 +583,66 @@ def _policy_fit(args: argparse.Namespace) -> None:
     )
 
 
+def _replay_semantic_predictions(
+    features: Iterable[PolicyFeature], split: PolicySplit,
+    predictions: Iterable[AutoPrediction],
+) -> list[AutoPrediction]:
+    """Validate a completed local semantic artifact, then retain held-out rows."""
+    feature_by_id: dict[str, PolicyFeature] = {}
+    for feature in features:
+        if not isinstance(feature, PolicyFeature):
+            raise ValueError("features must contain PolicyFeature records")
+        if feature.decision_id in feature_by_id:
+            raise ValueError(f"duplicate feature decision_id: {feature.decision_id}")
+        feature_by_id[feature.decision_id] = feature
+
+    prediction_by_id: dict[str, AutoPrediction] = {}
+    provenance: tuple[str, str, str, str] | None = None
+    for prediction in predictions:
+        if not isinstance(prediction, AutoPrediction):
+            raise ValueError("semantic_predictions must contain AutoPrediction records")
+        if prediction.decision_id in prediction_by_id:
+            raise ValueError(
+                f"duplicate semantic prediction decision_id: {prediction.decision_id}"
+            )
+        value = (
+            prediction.run_id,
+            prediction.agent,
+            prediction.model,
+            json.dumps(
+                prediction.config, sort_keys=True, separators=(",", ":"),
+                ensure_ascii=False, allow_nan=False,
+            ),
+        )
+        if provenance is None:
+            provenance = value
+        elif value != provenance:
+            raise ValueError("mixed semantic prediction provenance is not allowed")
+        prediction_by_id[prediction.decision_id] = prediction
+
+    if set(prediction_by_id) != set(feature_by_id):
+        raise ValueError("semantic prediction IDs must exactly match policy features")
+    test_groups = set(split.test_source_recording_ids)
+    test_ids = sorted(
+        feature.decision_id
+        for feature in feature_by_id.values()
+        if feature.source_recording_id in test_groups
+    )
+    return [prediction_by_id[decision_id] for decision_id in test_ids]
+
+
 def _policy_replay(args: argparse.Namespace) -> None:
-    semantic_predictions = read_predictions(args.semantic) if args.semantic else ()
+    features = read_policy_features(args.features)
+    split = read_policy_split(args.split)
+    semantic_predictions = ()
+    if args.semantic:
+        semantic_predictions = _replay_semantic_predictions(
+            features, split, read_predictions(args.semantic),
+        )
     report = replay_policy(
-        read_policy_features(args.features),
+        features,
         read_references(args.references),
-        read_policy_split(args.split),
+        split,
         read_policy_artifact(args.policy),
         semantic_predictions=semantic_predictions,
     )
