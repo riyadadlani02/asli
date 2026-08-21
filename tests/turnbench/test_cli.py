@@ -178,6 +178,22 @@ def _diarbench_row():
     }
 
 
+def test_resolved_revision_finds_commit_in_streaming_file_url():
+    commit = "f" * 40
+
+    class ArrowExamplesIterable:
+        kwargs = {
+            "files": [
+                f"hf://datasets/sarvamai/indic-diarbench@{commit}/Hindi/test.parquet"
+            ]
+        }
+
+    class IterableDataset:
+        _ex_iterable = ArrowExamplesIterable()
+
+    assert turnbench_cli._resolved_revision(IterableDataset()) == commit
+
+
 def test_diarbench_export_writes_isolated_records_and_versioned_manifest(tmp_path, monkeypatch):
     out_dir = tmp_path / "diarbench"
     seen = {}
