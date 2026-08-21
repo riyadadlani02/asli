@@ -7,6 +7,7 @@ import io
 import json
 import os
 import shutil
+import sys
 import tempfile
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
@@ -51,6 +52,7 @@ from .schema import (
     DecisionLabel,
     ProviderTrace,
     Recording,
+    SchemaError,
     _decode_strict_json,
     read_jsonl,
 )
@@ -356,24 +358,53 @@ def _adapt_published_diarbench_row(
     }
 
 
+# A diarisation annotation routinely ends a fraction after the trimmed audio does.
+# Measured over 45 published Hindi recordings: 40 overrun by nothing at all, and the
+# other five by 62, 86, 87, 102 and 154 ms — every one of them on the final segment, the
+# worst being 154 ms against a 1,902-second file. Rejecting those is discarding good
+# recordings over annotation slack; a genuine audio/annotation mismatch is seconds wrong
+# across many segments, not a tenth of a second on the last one. So a small overrun is
+# clamped and counted, and anything past the bound still fails loudly.
+ANNOTATION_OVERRUN_TOLERANCE_MS = 250
+
+
 def _validate_annotation_duration(
-    row: Mapping[str, object], *, sample_id: str, duration_ms: int
-) -> None:
+    row: Mapping[str, object], adapted: Mapping[str, object], *,
+    sample_id: str, duration_ms: int,
+) -> int:
+    """Return how many annotation times were clamped to the decoded duration."""
+
     transcript = row.get("annotated_transcript")
     if not isinstance(transcript, list):
         raise ValueError(f"{sample_id}: annotated_transcript must be a list")
+    segments = adapted.get("segments")
+    if not isinstance(segments, list) or len(segments) != len(transcript):
+        raise ValueError(f"{sample_id}: adapted segments do not match annotated_transcript")
+    clamped = 0
     for index, entry in enumerate(transcript):
         if not isinstance(entry, Mapping):
             raise ValueError(f"{sample_id}: annotated_transcript[{index}] must be an object")
-        for field in ("start_time", "end_time"):
+        for field, adapted_field in (("start_time", "start"), ("end_time", "end")):
             value = entry.get(field)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise ValueError(f"{sample_id}: annotated_transcript[{index}].{field} must be seconds")
             rounded_ms = int(round(value * 1000))
-            if rounded_ms < 0 or rounded_ms > duration_ms:
+            if rounded_ms < 0:
                 raise ValueError(
-                    f"{sample_id}: annotated_transcript[{index}].{field} exceeds decoded audio duration"
+                    f"{sample_id}: annotated_transcript[{index}].{field} is negative"
                 )
+            overrun_ms = rounded_ms - duration_ms
+            if overrun_ms > ANNOTATION_OVERRUN_TOLERANCE_MS:
+                raise ValueError(
+                    f"{sample_id}: annotated_transcript[{index}].{field} exceeds decoded "
+                    f"audio duration by {overrun_ms} ms, over the "
+                    f"{ANNOTATION_OVERRUN_TOLERANCE_MS} ms tolerance"
+                )
+            if overrun_ms > 0:
+                # clamp the adapted copy: that is the one the converter reads
+                segments[index][adapted_field] = duration_ms / 1000
+                clamped += 1
+    return clamped
 
 
 def _export_diarbench(args: argparse.Namespace) -> None:
@@ -396,6 +427,8 @@ def _export_diarbench(args: argparse.Namespace) -> None:
     temporary = Path(tempfile.mkdtemp(dir=args.out_dir.parent, prefix=f".{args.out_dir.name}."))
     candidates: list[DiarBenchCandidate] = []
     references = []
+    clamped_annotations = 0
+    skipped: list[tuple[str, str]] = []
     try:
         audio_dir = temporary / "audio"
         audio_dir.mkdir()
@@ -406,15 +439,25 @@ def _export_diarbench(args: argparse.Namespace) -> None:
             raw_sample_id = adapted.get("sample_id")
             sample_id = raw_sample_id if isinstance(raw_sample_id, str) and raw_sample_id else f"row-{index}"
             name = f"{index:06d}.wav"
-            pcm, rate = _decoded_audio(adapted, sample_id=sample_id)
-            _validate_annotation_duration(
-                row, sample_id=sample_id, duration_ms=len(pcm) * 1000 // rate
-            )
+            # One unusable recording must not cost the whole export. The published Hindi
+            # split contains a segment whose end precedes its start by 783 seconds
+            # (hindi_038[93]), and refusing it used to abort a 40-recording run and leave
+            # nothing behind. Every skip is named on stderr so a shrinking corpus cannot
+            # pass unnoticed.
+            try:
+                pcm, rate = _decoded_audio(adapted, sample_id=sample_id)
+                clamped_annotations += _validate_annotation_duration(
+                    row, adapted, sample_id=sample_id, duration_ms=len(pcm) * 1000 // rate
+                )
+                converted_candidates, converted_references = convert_diarbench_sample(
+                    adapted, min_pause_ms=args.min_pause_ms, max_pause_ms=args.max_pause_ms,
+                    audio_path=str(args.out_dir / "audio" / name), context_ms=args.context_ms,
+                )
+            except (SchemaError, ValueError) as exc:
+                skipped.append((sample_id, str(exc)))
+                print(f"skipping {sample_id}: {exc}", file=sys.stderr)
+                continue
             write_wav(audio_dir / name, pcm, rate)
-            converted_candidates, converted_references = convert_diarbench_sample(
-                adapted, min_pause_ms=args.min_pause_ms, max_pause_ms=args.max_pause_ms,
-                audio_path=str(args.out_dir / "audio" / name), context_ms=args.context_ms,
-            )
             candidates.extend(converted_candidates)
             eligible_ids = {candidate.decision_id for candidate in converted_candidates}
             references.extend(
@@ -429,6 +472,18 @@ def _export_diarbench(args: argparse.Namespace) -> None:
         )
         write_candidates(temporary / "candidates.jsonl", sorted(candidates, key=lambda row: row.decision_id))
         write_references(temporary / "references.jsonl", sorted(references, key=lambda row: row.candidate.decision_id))
+        if skipped and not candidates:
+            # every row was unusable: emitting an empty export would be a ghost artifact
+            raise ValueError("; ".join(reason for _, reason in skipped))
+        if skipped:
+            print(f"skipped {len(skipped)} unusable recording(s): "
+                  f"{', '.join(sid for sid, _ in skipped)}", file=sys.stderr)
+        if clamped_annotations:
+            print(
+                f"clamped {clamped_annotations} annotation time(s) to the decoded audio "
+                f"duration, each within {ANNOTATION_OVERRUN_TOLERANCE_MS} ms",
+                file=sys.stderr,
+            )
         (temporary / "manifest.json").write_text(
             json.dumps(provenance.to_dict(), sort_keys=True, allow_nan=False) + "\n",
             encoding="utf-8",

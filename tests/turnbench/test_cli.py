@@ -871,3 +871,55 @@ def test_auto_label_preflight_rejects_duplicate_ids_and_manifest_mismatch(tmp_pa
     assert "duplicate candidate decision_id" in capsys.readouterr().err
     assert not created
     assert not output.exists()
+
+
+def _row_with_overrun(overrun_ms, *, duration_ms=1000):
+    """A published-shape row whose final annotation ends past the audio."""
+    return {
+        "sample_id": "hindi_x", "recording_id": "r1", "dataset_type": "diarbench",
+        "annotated_transcript": [
+            {"speaker_id": "a", "start_time": 0.0, "end_time": 0.5},
+            {"speaker_id": "b", "start_time": 0.6,
+             "end_time": (duration_ms + overrun_ms) / 1000},
+        ],
+        "audio": None,
+    }
+
+
+def test_a_small_annotation_overrun_is_clamped_and_counted():
+    """Fails if annotation slack past the audio end discards a whole recording.
+
+    Measured on 45 published Hindi recordings: five overrun, all on the final segment,
+    worst 154 ms against a 1,902-second file. That is annotation slack, not a mismatch.
+    """
+    row = _row_with_overrun(154)
+    adapted = turnbench_cli._adapt_published_diarbench_row(row, language="Hindi")
+
+    clamped = turnbench_cli._validate_annotation_duration(
+        row, adapted, sample_id="hindi_x", duration_ms=1000,
+    )
+
+    assert clamped == 1
+    # the converter reads `adapted`, so that is the copy that must be corrected
+    assert adapted["segments"][1]["end"] == 1.0
+
+
+def test_a_large_annotation_overrun_still_fails_loudly():
+    """Fails if a genuine audio/annotation mismatch is silently clamped away."""
+    row = _row_with_overrun(5000)
+    adapted = turnbench_cli._adapt_published_diarbench_row(row, language="Hindi")
+
+    with pytest.raises(ValueError, match="exceeds decoded audio duration by 5000 ms"):
+        turnbench_cli._validate_annotation_duration(
+            row, adapted, sample_id="hindi_x", duration_ms=1000,
+        )
+
+
+def test_an_exactly_flush_annotation_is_not_clamped():
+    """Fails if floor-vs-round arithmetic invents an overrun on a good recording."""
+    row = _row_with_overrun(0)
+    adapted = turnbench_cli._adapt_published_diarbench_row(row, language="Hindi")
+
+    assert turnbench_cli._validate_annotation_duration(
+        row, adapted, sample_id="hindi_x", duration_ms=1000,
+    ) == 0
