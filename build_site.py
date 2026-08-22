@@ -222,6 +222,7 @@ def subs() -> dict[str, str]:
     conv = json.loads((ROOT / "results/conv.json").read_text())
     eng = json.loads((ROOT / "results/pause_fit_english.json").read_text())
     sem = _semantic_lane()
+    db = _diarbench()
     pol = _policy_lane()
     lat = json.loads((ROOT / "results/policy_latency.json").read_text())
     modes = fixed_mode_matrix()
@@ -327,6 +328,22 @@ def subs() -> dict[str, str]:
             f"into three files that had drifted apart; there is one now, in "
             f"<code>asli.score</code>, and re-scoring costs nothing because the "
             f"transcripts are already stored."),
+        "__T_DB_HEAD__": (
+            f"A caller pauses {db['acoustic_auc']['pause_ms']['median_continue']}&nbsp;ms "
+            f"when they are still talking and "
+            f"{db['acoustic_auc']['pause_ms']['median_yield']}&nbsp;ms when they have "
+            f"finished. There is no threshold that separates those, at any value. "
+            f"<b>Every silence timer in production is built on this variable, and on "
+            f"{db['export']['decisions']:,} human-labelled pauses it carries no signal "
+            f"at all.</b>"),
+        "__T_DB_ACC__": f"{db['semantic_vs_human']['accuracy'] * 100:.1f}%",
+        "__T_DB_ALWAYS__": f"{db['semantic_vs_human']['always_reply_accuracy'] * 100:.1f}%",
+        "__T_DB_CURVE__": (
+            "There is no curve to tune along, and that is a finding rather than an "
+            "omission: the API returns a verdict and no confidence, so those three rows "
+            "are every setting there is. Reaching a 20% hold budget needs a probability "
+            "from the provider, not better engineering on our side. Raw numbers: "
+            "<code>results/diarbench.json</code>."),
         "__T_SEM_HEAD__": (
             f"On the same audio, at the same nominal gate: the silence timer ended the "
             f"turn early in <b>every one of {sem_sv} calls</b>. Semantic detection did it "
@@ -561,12 +578,18 @@ def _budget() -> list[dict]:
     return rows
 
 
+def _diarbench() -> dict:
+    """Measured on Sarvam's own human-annotated benchmark. See results/diarbench.json."""
+    return json.loads((ROOT / "results/diarbench.json").read_text())
+
+
 def collect() -> dict:
     d: dict = {"said": SAID}
     d["sweep"] = json.loads((ROOT / "results/pir_sweep_sarvam.json").read_text())
     d["fit"] = json.loads((ROOT / "results/pause_fit.json").read_text())
     d["text"] = _text_lane()
     d["vendors"] = _vendor_lane()
+    d["diarbench"] = _diarbench()
     d["lanes"] = _lane_results()
     d["semantic"] = _semantic_lane()
     d["policy"] = _policy_lane()

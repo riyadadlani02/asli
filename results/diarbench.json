@@ -1,0 +1,67 @@
+{
+ "export": {
+  "source_calls": 63,
+  "decisions": 2183,
+  "was_source_calls": 2,
+  "was_decisions": 296,
+  "corrupt_segments_found": 1,
+  "annotation_overruns_clamped": 42
+ },
+ "acoustic_auc": {
+  "pause_ms": {
+   "auc": 0.503,
+   "median_continue": 644,
+   "median_yield": 676
+  },
+  "trailing_energy": {
+   "auc": 0.533,
+   "median_continue": 0,
+   "median_yield": 0
+  },
+  "trailing_energy_slope": {
+   "auc": 0.478,
+   "median_continue": 0,
+   "median_yield": 0
+  },
+  "trailing_speech_ms": {
+   "auc": 0.526,
+   "median_continue": 800,
+   "median_yield": 780
+  },
+  "local_speech_rate_hz": {
+   "auc": 0.472,
+   "median_continue": 2,
+   "median_yield": 2
+  }
+ },
+ "labelled": {
+  "continue": 650,
+  "yield": 1533
+ },
+ "semantic_vs_human": {
+  "n": 385,
+  "accuracy": 0.522,
+  "continuation_recall": 0.742,
+  "false_hold_rate": 0.588,
+  "always_reply_accuracy": 0.668
+ },
+ "operating_points": [
+  {
+   "name": "always reply",
+   "recall": 0.0,
+   "false_hold": 0.0
+  },
+  {
+   "name": "semantic VAD",
+   "recall": 0.742,
+   "false_hold": 0.588
+  },
+  {
+   "name": "always wait",
+   "recall": 1.0,
+   "false_hold": 1.0
+  }
+ ],
+ "policy_win": false,
+ "note": "no confidence score is returned, so semantic VAD offers one operating point; the recall/false-hold trade-off is not tunable without probabilities"
+}

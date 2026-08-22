@@ -679,15 +679,54 @@ footer b{color:var(--orange)}
   </div>
 </section>
 
+<section class="scene rev" id="diarbench">
+  <div class="idx"><b>12</b><span>the benchmark run</span></div>
+  <h2>Pause length is a <span class="q">coin flip</span>.</h2>
+  <p class="lede">Run against <b>Sarvam's own human-annotated diarisation benchmark</b>
+  &mdash; 63 independent source calls, 2,183 pause decisions, every label from a human.
+  The question at each pause: does this speaker carry on, or has someone else got the
+  floor? Then: which signal predicts it?</p>
+
+  <div class="scroll" style="margin-top:1.6rem">
+    <table class="tbl" id="dbAuc">
+      <thead><tr><th>signal at the pause</th><th>separating power</th><th>median when continuing</th><th>median when finished</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="sub" style="margin-top:.9rem">0.500 is a coin flip. Every one of them lands there.</p>
+
+  <p class="lede" style="margin-top:1.4rem"><b>__T_DB_HEAD__</b></p>
+
+  <p class="lede" style="margin-top:1.2rem">So what does work? A semantic model &mdash;
+  one that reads the words and judges whether the sentence could have ended. Scored
+  against the same human labels:</p>
+  <div class="ctrlbox" id="dbSem"></div>
+
+  <p class="lede" style="margin-top:1.4rem"><b>It catches three continuations in four,
+  and pays for it by holding the floor on six finished turns in ten.</b> That is why its
+  agreement with humans is __T_DB_ACC__ &mdash; worse than the __T_DB_ALWAYS__ you get by
+  never waiting at all. Neither is an agent anyone wants.</p>
+
+  <div class="scroll" style="margin-top:1.4rem">
+    <table class="tbl" id="dbOps">
+      <thead><tr><th>every setting available</th><th>catches continuations</th><th>wrongly holds</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="sub" style="margin-top:1rem">__T_DB_CURVE__</p>
+
+  <div class="tags"><span>63 source calls</span><span>2,183 human-labelled pauses</span><span class="hot">pause AUC 0.503</span><span>no policy win</span></div>
+</section>
+
 <section class="scene rev" id="honest">
-  <div class="idx"><b>12</b><span>read before citing</span></div>
+  <div class="idx"><b>13</b><span>read before citing</span></div>
   <h2>What this result<br><span class="q">does not prove.</span></h2>
   <p class="lede">Read these limits before using the numbers outside this test.</p>
   <div class="cav" id="cav"></div>
 </section>
 
 <section class="scene rev" id="run">
-  <div class="idx"><b>13</b><span>the tool</span></div>
+  <div class="idx"><b>14</b><span>the tool</span></div>
   <h2>Test <span class="q">your own</span> agent.</h2>
   <p class="lede">The harness is the product. These numbers are one reproducible run.</p>
   <pre><b>uv</b> venv --python 3.12 &amp;&amp; <b>uv</b> pip install -e ".[agent]"
@@ -703,7 +742,7 @@ echo "SARVAM_API_KEY=..." &gt;&gt; .env
 </section>
 
 <section class="scene rev" id="turnbench">
-  <div class="idx"><b>14</b><span>turnbench</span></div>
+  <div class="idx"><b>15</b><span>turnbench</span></div>
   <h2>A pause needs a<br><span class="q">benchmark, not a guess.</span></h2>
   <p class="lede">TurnBench is a separate, offline harness for measuring whether an agent speaks before a caller resumes, or waits after a true yield.</p>
   <div class="box" style="margin-top:1.6rem"><b>Kept separate from this study.</b> It uses local fixtures and recorded event streams&mdash;no provider calls, no cross-language leaderboard, and no claimed results until matched data arrives.</div>
@@ -1059,6 +1098,27 @@ function laneCard(k){
         `${L.not_measured.join("; ")}</p>` : "");
 }
 laneCard("sarvam");
+
+/* diarbench */
+(function(){
+  const D2=D.diarbench, NAME={pause_ms:"how long the pause was",
+    trailing_energy:"loudness at the end", trailing_energy_slope:"whether the voice was trailing off",
+    trailing_speech_ms:"how long they had been speaking", local_speech_rate_hz:"how fast they were speaking"};
+  const U={pause_ms:" ms", trailing_speech_ms:" ms", trailing_energy:"", trailing_energy_slope:"", local_speech_rate_hz:" Hz"};
+  document.querySelector("#dbAuc tbody").innerHTML=Object.entries(D2.acoustic_auc).map(([k,v])=>
+    `<tr><td>${NAME[k]||k} <span class="sub2">${k}</span></td>`+
+    `<td class="${Math.abs(v.auc-0.5)<0.06?"no":""}"><b>${v.auc.toFixed(3)}</b></td>`+
+    `<td>${v.median_continue}${U[k]||""}</td><td>${v.median_yield}${U[k]||""}</td></tr>`).join("");
+  const S2=D2.semantic_vs_human;
+  document.querySelector("#dbSem").innerHTML=
+    `<div><span>catches continuations</span><b>${(S2.continuation_recall*100).toFixed(1)}%</b></div>`+
+    `<div class="hot"><span>holds a finished turn</span><b>${(S2.false_hold_rate*100).toFixed(1)}%</b></div>`+
+    `<div><span>agreement with humans</span><b>${(S2.accuracy*100).toFixed(1)}%</b></div>`+
+    `<div><span>decisions scored</span><b>${S2.n}</b></div>`;
+  document.querySelector("#dbOps tbody").innerHTML=D2.operating_points.map(o=>
+    `<tr><td>${o.name}</td><td><b>${(o.recall*100).toFixed(1)}%</b></td>`+
+    `<td class="${o.false_hold>0.2?"no":""}"><b>${(o.false_hold*100).toFixed(1)}%</b></td></tr>`).join("");
+})();
 
 /* vendor matrix */
 document.querySelector("#vendTbl tbody").innerHTML=D.vendors.map(v=>

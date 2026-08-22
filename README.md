@@ -90,6 +90,72 @@ measurement of anybody's product. Read them as instrument validation.
 **This is not a leaderboard.** No vendor is ranked. One system was characterised, in
 public, with its own documentation open next to it.
 
+## DiarBench — pause length is a coin flip
+
+Run against **Sarvam's own human-annotated diarisation benchmark**
+(`sarvamai/indic-diarbench`, Hindi): **63 independent source calls,
+2,183 pause decisions**, every label from a human. At each pause: does this
+speaker carry on, or does someone else take the floor?
+
+Then the question that matters — which signal predicts it?
+
+| signal at the pause | separating power | median continuing | median finished |
+|---|---|---|---|
+| how long the pause was | **0.503** | 644 ms | 676 ms |
+| loudness at the end | 0.533 | — | — |
+| voice trailing off | 0.478 | — | — |
+| how long they'd been speaking | 0.526 | 800 ms | 780 ms |
+| how fast they were speaking | 0.472 | — | — |
+
+0.500 is a coin flip. **Every one of them lands there.**
+
+A caller pauses **644 ms when still talking and
+676 ms when finished.** No threshold separates those, at any
+value. Every silence timer in production is built on this variable, and on
+2,183 human-labelled pauses it carries no signal at all.
+
+### What a semantic model does instead
+
+Scored against the same human labels, on 385 decisions:
+
+| | |
+|---|---|
+| catches continuations | **74.2%** |
+| holds a turn that had finished | **58.8%** |
+| agreement with humans | 52.2% |
+| agreement from never waiting at all | 66.8% |
+
+It catches three continuations in four and pays for it by holding the floor on six
+finished turns in ten. That is why its agreement is *below* what you get by never
+waiting — and neither is an agent anyone wants.
+
+### There is no curve to tune along
+
+| every setting available | catches continuations | wrongly holds |
+|---|---|---|
+| always reply | 0.0% | 0.0% |
+| semantic VAD | 74.2% | 58.8% |
+| always wait | 100.0% | 100.0% |
+
+Three points, and nothing between them. The API returns a verdict and no confidence, so
+reaching a 20% hold budget needs a *probability* from the provider — not better
+engineering here. That is a product ask, and it is the concrete blocker.
+
+### Two data defects found in the benchmark itself
+
+- **one corrupt segment** — `hindi_038[93]` has `start=939.09`, `end=155.91`: an end 783
+  seconds before its start, in the published data
+- **42 annotation times past their audio** — worst 154 ms
+  against a 1,902-second file, all on final segments. Ordinary annotation slack, now
+  clamped within a measured 250 ms tolerance and counted rather than discarding whole
+  recordings
+
+Before these were handled, one bad row aborted a 40-recording export and left nothing —
+which is why this study ran on 2 source calls
+(296~decisions) until now.
+
+Raw numbers: `results/diarbench.json`. **No policy win was found in any configuration.**
+
 ## What is actually in here
 
 Two studies and two harnesses, kept apart on purpose. The Hindi telephone study is the
