@@ -3,12 +3,14 @@
 Every test here is a failure mode the bare word list had.
 """
 
+import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(ROOT))
 
-from asli import policy  # noqa: E402
+from asli import policy, score  # noqa: E402
 
 
 def turn(t_ms, text, **kw):
@@ -57,9 +59,41 @@ def test_both_columns_are_counted():
 
 
 def test_finality_markers_never_hold():
-    for text in ("ठीक है धन्यवाद", "बस", "शुक्रिया"):
+    for text in ("ठीक है धन्यवाद", "शुक्रिया"):
         assert policy.decide(text).hold is False, text
     assert policy.decide("ठीक है धन्यवाद").reason == "finality-marker"
+
+
+def test_bas_holds_because_the_corpus_says_so():
+    """It reads as "that's it" and was a finality marker on that reading. The corpus
+    ends an utterance on it 1 time in 6, and it is already a dangling filler."""
+    assert policy.decide("बस").hold is True
+    assert not (policy.FINALITY & policy.DANGLING), "finished and unfinished are exclusive"
+
+
+def test_derived_and_asserted_finality_are_separable():
+    """The claim is that this list was counted. शुक्रिया was not — it does not occur in
+    the corpus once — so it is kept where that stays visible."""
+    assert policy.FINALITY_DERIVED and policy.FINALITY_ASSERTED
+    assert policy.FINALITY == policy.FINALITY_DERIVED | policy.FINALITY_ASSERTED
+    markers = json.loads((ROOT / "results/markers.json").read_text())
+    kept = {m["word"] for m in markers["finality_markers"]
+            if m["p_final"] >= policy.FINALITY_MIN_P}
+    assert kept == set(policy.FINALITY_DERIVED), kept
+
+
+def test_a_merged_turn_keeps_its_seam():
+    """Merging feeds a longer string to an extractor that concatenates every digit it
+    sees. The join is for turn-taking; the entity must be read off the parts."""
+    led = policy.Ledger()
+    out = policy.apply([turn(0, "मेरा नंबर है उसका"), turn(300, "नौ आठ सात सात")],
+                       hold_ms=600, ledger=led)
+    assert led.merged == 1 and out[0]["parts"] == ["मेरा नंबर है उसका", "नौ आठ सात सात"]
+
+    stray = policy.apply([turn(0, "मेरा एक नंबर है उसका"), turn(300, "नौ आठ सात सात")],
+                         hold_ms=600)[0]
+    assert score.spoken_digits(stray["text"]) == "19877", "the join picks up the एक"
+    assert score.spoken_digits(stray["parts"][-1]) == "9877", "the part does not"
 
 
 def test_an_empty_final_falls_back_to_the_partial():

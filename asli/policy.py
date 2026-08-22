@@ -5,7 +5,7 @@ a function: a discourse marker means the speaker is unfinished but it is not cas
 marking, and letting it inflate `cut_dangling_*` would corrupt the measurement with the
 intervention.
 
-Six things this handles that a bare word list did not:
+Seven things this handles that a bare word list did not:
 
 1. HOLDS ARE BOUNDED. "Wait for the rest" has no answer when the rest never comes — the
    speaker really did stop, or hung up, or the line dropped. A hold expires.
@@ -23,6 +23,12 @@ Six things this handles that a bare word list did not:
    as मतलब.
 6. BOTH SIDES ARE COUNTED. `Ledger` tallies holds and expiries together, because a rule
    that only reports prevented interruptions can only produce good news.
+7. A MERGED TURN KEEPS ITS SEAM. Gluing two turns into one string walks straight into a
+   bug this repo already paid for: `score.spoken_digits` concatenates every digit-like
+   token in whatever it is handed, so "मेरा एक नंबर है उसका" merged with "नौ आठ सात सात"
+   extracts 19877 rather than 9877 — a wrong number asserted with confidence, which is
+   the failure this project is named after. The merged text is for turn-taking. Anything
+   pulling an entity out of it reads `parts` and takes the segment, not the join.
 """
 
 from __future__ import annotations
@@ -38,12 +44,28 @@ from .score import DANGLING_FILLER, DANGLING_MARGINAL, DANGLING_STRICT
 FILLER_EN = frozenset("umm um uh er hmm like actually basically anyway".split())
 FILLER_EN_PHRASES = ("i mean", "you know", "sort of", "kind of")
 
-# Derived, not asserted: results/markers.json, P(final|word) against a random-cut
-# baseline with Bonferroni correction. है and हैं are here at ~4x baseline, which is the
-# same finding the verb-final experiment reached from the other side.
-FINALITY = frozenset("धन्यवाद शुक्रिया बस".split())
-
 DANGLING = DANGLING_STRICT | DANGLING_MARGINAL | DANGLING_FILLER
+
+# Counted, not reasoned: results/markers.json holds P(final|word) against a random-cut
+# baseline with Bonferroni correction, and this is the half of that list that clears the
+# threshold. The threshold is the dial — lower it and the agent answers sooner on weaker
+# evidence, at the cost of the very interruption this project measures.
+FINALITY_MIN_P = 0.5
+# धन्यवाद: 107 finals in 140, 19.4x baseline. The only survivor at this threshold.
+FINALITY_DERIVED = frozenset("धन्यवाद".split())
+# UNMEASURED, kept separate for the same reason FILLER_EN is: शुक्रिया does not occur once
+# in the corpus, so it is धन्यवाद's synonym by argument and not by count.
+FINALITY_ASSERTED = frozenset("शुक्रिया".split())
+FINALITY = FINALITY_DERIVED | FINALITY_ASSERTED
+# बस is the case for counting rather than asserting. It reads as "that's it, enough" and
+# was in this set on that reading; the corpus ends an utterance on it 1 time in 6, and
+# score.DANGLING_FILLER already had it as the other बस, "just/only". Reasoning had the
+# sign wrong. It stays a dangler, and the cost asymmetry says so too: a false finality
+# produces the interruption this repo exists to measure, a false hold costs one gate.
+# है/हैं are derived at ~4x baseline and still excluded — 15% final is not finality, and
+# they are exactly the words the real-caller misses ended on. Replying faster there would
+# cut off the callers the rule is meant to hold.
+assert not FINALITY & DANGLING, "a word cannot mean both finished and not"
 
 
 @dataclass
@@ -108,7 +130,9 @@ def apply(turns: list[dict], *, hold_ms: int = 600, ledger: Ledger | None = None
 
     Each turn needs `text`, `t_ms`, and optionally `partial` and `agent_spoke_before`.
     A held turn merges with the next only if it arrives within `hold_ms` and the agent
-    stayed silent; otherwise the hold expires and the turn stands as it was.
+    stayed silent; otherwise the hold expires and the turn stands as it was. The merged
+    turn carries `parts`, and an entity extractor must use those rather than `text` —
+    see point 7 above.
     """
     led = ledger or Ledger()
     out: list[dict] = []
@@ -121,8 +145,9 @@ def apply(turns: list[dict], *, hold_ms: int = 600, ledger: Ledger | None = None
                 out.append(pending)
             elif gap <= hold_ms:
                 led.merged += 1
-                t = {**t, "text": (pending["text"] + " " + t["text"]).strip(),
-                     "t_ms": pending["t_ms"], "merged": True}
+                parts = pending.get("parts", [pending["text"]]) + [t["text"]]
+                t = {**t, "text": " ".join(p for p in parts if p).strip(),
+                     "parts": parts, "t_ms": pending["t_ms"], "merged": True}
             else:
                 led.expired += 1
                 out.append(pending)
