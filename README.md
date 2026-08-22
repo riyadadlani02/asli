@@ -90,6 +90,23 @@ measurement of anybody's product. Read them as instrument validation.
 **This is not a leaderboard.** No vendor is ranked. One system was characterised, in
 public, with its own documentation open next to it.
 
+## What is actually in here
+
+Two studies and two harnesses, kept apart on purpose. The Hindi telephone study is the
+one with published numbers. TurnBench is the reusable instrument, and it ships with
+**no accuracy figure, deliberately** — [why](#turnbench--the-second-harness).
+
+| | what it is | state |
+|---|---|---|
+| **the Hindi study** | PIR, recovery, INEPA, SFR against four live stacks and 20 real callers | published, every row stored |
+| **[the intervention](#the-rule-and-what-it-costs)** | `policy.py` — hold a turn open on an unfinished ending, bounded, with its own cost ledger | measured, including where it fails |
+| **[TurnBench](#turnbench--the-second-harness)** | offline turn-taking benchmark: four gates, a calibrated three-state policy, a DiarBench agreement lane | code and tests complete, blocked on data |
+| **[the method](#how-these-findings-were-made)** | pre-registration, derived word lists, a published failed experiment | the part worth copying |
+
+8,676 lines of Python and 4,706 of tests, 232 test functions. `results/` holds every
+row behind every number, and CI [refuses a commit](#what-guarantees-these-numbers)
+whose site does not rebuild byte-identically from them.
+
 ---
 
 ## Try it in 60 seconds
@@ -702,6 +719,84 @@ quantised to the 100 ms chunk they arrive on, so a one-chunk tolerance is now ap
 in-hesitation figure from 20% to 50%. The `in_pause` column in the stored
 `pir_sweep_sarvam.json` predates it and is the stricter, lower number.
 
+### The rule, and what it costs
+
+Raising the gate charges every turn of every call. The alternative is to hold a turn open
+only when its last words cannot end a sentence — `का`, `को`, `क्योंकि`, `मतलब` — so the
+added latency is paid by incomplete turns only.
+
+`policy.py` is deliberately **not** in `score.py`. A discourse marker means the speaker is
+unfinished, but it is not case marking, and letting it inflate `cut_dangling_*` would
+corrupt the measurement with the intervention. Six things it handles that a word list does
+not:
+
+1. **Holds expire.** "Wait for the rest" has no answer when the rest never comes.
+2. **Never merge across agent speech.** What the caller says after the agent starts talking
+   may be answering the agent, and gluing it on produces a sentence neither of them said.
+3. **Finality markers, the opposite direction.** Words meaning definitely-finished, so the
+   agent can answer *sooner* than the gate. [Derived, not asserted](#the-word-lists-are-derived-not-asserted).
+4. **Read the live transcript, not the final.** This repo measured a recogniser returning
+   `speech_final` with an empty transcript while the interim carried the words, so deciding
+   off the final means deciding off text already shown to truncate. The longer of the two wins.
+5. **English and Hinglish fillers**, kept in a separate frozenset because the only corpus
+   here is Hindi and that set is therefore reasoned rather than measured.
+6. **`Ledger` counts both columns.** Holds and expiries together, because a rule that only
+   reports prevented interruptions can only produce good news.
+
+**The cost, priced against the alternative.** A false hold costs one more endpointing cycle,
+so its expected cost is the false-positive rate times 500 ms. It would have to wrongly hold
+**40% of finished turns** before it cost more than moving the gate to 700 ms. Measured: 0
+false holds in 93 utterances whose true ending was built, so at 95% confidence no worse than
+3.2% — **15.8 ms a turn against 200**. Stored in `results/policy_latency.json`, alongside the
+note that every utterance in that corpus ends on an entity, which is the easiest ending for
+the rule to get right.
+
+**Where it cannot work.** No word list fires on a finite verb, because a finite verb is a
+legal ending. That ceiling is reached independently three times below.
+
+### The word lists are derived, not asserted
+
+Which Hindi words actually mean "I have finished"? `experiments/derive_markers.py` counts
+rather than guesses: P(final | word) across 1,872 utterances and 47,403 tokens against the
+random-cut baseline of 0.0395, one-sided binomial tail computed in log space because
+`comb(1501, k)` overflows a float outright, Bonferroni corrected across the 283 words with
+count ≥ 25.
+
+| word | count | ends a turn | lift over random |
+|---|---:|---:|---:|
+| धन्यवाद | 140 | 76.4% | **19.4×** |
+| करें | 30 | 36.7% | 9.3× |
+| जाएगी | 28 | 32.1% | 8.1× |
+| जाए | 57 | 21.1% | 5.3× |
+| हैं | 498 | 15.7% | 4.0× |
+| है | 1,501 | 15.4% | 3.9× |
+
+Six survive correction. `results/markers.json` carries every p-value.
+
+**The other half of the list is not derivable from this corpus, and the module says so
+before it says anything else.** The recordings are fixed-length segments cut mid-phrase, so
+a segment ending is close to a random position in a sentence. Measured: known danglers end
+segments at 0.039 against 0.045 for everything else, on a baseline of 0.039. No signal. A
+list built from that would be noise wearing a number, so the dangler half stays hand-written
+and is labelled as such.
+
+```bash
+uv run python experiments/derive_markers.py
+```
+
+### One ceiling, reached three ways
+
+The most load-bearing result here is not a number, it is a convergence:
+
+| method | what it found |
+|---|---|
+| marker derivation, above | `है`/`हैं` end turns at 4× baseline — a finite verb is a legal ending |
+| [verb-final experiment](experiments/verbfinal-README.md), 186 calls | no word list can fire on one, and semantic detection has no verb-final blind spot either (Fisher p = 0.17 pooled) |
+| [pre-registered real-caller run](docs/prereg-real-callers.md) | 4 of the rule's 5 misses ended on a verb: `है`, `है`, `हूँ`, `बताया` |
+
+Three methods, three corpora, one conclusion. That is worth more than any single rate on
+this page.
+
 ### Reference agent — INEPA and SFR
 
 *These use our own fixed prompt in `agent.py`, not a vendor's agent.*
@@ -736,6 +831,226 @@ agent prompt is moving both at once.
 The 8 kHz telephony codec alone changes PIR **not at all**. Babble at 5 dB SNR drives
 it to 0.00 at every gate — not an improvement: the noise fills the pause so the
 endpointer never fires and the turn never ends. The mirror failure.
+
+---
+
+## How these findings were made
+
+The numbers above are only worth as much as the process behind them. This section is the
+process.
+
+### A prediction committed before the run
+
+The rule rescued 46 of 93 turns the gate cut — on **authored audio where the hesitation was
+spliced immediately after a word the rule watches for**. An egg-finder tested on eggs we hid.
+
+So [`docs/prereg-real-callers.md`](docs/prereg-real-callers.md) was written and committed
+*first*, with a point estimate, an interval, a reading for every outcome band, and a stop
+condition naming the result at which the rule should be withdrawn from the site entirely.
+Check `git log` on that file against the results commit.
+
+| | |
+|---|---|
+| predicted | 5 of 20, interval 3–9 |
+| stop condition | fewer than 3 fires, and the honest headline becomes "change the gate instead" |
+| **actual** | **7 of 20. 58% of the 12 real cuts, 95% CI [32%, 81%]** |
+
+**The prediction was wrong in the rule's favour**, and the write-up leads with that. I
+expected real speech to fire *worse* than authored audio (49%); it fired better. Real callers
+do hesitate on case markers with no help from us about where: `को`, `का`, `को`, `तो`, `में`,
+`यह`, `मतलब`. Six postpositions and a filler.
+
+n = 12 cuts on 20 recordings selected for carrying a long pause. Recall on a conditional
+sample, not a population rate, and it measures nothing about false holds because every
+recording in it is a case that should be held.
+
+### A failed experiment, published as one
+
+[`experiments/verbfinal-README.md`](experiments/verbfinal-README.md) opens with **"Experiment
+B — inconclusive, and why"** and 48 spent calls.
+
+The hypothesis: semantic end-of-turn detection is trained overwhelmingly on English, an SVO
+language whose danglers are obvious. Hindi is verb-final, so a speaker can stop mid-thought on
+a finite verb that *looks* like a complete sentence. Does semantic detection inherit an
+SVO-shaped blind spot?
+
+Attempt 1 could not answer it, because **the control failed**. 8 of 48 rows came back
+transcribed as questions (`मैंने भेजा है मतलब?`), and a question is a complete utterance, so
+ending the turn there is correct behaviour rather than the failure under test. Heads were
+mis-recognised on top of it: `pin code` → `पिंक कोट`. Three usable pairs pointed in three
+directions.
+
+The post-mortem names the upstream mistake plainly: the pairs were built without first
+checking the control would hold, when one call per head would have caught every problem.
+
+Attempt 2 fixed the design — longer unambiguously declarative heads, per-head pre-flight
+rejection, a gate saying the comparison is not reported at all unless the positive control
+holds, n ≥ 30 per arm. **186 calls, 31 items surviving pre-flight, zero call failures.**
+
+| arm | `server_vad` | `semantic_vad` |
+|---|---:|---:|
+| dangler (positive control) | 1.00 (n=31) | **0.00 (0/24)** |
+| verb-final | 1.00 (n=31) | 0.077 (2/26) |
+| filler | 1.00 (n=31) | 0.125 (3/24) |
+
+**The hypothesis is not supported.** Fisher exact: verb-final vs dangler p = 0.49, pooled
+p = 0.17. The filler arm fails at least as often as the verb-final one, so whatever is
+happening is not about verb position.
+
+What the design *did* establish is worth more: `server_vad` splits 1.00 on all three arms, so
+the stimuli are matched and any `semantic_vad` difference is semantic rather than acoustic —
+which is exactly what attempt 1 could not show. And the positive control holding outright at
+0/24 proves semantic detection can do end-of-turn in Hindi at all, the precondition for the
+question being askable.
+
+**The 19 zero-turn rows are holds, and that is proven rather than assumed.** All 19 are
+`semantic_vad`, none carries an error, none has any turn-end event, and the same audio
+produced turns on every `server_vad` row. Excluding them makes every `semantic_vad` rate above
+an **upper bound**. Counting them in gives 0/30, 2/30, 3/27.
+
+One post-hoc observation is kept and labelled: both verb-final splits are imperatives
+(`likh leejiye`, `note kar leejiye`), and an imperative is a complete speech act. Drop those
+two and the arm is 0/24, level with the control. That is subsetting after seeing the data, so
+it is a hypothesis for the next run — that the boundary is a completed *speech act* rather
+than a completed *clause* — and not a result of this one.
+
+### What guarantees these numbers
+
+`build_site.py` regenerates the page from `results/`, and **CI fails the build if the output
+differs by a byte from what is committed**. No figure on the site or in this README can be
+typed by hand and survive.
+
+```yaml
+- name: the site is rebuildable and matches what is committed
+  run: |
+    uv run python build_site.py
+    git diff --exit-code -- site/index.html docs/index.html
+```
+
+Two jobs on purpose. `checks` is offline with no keys, so a fork's PR runs it. `regression`
+is opt-in, sweeps the live endpoint, and warns when the cliff moves — because a workflow that
+fails on every fork for want of a secret trains people to ignore it.
+
+232 test functions across 4,706 lines. They exist to pin the scorers: that a 256 ms gate *does*
+trip on a 700 ms hesitation and a 1024 ms one does not, that noise lands at the SNR requested,
+that packet loss removes the share asked for, that render timing is exact by construction.
+If the scoring cannot be pinned, no measured number would mean anything.
+
+---
+
+## TurnBench — the second harness
+
+The Hindi study characterises one behaviour on one language. TurnBench is the reusable
+instrument: does the agent speak during a caller's continuation, and how long does it take to
+respond after a real yield? Offline, local fixtures, no provider calls, no credentials, and
+**no performance claim about any provider, language, or deployment**.
+
+```bash
+uv run asli-turnbench score \
+  --recordings turnbench/fixtures/recordings.jsonl \
+  --labels turnbench/fixtures/labels.jsonl \
+  --events turnbench/fixtures/events.jsonl \
+  --out /tmp/turnbench-report.json --provider fixture
+```
+
+4,326 lines of implementation, 3,894 of tests. Full contract in
+[`docs/turnbench.md`](docs/turnbench.md).
+
+### Why it ships with no accuracy figure
+
+On a synthetic run, the policy that simply replies immediately every time — `always_yield` —
+scores **1.00 accuracy**, and the evaluator still returns `policy_win: false`.
+
+One accuracy number is satisfiable by the worst possible turn-taking behaviour. Publishing one
+would measure nothing. So a run is a win only when **all four** hold on independent held-out
+source recordings:
+
+| gate | required | status |
+|---|---|---|
+| continuation recall | ≥ 0.80 | not met |
+| unnecessary-hold rate on true yields | ≤ 0.20 | not measured |
+| prediction coverage | ≥ 0.95 | not measured |
+| utility strictly above `always_yield` **and** the complete semantic baseline | both | not met |
+
+**The blocker is data, not code.** Fitting needs 20 independent source recordings; the Hindi
+export has 2, so `policy split` fails its minimum and exits without writing an artifact. The
+same shortage blocks the prosody work: `GV_Dev_5h` is 1,885 fixed-length segments cut
+mid-phrase, so it supplies "the speaker continued" abundantly and "the speaker finished"
+almost never.
+
+### The report contract
+
+`turnbench.report.v1`. The design decisions that matter are about what a summary is not
+allowed to hide:
+
+- **A missing measurement never becomes a good score.** A language with no eligible
+  continuation does not become a zero PIR; one with no eligible yield does not become a zero
+  delay. Timeouts, provider failures, and missing audible-agent events are reported as
+  unavailable, never counted as safe outcomes.
+- **Two aggregations, both labelled.** `overall` is `macro_by_language` with a companion
+  `pir_language_n` on every value stating how many languages contributed; `micro_overall` is
+  `micro_by_decision`. Macro percentiles are means of published language percentiles, not
+  percentiles pooled across decisions.
+- **The bootstrap resamples whole source-recording groups**, and names which aggregation its
+  interval describes. Below two eligible groups both bounds are `null` and the provenance
+  stays present.
+- **Counts survive beside every rate**: `decision_n`, `excluded_n`, `provider_failed_n`,
+  `missing_agent_first_audio_n`, `fixture_label_n`, `adjudicated_label_n`.
+- **Conditions and languages come from the linked recording manifest**, never from transcript
+  text, labels, or CLI configuration.
+- **No lexical heuristic may label a turn.** Real results need two independent native-language
+  annotations plus adjudication ([`turnbench/ANNOTATION.md`](turnbench/ANNOTATION.md)).
+
+### The calibrated policy lane
+
+A three-state turn-taking policy — yield, hold, uncertain — fitted locally and replayed
+against offline references. Logistic regression in numpy over six features: pause length,
+trailing energy, energy slope, a voiced-onset local speech-rate proxy, and two signals for
+what semantic VAD said and whether it was available at all.
+
+The engineering is in what it refuses to do:
+
+- **Leakage is prevented at the I/O layer, not by a comment.** `_read_audio_through` decodes
+  no more WAV audio than is visible to one candidate. Future frames are not skipped, they are
+  never read.
+- **Splits are by source recording**, deterministic from a seed, 60/20/remaining, with a
+  20-group minimum. Replay requires the actual feature source IDs to match the declared train,
+  calibration, and test groups exactly before it writes any report.
+- **Thresholds are calibrated on the calibration split only**, by grid search that marks a
+  band eligible only when continuation recall ≥ 0.80 and unnecessary-hold rate ≤ 0.20. When no
+  band satisfies both, it keeps the deterministic highest-utility fallback rather than quietly
+  relaxing the limits.
+- **Artifacts pin their provenance.** Feature schema version, export fingerprint, and the exact
+  extractor config travel inside the artifact, and runtime refuses a mismatch on any of the
+  three. Features from one export cannot be scored by a model fitted on another.
+- **The decision path never reads a label.** `decide_policy` takes a feature and an artifact,
+  and returns `unavailable` with a reason rather than guessing on a non-finite score.
+
+```bash
+uv run --locked --no-sync python -m asli.turnbench.cli policy features ...
+uv run --locked --no-sync python -m asli.turnbench.cli policy split --seed 42 ...
+uv run --locked --no-sync python -m asli.turnbench.cli policy fit ...
+uv run --locked --no-sync python -m asli.turnbench.cli policy replay ...
+```
+
+### The DiarBench agreement lane
+
+Opt-in, and it does **not** claim DiarBench annotators labelled hidden speaker intent. It
+derives an *observed speaker-continuation* reference from human-verified speaker timing: same
+speaker at the earliest next event means `continue`, a different speaker means `yield`.
+Co-starts, active overlap, and no reliable next event stay explicitly excluded.
+
+- Export requires `--language`, a positive `--limit`, and both pause bounds, so it cannot
+  silently pull the full corpus.
+- The manifest records the **resolved immutable dataset commit SHA**, never the mutable `main`
+  alias, so an export is reproducible after the dataset moves.
+- Automatic labelling consumes candidates and audio only. **It never opens the reference
+  JSONL.** It verifies every candidate was exported with the supplied `--context-ms`, and
+  fails before any provider connection if the key is missing.
+- Comparison closes a three-way ID and provenance join across candidates, references, and
+  predictions before writing a deterministic report.
+
+No DiarBench result has been published, and this lane changes nothing in the Hindi study.
 
 ---
 
@@ -992,15 +1307,32 @@ uv run asli sweep --suite pir --agent myvendor --pause-ms 700
 
 ### The pieces
 
-Nine pieces. One JSONL row per call in `results/`.
+One JSONL row per call in `results/`.
 
 ```
 asli/
-  spec.py     ground-truth record        drive.py    adapters (Mock, Sarvam, Deepgram)
-  synth.py    segment-wise TTS + splice  score.py    inepa() pir() sfr() recovery()
-  degrade.py  8k μ-law, noise, loss      agent.py    reference agent (two stances)
-  fit.py      pause distribution + gate  real.py     real recordings -> CallSpec
+  spec.py     ground-truth record        drive.py    adapters: Mock, Sarvam, Deepgram,
+  synth.py    segment-wise TTS + splice              OpenAI (both VAD modes), Gemini Live
+  degrade.py  8k μ-law, noise, loss      score.py    inepa() pir() sfr() recovery()
+  fit.py      pause distribution + gate  agent.py    reference agent (two stances)
+  real.py     real recordings -> CallSpec  policy.py the intervention, kept out of score.py
   text/       the same SFR, no audio     cli.py      the commands
+
+  turnbench/  the second harness — offline, reusable, four gates
+    schema.py       report.v1 contract, linked-record validation
+    score.py        PIR + response delay, macro and micro, group bootstrap
+    diarbench.py    bounded export, pinned dataset commit SHA
+    auto_label.py   semantic VAD decisions — never reads the references
+    policy_features.py  label-free features, decoded no further than the boundary
+    policy_model.py     grouped fit + threshold calibration under hard constraints
+    policy_runtime.py   yield / hold / uncertain, provenance-checked
+    report.py · auto_report.py · policy_report.py · candidates.py · events.py · cli.py
+
+experiments/
+  derive_markers.py    finality markers, binomial tail + Bonferroni
+  run_verbfinal2.py    the redesigned verb-final experiment, with pre-flight
+  vendor_matrix.py     four stacks, one utterance
+  policy_latency.py    what the rule costs against raising the gate
 ```
 
 Every lane goes through `score.py`, and `real.py` earns its place by making a real
@@ -1045,32 +1377,6 @@ timing claim in the harness.
    trade-off per gate and picks within a stated latency budget. Owed: the same
    trade-off measured end-to-end rather than derived, which needs a full agent in the
    loop.
-
-## The site
-
-`site/index.html` is a standalone single-file page — audio, waveforms and every number
-embedded, no build step, no external requests.
-
-```bash
-python3 -m http.server --directory site 8000    # view locally
-python3 build_site.py                           # rebuild after a new run
-```
-
-`build_site.py` writes **both** `site/index.html` and `docs/index.html`. GitHub Pages
-serves `docs/` from the `main` branch, so **commit `docs/` or the live page won't
-change**. (Pages serves the branch folder rather than building in CI, because Actions
-is unavailable on this account.)
-
-## Who
-
-Built by [riyadadlani02](https://github.com/riyadadlani02). Corrections are the point:
-if a number here is wrong, [open an issue](https://github.com/riyadadlani02/asli/issues)
-and it gets fixed in the README and on the site together, because both are generated from
-the same stored rows.
-
-Adapters for other systems are one method (`run(pcm, spec) -> Result`) — see
-[Test your own agent](#test-your-own-agent). A PR adding one is welcome.
-
-## Licence
-
-MIT.
+9. ~~Derive the word lists instead of asserting them~~ — done for finality markers, six
+   surviving Bonferroni correction across 283 candidates. The dangler half is **not**
+   derivable from a segment-cut corpus and stays hand-written; closing i
