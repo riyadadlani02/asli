@@ -63,5 +63,28 @@
   }
  ],
  "policy_win": false,
- "note": "no confidence score is returned, so semantic VAD offers one operating point; the recall/false-hold trade-off is not tunable without probabilities"
+ "note": "no confidence score is returned, so semantic VAD offers one operating point; the recall/false-hold trade-off is not tunable without probabilities",
+ "annotation": {
+  "n": 385,
+  "agreement": 0.522,
+  "chance_agreement": 0.453,
+  "cohens_kappa": 0.126,
+  "majority_label_agreement": 0.668,
+  "by_answer": {
+   "still talking": {
+    "share": 0.639,
+    "n": 246,
+    "precision": 0.386,
+    "errors": 151
+   },
+   "finished": {
+    "share": 0.361,
+    "n": 139,
+    "precision": 0.763,
+    "errors": 33
+   }
+  },
+  "precision_needed_to_save_work": 0.95,
+  "note": "an agreement rate is computed after you already have the human labels, so it cannot be used to skip collecting them; what would save work is high precision on a slice identifiable in advance, which needs a confidence score the API does not return"
+ }
 }

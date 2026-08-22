@@ -223,6 +223,7 @@ def subs() -> dict[str, str]:
     eng = json.loads((ROOT / "results/pause_fit_english.json").read_text())
     sem = _semantic_lane()
     db = _diarbench()
+    an = db["annotation"]
     pol = _policy_lane()
     lat = json.loads((ROOT / "results/policy_latency.json").read_text())
     modes = fixed_mode_matrix()
@@ -328,6 +329,24 @@ def subs() -> dict[str, str]:
             f"into three files that had drifted apart; there is one now, in "
             f"<code>asli.score</code>, and re-scoring costs nothing because the "
             f"transcripts are already stored."),
+        "__T_AN_HEAD__": (
+            f"It agrees with the human annotator {an['agreement']:.1%} of the time, against "
+            f"{an['chance_agreement']:.1%} from chance alone &mdash; a Cohen&rsquo;s kappa of "
+            f"<b>{an['cohens_kappa']:.2f}</b>, which is &ldquo;slight&rdquo; on the scale "
+            f"annotation teams use and a long way below the 0.80 that would let it stand in "
+            f"for a person. Writing &ldquo;finished&rdquo; on every row without listening "
+            f"scores {an['majority_label_agreement']:.1%}."),
+        "__T_AN_NOTE__": (
+            f"Auto-accepting only the more reliable answer covers "
+            f"{an['by_answer']['finished']['share']:.0%} of the work and would put "
+            f"{an['by_answer']['finished']['errors']} wrong labels into "
+            f"{an['by_answer']['finished']['n']} rows &mdash; a "
+            f"{1 - an['by_answer']['finished']['precision']:.0%} error rate in the reference "
+            f"data everything else is measured against. Pre-labelling saves time only when "
+            f"the trusted slice is right about "
+            f"{an['precision_needed_to_save_work']:.0%} of the time, so the human skims "
+            f"rather than verifies. Getting there needs a confidence score from the "
+            f"provider, not better engineering here."),
         "__T_DB_HEAD__": (
             f"A caller pauses {db['acoustic_auc']['pause_ms']['median_continue']}&nbsp;ms "
             f"when they are still talking and "

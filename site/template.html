@@ -715,6 +715,30 @@ footer b{color:var(--orange)}
   </div>
   <p class="sub" style="margin-top:1rem">__T_DB_CURVE__</p>
 
+  <h3 style="margin-top:2.2rem">Could it label instead of a human?</h3>
+  <p class="lede" style="margin-top:.6rem">The other reason to run against human labels:
+  if the agent annotated well enough, it could take the work. <b>__T_AN_HEAD__</b></p>
+
+  <div class="ctrlbox" id="dbAnn"></div>
+
+  <p class="lede" style="margin-top:1.4rem"><b>An agreement rate cannot be spent.</b> It
+  is computed <em>after</em> you already hold the human labels, and at labelling time
+  there is no way to tell which decisions fall in the agreeing half. Finding out requires
+  a human, which is the job being removed.</p>
+
+  <p class="lede" style="margin-top:1.2rem">The version that could work is a slice you
+  can identify <em>in advance</em> and trust. The agent's two answers are not equally
+  reliable, so that is worth testing rather than assuming:</p>
+
+  <div class="scroll" style="margin-top:1.2rem">
+    <table class="tbl" id="dbAnnSlice">
+      <thead><tr><th>when the agent says</th><th>how often</th><th>it is right</th><th>errors it would add</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <p class="sub" style="margin-top:1rem">__T_AN_NOTE__</p>
+
   <div class="tags"><span>63 source calls</span><span>2,183 human-labelled pauses</span><span class="hot">pause AUC 0.503</span><span>no policy win</span></div>
 </section>
 
@@ -1098,6 +1122,20 @@ function laneCard(k){
         `${L.not_measured.join("; ")}</p>` : "");
 }
 laneCard("sarvam");
+
+/* diarbench: annotation replacement */
+(function(){
+  const A=D.diarbench.annotation;
+  document.querySelector("#dbAnn").innerHTML=
+    `<div><span>agrees with the human</span><b>${(A.agreement*100).toFixed(1)}%</b></div>`+
+    `<div><span>agreement by chance alone</span><b>${(A.chance_agreement*100).toFixed(1)}%</b></div>`+
+    `<div class="hot"><span>Cohen&rsquo;s kappa</span><b>${A.cohens_kappa.toFixed(2)}</b></div>`+
+    `<div><span>writing &ldquo;finished&rdquo; on every row</span><b>${(A.majority_label_agreement*100).toFixed(1)}%</b></div>`;
+  document.querySelector("#dbAnnSlice tbody").innerHTML=Object.entries(A.by_answer).map(([k,v])=>
+    `<tr><td>&ldquo;${k}&rdquo;</td><td>${(v.share*100).toFixed(0)}%</td>`+
+    `<td class="${v.precision>=A.precision_needed_to_save_work?"":"no"}"><b>${(v.precision*100).toFixed(1)}%</b></td>`+
+    `<td>${v.errors} of ${v.n}</td></tr>`).join("");
+})();
 
 /* diarbench */
 (function(){
