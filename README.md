@@ -141,6 +141,44 @@ Three points, and nothing between them. The API returns a verdict and no confide
 reaching a 20% hold budget needs a *probability* from the provider — not better
 engineering here. That is a product ask, and it is the concrete blocker.
 
+### Could the agent label instead of a human?
+
+The other reason to run against human labels: if the agent annotated well enough, it
+could take the work. It cannot.
+
+| | |
+|---|---|
+| agrees with the human annotator | 52.2% |
+| agreement from chance alone | 45.3% |
+| **Cohen's kappa** | **0.13** |
+| writing "finished" on every row without listening | 66.8% |
+
+Kappa is the number annotation teams use — it strips out agreement you would get by
+guessing. Below 0.20 is "slight"; **0.80** is where a model can stand in for a person.
+At 0.13 it is worse than not listening at all.
+
+**An agreement rate cannot be spent.** The obvious follow-up is: if it agrees 52%
+of the time, can it cover those cases? No. That rate is computed *after* you already hold
+the human labels, and at labelling time there is no way to tell which decisions fall in
+the agreeing half. Finding out requires a human — the job being removed.
+
+The version that could work is a slice you can identify **in advance** and trust. The
+agent's two answers are not equally reliable, so it is worth testing rather than assuming:
+
+| when the agent says | how often | it is right | errors it would add |
+|---|---|---|---|
+| "still talking" | 64% | 38.6% | 151 of 246 |
+| "finished" | 36% | **76.3%** | 33 of 139 |
+
+Auto-accepting only the better slice covers 36% of the work and puts
+33 wrong labels into 139 rows — a **24% error rate**
+in the reference data everything else is measured against.
+
+Pre-labelling saves time only when the trusted slice is right about
+**95%** of the time, so the human skims rather than
+verifies. Reaching that needs a confidence score from the provider — the same blocker as
+the missing curve above, which makes it one ask rather than two.
+
 ### Two data defects found in the benchmark itself
 
 - **one corrupt segment** — `hindi_038[93]` has `start=939.09`, `end=155.91`: an end 783
