@@ -35,6 +35,26 @@ from .spec import SAMPLE_RATE, CallSpec, Event, Result
 FRAME_SAMPLES = 512  # Sarvam's frame: 32ms @16k, 64ms @8k
 
 
+class EventLog(list):
+    """The events list, reporting each event the moment it lands.
+
+    Lets the test bench show a live call live — a turn end appears on screen while the
+    audio is still being streamed, not after the socket closes. With no callback it is
+    an ordinary list, so nothing about a stored result changes. The `iterable` first
+    argument keeps `dataclasses.asdict`, which rebuilds lists by calling their type,
+    working on a Result that carries one.
+    """
+
+    def __init__(self, iterable=(), on_event=None):
+        super().__init__(iterable)
+        self.on_event = on_event
+
+    def append(self, event: Event) -> None:
+        super().append(event)
+        if self.on_event:
+            self.on_event(event)
+
+
 @dataclass
 class MockASR:
     """Energy-gated VAD + endpointer. Deterministic, so PIR is analytically checkable.
@@ -115,6 +135,8 @@ class SarvamWS:
     """
 
     name = "sarvam"
+    on_event = None    # bench hooks: called as events and partials arrive
+    on_partial = None
     URL = "wss://api.sarvam.ai/speech-to-text-realtime/ws"
     CHUNK_MS = 100
 
@@ -135,7 +157,7 @@ class SarvamWS:
         import websockets
 
         qs = "&".join(f"{k}={v}" for k, v in self.params.items())
-        events: list[Event] = []
+        events: list[Event] = EventLog(on_event=self.on_event)
         finals: list[str] = []
         sent_ms = 0  # audio position, the clock we timestamp against
 
@@ -168,6 +190,8 @@ class SarvamWS:
                             events.append(Event("speech_start", sent_ms))
                         elif ev == "vad.speech_end":
                             events.append(Event("speech_end", sent_ms))
+                        elif ev == "transcript.partial" and self.on_partial:
+                            self.on_partial(sent_ms, msg.get("text", ""))
                         elif ev == "transcript.final":
                             text = msg.get("text", "")
                             finals.append(text)
@@ -200,6 +224,8 @@ class DeepgramWS:
     """
 
     name = "deepgram"
+    on_event = None    # bench hooks: called as events and partials arrive
+    on_partial = None
     URL = "wss://api.deepgram.com/v1/listen"
     CHUNK_MS = 100
 
@@ -221,7 +247,7 @@ class DeepgramWS:
         import websockets
 
         qs = "&".join(f"{k}={v}" for k, v in self.params.items())
-        events: list[Event] = []
+        events: list[Event] = EventLog(on_event=self.on_event)
         finals: list[str] = []
         sent_ms = 0
         interim = ""
@@ -259,6 +285,8 @@ class DeepgramWS:
                                 interim = ""
                             elif text:
                                 interim = text
+                                if self.on_partial:
+                                    self.on_partial(sent_ms, text)
                         elif msg.get("type") == "Metadata":
                             break
                         elif msg.get("type") == "Error" or msg.get("error"):
@@ -290,6 +318,8 @@ class OpenAIWS:
     """
 
     name = "openai"
+    on_event = None    # bench hooks: called as events and partials arrive
+    on_partial = None
     URL = "wss://api.openai.com/v1/realtime?model=gpt-realtime"
     CHUNK_MS = 100
     NATIVE_RATE = 24000
@@ -300,8 +330,10 @@ class OpenAIWS:
     def __init__(self, *, language_code: str = "hi", model: str = "gpt-4o-transcribe",
                  rate: int = SAMPLE_RATE, silence_duration_ms: int | None = None,
                  turn_detection: str = "server_vad", trailing_silence_ms: int = 2500,
-                 require_endpoint_timestamps: bool = False, **params):
+                 require_endpoint_timestamps: bool = False, read_grace_s: float = 20,
+                 **params):
         self.rate, self.model = rate, model
+        self.read_grace_s = read_grace_s  # how long to wait for finals after the audio
         self.lang = language_code.split("-")[0]
         self.gate = silence_duration_ms or 500
         if turn_detection not in {"server_vad", "semantic_vad"}:
@@ -374,7 +406,7 @@ class OpenAIWS:
                 audio,
                 np.zeros(self.NATIVE_RATE * self.trailing_silence_ms // 1000, np.int16),
             ])
-        events: list[Event] = []
+        events: list[Event] = EventLog(on_event=self.on_event)
         finals: list[str] = []
         sent_ms = 0
         self.missing_endpoint_timestamp = False
@@ -419,12 +451,16 @@ class OpenAIWS:
                             events.append(Event("transcript", sent_ms, text))
                             if finals and not self.require_endpoint_timestamps:
                                 return
+                        elif ("transcription" in ty and "delta" in ty
+                              and self.on_partial):
+                            self.on_partial(sent_ms, msg.get("delta", ""))
                         elif ty == "error":
                             raise RuntimeError(str(msg.get("error", {}))[:200])
 
                 try:
                     await asyncio.wait_for(reader(),
-                                           timeout=len(audio) / self.NATIVE_RATE + 20)
+                                           timeout=len(audio) / self.NATIVE_RATE
+                                           + self.read_grace_s)
                 except asyncio.TimeoutError:
                     pass
                 finally:
@@ -461,6 +497,8 @@ class GeminiLive:
     """
 
     name = "gemini"
+    on_event = None    # bench hooks: called as events and partials arrive
+    on_partial = None
     URL = ("wss://generativelanguage.googleapis.com/ws/"
            "google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent")
     CHUNK_MS = 100
@@ -483,7 +521,7 @@ class GeminiLive:
             return Result(spec_id=spec.id, adapter=self.name,
                           error=f"gemini lane needs {self.NATIVE_RATE} Hz, got {self.rate}")
         audio = np.concatenate([pcm, np.zeros(int(self.NATIVE_RATE * 2.5), np.int16)])
-        events: list[Event] = []
+        events: list[Event] = EventLog(on_event=self.on_event)
         heard: list[str] = []
         sent_ms = 0
         try:

@@ -1,0 +1,244 @@
+# The sample kit. Rebuild with `asli samples`; do not edit by hand.
+# pause_ms and speech_end_ms are exact (the pause was spliced in), in ms from the
+# start of the file. Add your own recordings in samples/mine.yaml (same fields;
+# hesitation_ms, pause_ms and speech_end_ms optional) — see samples/README.md.
+- id: mobile-150ms
+  file: samples/mobile-150ms.wav
+  title: Mobile number · fluent, 150 ms gap (control)
+  said: Mera mobile number hai, matlab … nine eight double seven, triple one
+  entity_type: digits
+  expected: '9877111'
+  hesitation_ms: 150
+  pause_ms:
+  - 2017
+  - 2167
+  speech_end_ms: 4105
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: mobile-400ms
+  file: samples/mobile-400ms.wav
+  title: Mobile number · 400 ms pause after “matlab”
+  said: Mera mobile number hai, matlab … nine eight double seven, triple one
+  entity_type: digits
+  expected: '9877111'
+  hesitation_ms: 400
+  pause_ms:
+  - 2017
+  - 2417
+  speech_end_ms: 4355
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: mobile-700ms
+  file: samples/mobile-700ms.wav
+  title: Mobile number · 700 ms pause after “matlab”
+  said: Mera mobile number hai, matlab … nine eight double seven, triple one
+  entity_type: digits
+  expected: '9877111'
+  hesitation_ms: 700
+  pause_ms:
+  - 2017
+  - 2717
+  speech_end_ms: 4655
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: mobile-1000ms
+  file: samples/mobile-1000ms.wav
+  title: Mobile number · 1000 ms pause after “matlab”
+  said: Mera mobile number hai, matlab … nine eight double seven, triple one
+  entity_type: digits
+  expected: '9877111'
+  hesitation_ms: 1000
+  pause_ms:
+  - 2017
+  - 3017
+  speech_end_ms: 4955
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: mobile-700ms-telephony
+  file: demo/wav/dig-01-pir-700-telephony.wav
+  title: Mobile number · 700 ms pause · phone line (8 kHz mu-law)
+  said: Mera mobile number hai, matlab … nine eight double seven, triple one
+  entity_type: digits
+  expected: '9877111'
+  hesitation_ms: 700
+  pause_ms:
+  - 1717
+  - 2417
+  speech_end_ms: 4355
+  line: phone line (8 kHz mu-law)
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: mobile-700ms-noisy
+  file: demo/wav/dig-01-pir-700-noisy-snr10.wav
+  title: Mobile number · 700 ms pause · babble noise, 10 dB SNR
+  said: Mera mobile number hai, matlab … nine eight double seven, triple one
+  entity_type: digits
+  expected: '9877111'
+  hesitation_ms: 700
+  pause_ms:
+  - 1717
+  - 2417
+  speech_end_ms: 4355
+  line: babble noise, 10 dB SNR
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: account-150ms
+  file: samples/account-150ms.wav
+  title: Account digits · fluent, 150 ms gap (control)
+  said: Account ke last five digits, woh kya bolte hain … char zero double five six
+  entity_type: digits
+  expected: '40556'
+  hesitation_ms: 150
+  pause_ms:
+  - 2825
+  - 2975
+  speech_end_ms: 4483
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: account-400ms
+  file: samples/account-400ms.wav
+  title: Account digits · 400 ms pause after “woh kya bolte hain”
+  said: Account ke last five digits, woh kya bolte hain … char zero double five six
+  entity_type: digits
+  expected: '40556'
+  hesitation_ms: 400
+  pause_ms:
+  - 2825
+  - 3225
+  speech_end_ms: 4733
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: account-700ms
+  file: samples/account-700ms.wav
+  title: Account digits · 700 ms pause after “woh kya bolte hain”
+  said: Account ke last five digits, woh kya bolte hain … char zero double five six
+  entity_type: digits
+  expected: '40556'
+  hesitation_ms: 700
+  pause_ms:
+  - 2825
+  - 3525
+  speech_end_ms: 5033
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: account-1000ms
+  file: samples/account-1000ms.wav
+  title: Account digits · 1000 ms pause after “woh kya bolte hain”
+  said: Account ke last five digits, woh kya bolte hain … char zero double five six
+  entity_type: digits
+  expected: '40556'
+  hesitation_ms: 1000
+  pause_ms:
+  - 2825
+  - 3825
+  speech_end_ms: 5333
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: account-700ms-telephony
+  file: demo/wav/dig-02-pir-700-telephony.wav
+  title: Account digits · 700 ms pause · phone line (8 kHz mu-law)
+  said: Account ke last five digits, woh kya bolte hain … char zero double five six
+  entity_type: digits
+  expected: '40556'
+  hesitation_ms: 700
+  pause_ms:
+  - 2525
+  - 3225
+  speech_end_ms: 4733
+  line: phone line (8 kHz mu-law)
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: account-700ms-noisy
+  file: demo/wav/dig-02-pir-700-noisy-snr10.wav
+  title: Account digits · 700 ms pause · babble noise, 10 dB SNR
+  said: Account ke last five digits, woh kya bolte hain … char zero double five six
+  entity_type: digits
+  expected: '40556'
+  hesitation_ms: 700
+  pause_ms:
+  - 2525
+  - 3225
+  speech_end_ms: 4733
+  line: babble noise, 10 dB SNR
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+- id: reference-150ms
+  file: samples/reference-150ms.wav
+  title: Reference number · fluent, 150 ms gap (control)
+  said: Haan toh … the reference is eight, double zero, nine
+  entity_type: digits
+  expected: '8009'
+  hesitation_ms: 150
+  pause_ms:
+  - 1073
+  - 1223
+  speech_end_ms: 3471
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+  note: the filler and pause come at the START, before the whole sentence
+- id: reference-400ms
+  file: samples/reference-400ms.wav
+  title: Reference number · 400 ms pause after “haan toh”
+  said: Haan toh … the reference is eight, double zero, nine
+  entity_type: digits
+  expected: '8009'
+  hesitation_ms: 400
+  pause_ms:
+  - 1073
+  - 1473
+  speech_end_ms: 3721
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+  note: the filler and pause come at the START, before the whole sentence
+- id: reference-700ms
+  file: samples/reference-700ms.wav
+  title: Reference number · 700 ms pause after “haan toh”
+  said: Haan toh … the reference is eight, double zero, nine
+  entity_type: digits
+  expected: '8009'
+  hesitation_ms: 700
+  pause_ms:
+  - 1073
+  - 1773
+  speech_end_ms: 4021
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+  note: the filler and pause come at the START, before the whole sentence
+- id: reference-1000ms
+  file: samples/reference-1000ms.wav
+  title: Reference number · 1000 ms pause after “haan toh”
+  said: Haan toh … the reference is eight, double zero, nine
+  entity_type: digits
+  expected: '8009'
+  hesitation_ms: 1000
+  pause_ms:
+  - 1073
+  - 2073
+  speech_end_ms: 4321
+  line: clean
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+  note: the filler and pause come at the START, before the whole sentence
+- id: reference-700ms-telephony
+  file: demo/wav/dig-03-pir-700-telephony.wav
+  title: Reference number · 700 ms pause · phone line (8 kHz mu-law)
+  said: Haan toh … the reference is eight, double zero, nine
+  entity_type: digits
+  expected: '8009'
+  hesitation_ms: 700
+  pause_ms:
+  - 773
+  - 1473
+  speech_end_ms: 3721
+  line: phone line (8 kHz mu-law)
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+  note: the filler and pause come at the START, before the whole sentence
+- id: reference-700ms-noisy
+  file: demo/wav/dig-03-pir-700-noisy-snr10.wav
+  title: Reference number · 700 ms pause · babble noise, 10 dB SNR
+  said: Haan toh … the reference is eight, double zero, nine
+  entity_type: digits
+  expected: '8009'
+  hesitation_ms: 700
+  pause_ms:
+  - 773
+  - 1473
+  speech_end_ms: 3721
+  line: babble noise, 10 dB SNR
+  voice: ElevenLabs eleven_multilingual_v2 (synthetic), re-spliced from demo/wav
+  note: the filler and pause come at the START, before the whole sentence

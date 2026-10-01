@@ -8,6 +8,11 @@
     asli conv --agent sarvam      # what the agent holds when it answers, and collisions
     asli real --corpus DIR        # PIR on real recordings, no synthesis in the path
     asli fit  --corpus DIR        # pause distribution, and what to set the gate to
+
+    asli bench                    # the test bench: your voice, live providers, a verdict
+    asli test FILE --agent sarvam --expect 9877111   # the same, from the terminal
+    asli test --samples           # every sample in the kit, against its known truth
+    asli samples                  # rebuild the sample kit from demo/wav
 """
 
 from __future__ import annotations
@@ -232,7 +237,33 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("--dry-run", action="store_true",
                        help="`text`: print the built corpus, make no API calls")
 
+    b = sub.add_parser("bench", help="the test bench as a local web page")
+    b.add_argument("--host", default="127.0.0.1")
+    b.add_argument("--port", type=int, default=8765)
+    b.add_argument("--passcode", default=None,
+                   help="required to listen beyond localhost: it guards your API credits")
+    b.add_argument("--open", action="store_true", help="open it in the browser")
+
+    t = sub.add_parser("test", help="run recordings against live providers, with a verdict")
+    t.add_argument("files", nargs="*", help="audio files (anything ffmpeg reads)")
+    t.add_argument("--samples", action="store_true", help="run the sample kit instead")
+    t.add_argument("--only", default=None, help="with --samples: ids containing this text")
+    t.add_argument("--agent", default="mock",
+                   help="comma-separated: " + ",".join(_bench_providers()))
+    t.add_argument("--gate", type=int, default=500, help="silence timer, ms")
+    t.add_argument("--mode", default="verbatim",
+                   choices=["verbatim", "transcribe", "translit", "codemix"])
+    t.add_argument("--expect", default="", help="what was said, e.g. 9877111")
+    t.add_argument("--type", default="digits", choices=["digits", "amount", "date"])
+    t.add_argument("--hold-ms", type=int, default=600)
+    t.add_argument("--phone", action="store_true", help="simulate an 8 kHz mu-law line")
+    t.add_argument("--no-save", action="store_true", help="do not write a receipt")
+
+    sub.add_parser("samples", help="rebuild the sample kit in samples/ from demo/wav")
+
     a = p.parse_args(argv)
+    if a.cmd in ("bench", "test", "samples"):
+        return _bench_cmd(a)
     dials = {k: v for k, v in (("telephony", a.telephony), ("snr_db", a.snr)) if v}
     if a.snr is not None:
         dials["noise"] = a.noise
@@ -504,6 +535,78 @@ def main(argv: list[str] | None = None) -> int:
     agg = write(rows, Path(a.out or ROOT / "results" / f"{a.suite}.jsonl"))
     print(table(f"{a.suite} (agent={a.agent}, n={agg['n']}, stance={a.stance}, "
                 f"dials={dials or 'clean'})", agg))
+    return 0
+
+
+def _bench_providers() -> list[str]:
+    from .bench import PROVIDERS
+
+    return list(PROVIDERS)
+
+
+def _bench_cmd(a) -> int:
+    """The bench lane: recordings someone brings, not ones we authored."""
+    from . import bench
+
+    if a.cmd == "bench":
+        from .bench_server import serve
+
+        serve(a.host, a.port, a.passcode, a.open)
+        return 0
+
+    if a.cmd == "samples":
+        from . import kit
+
+        rows = kit.build()
+        print(f"wrote {sum(r['file'].startswith('samples/') for r in rows)} recordings and "
+              f"samples/manifest.yaml ({len(rows)} entries)")
+        return 0
+
+    providers = [x.strip() for x in a.agent.split(",") if x.strip()]
+    bad = [x for x in providers if x not in bench.PROVIDERS]
+    if bad:
+        print(f"unknown provider(s) {bad}; choose from {', '.join(bench.PROVIDERS)}",
+              file=sys.stderr)
+        return 2
+    ready = bench.configured()
+    for x in providers:
+        if not ready[x]:
+            print(f"  ! {x}: {bench.PROVIDERS[x].env} is not set in .env — it will be skipped",
+                  file=sys.stderr)
+    jobs = []
+    if a.samples:
+        for s in bench.load_samples():
+            if not a.only or a.only in s["id"]:
+                jobs.append((bench.ROOT / s["file"], s["title"], s))
+        if not jobs:
+            print("no samples matched — run `asli samples` first", file=sys.stderr)
+            return 2
+    else:
+        if not a.files:
+            print("usage: asli test FILE [FILE ...] --agent sarvam --expect 9877111\n"
+                  "       asli test --samples --agent sarvam,deepgram", file=sys.stderr)
+            return 2
+        jobs = [(Path(f), Path(f).name, None) for f in a.files]
+
+    tally: dict[str, list[str]] = {}
+    for path, name, sample in jobs:
+        try:
+            pcm = bench.load_audio(path)
+            rep = bench.run(pcm, providers, gate=a.gate, mode=a.mode, expected=a.expect,
+                            entity_type=a.type, name=name,
+                            source="sample" if sample else "file", hold_ms=a.hold_ms,
+                            phone_line=a.phone, save=not a.no_save, sample=sample)
+        except Exception as exc:
+            print(f"  ! {name}: {exc}", file=sys.stderr)
+            continue
+        print(bench.render_text(rep))
+        for pid, r in rep["results"].items():
+            tally.setdefault(pid, []).append(r["verdict"].get("status", "?"))
+    if len(jobs) > 1:
+        print("\nsummary — one row per provider, counts of each verdict")
+        for pid, sts in tally.items():
+            counts = ", ".join(f"{k} {sts.count(k)}" for k in sorted(set(sts)))
+            print(f"  {pid:<16} n={len(sts)}  {counts}")
     return 0
 
 

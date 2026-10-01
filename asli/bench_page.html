@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>asli test bench</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --bg:#F6F4EF; --panel:#FFFFFF; --ink:#151A21; --muted:#5A6371; --line:#E2DED5; --soft:#F1EEE7;
+  --accent:#1D5BBF; --accent-ink:#FFFFFF;
+  --live:#0B7347; --live-bg:#DFF3E8; --stored:#2155A3; --stored-bg:#E1EAF8;
+  --mock:#8A5600; --mock-bg:#FAEFD6; --pred:#6A3D9E; --pred-bg:#EEE5F9;
+  --cut:#B3360E; --cut-bg:#FBE6DD; --ok:#0B7347; --ok-bg:#DFF3E8; --warn:#8F5E00; --warn-bg:#FAF0D7;
+  --wave:#3B4654; --pause:rgba(179,54,14,.13); --tail:rgba(90,99,113,.08);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#0E1115; --panel:#161A20; --ink:#E7E9EC; --muted:#9AA3AF; --line:#29303A; --soft:#1D2229;
+  --accent:#5B93EE; --accent-ink:#0E1115;
+  --live:#55C98E; --live-bg:#12301F; --stored:#7FA8EC; --stored-bg:#16253D;
+  --mock:#E7B04F; --mock-bg:#33270F; --pred:#B898E6; --pred-bg:#2A2038;
+  --cut:#F08A63; --cut-bg:#3A1C12; --ok:#55C98E; --ok-bg:#12301F; --warn:#E7B04F; --warn-bg:#33270F;
+  --wave:#AEB8C5; --pause:rgba(240,138,99,.16); --tail:rgba(154,163,175,.08);
+}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Devanagari",sans-serif}
+main{max-width:1080px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.6rem;margin:0 0 .2rem;letter-spacing:-.01em}
+h2{font-size:1.05rem;margin:0 0 .7rem}
+h3{font-size:.98rem;margin:0}
+p{margin:.3rem 0 .6rem}
+.sub{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+.step{display:flex;gap:.6rem;align-items:baseline}
+.step b.n{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;
+  background:var(--ink);color:var(--bg);font-size:.8rem;flex:none}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}
+.legend div{font-size:.86rem;color:var(--muted)}
+.badge{display:inline-block;font:600 .7rem/1 var(--mono);letter-spacing:.06em;padding:.32rem .5rem;
+  border-radius:6px;vertical-align:middle;white-space:nowrap}
+.b-live{background:var(--live-bg);color:var(--live)} .b-stored{background:var(--stored-bg);color:var(--stored)}
+.b-mock{background:var(--mock-bg);color:var(--mock)} .b-pred{background:var(--pred-bg);color:var(--pred)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--line);background:var(--soft);color:var(--ink);padding:.5rem .9rem;
+  border-radius:8px;font:inherit;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn{border:0;background:var(--accent);color:var(--accent-ink);padding:.65rem 1.1rem;border-radius:8px;
+  font:600 .95rem/1 system-ui,sans-serif;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.rec{background:var(--cut);color:#fff}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:22px;text-align:center;color:var(--muted)}
+.drop.over{border-color:var(--accent);color:var(--ink)}
+.samples{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;max-height:420px;overflow:auto}
+.sample{border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--panel);
+  text-align:left;font:inherit;color:inherit}
+.sample[aria-pressed="true"]{outline:2px solid var(--accent);border-color:transparent}
+.sample .t{font-weight:600;font-size:.9rem}
+.sample .s{font-size:.84rem;color:var(--muted);margin:.2rem 0}
+.sample .p{font-size:.78rem;margin-top:.35rem}
+label.f{display:block;font-size:.82rem;color:var(--muted);margin-bottom:.25rem}
+input[type=text],input[type=password],select{font:inherit;color:var(--ink);background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;padding:.5rem .6rem;min-width:0}
+input[type=range]{width:100%}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.prov{display:flex;gap:.5rem;align-items:flex-start;padding:.45rem 0;border-bottom:1px solid var(--line)}
+.prov:last-child{border-bottom:0}
+.prov small{display:block;color:var(--muted);font-size:.78rem}
+.dot{width:.7rem;height:.7rem;border-radius:50%;display:inline-block;flex:none;margin-top:.35rem}
+canvas.wave{width:100%;height:150px;display:block;border-radius:8px;background:var(--soft)}
+.lanes{margin-top:8px;font-size:.88rem}
+.lane{display:grid;grid-template-columns:150px 1fr;gap:10px;padding:.3rem 0;border-top:1px solid var(--line)}
+.lane .who{display:flex;gap:.45rem;align-items:center;font-weight:600}
+.lane .txt{min-height:1.3em;overflow-wrap:anywhere}
+.lane .txt i{color:var(--muted);font-style:normal}
+.log{font:12px/1.55 var(--mono);background:var(--soft);border-radius:8px;padding:10px;max-height:200px;
+  overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:10px}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:12px;background:var(--panel)}
+.card .top{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.status{font:700 .72rem/1 var(--mono);letter-spacing:.06em;padding:.3rem .5rem;border-radius:6px}
+.s-cut{background:var(--cut-bg);color:var(--cut)} .s-ok{background:var(--ok-bg);color:var(--ok)}
+.s-early{background:var(--warn-bg);color:var(--warn)} .s-other{background:var(--soft);color:var(--muted)}
+.headline{font-size:1.05rem;font-weight:600;margin:.55rem 0 .2rem}
+table{border-collapse:collapse;width:100%;font-size:.88rem;margin-top:.5rem}
+th,td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:.8rem}
+td.num,th.num{text-align:right;font-family:var(--mono);white-space:nowrap}
+.tblwrap{overflow-x:auto}
+.yes{color:var(--ok);font-weight:600} .no{color:var(--cut);font-weight:600} .na{color:var(--muted)}
+details{margin-top:.6rem} summary{cursor:pointer;color:var(--muted);font-size:.86rem}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:.2rem .9rem;font-size:.82rem;margin-top:.4rem}
+.kv span:nth-child(odd){color:var(--muted)}
+.kv code,.mono{font-family:var(--mono);font-size:.8rem;overflow-wrap:anywhere}
+.note{font-size:.86rem;color:var(--muted)}
+.err{background:var(--cut-bg);color:var(--cut);border-radius:8px;padding:.6rem .8rem;margin-top:10px}
+.hist{display:flex;flex-direction:column;gap:6px}
+.hist button{all:unset;cursor:pointer;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;
+  padding:.45rem .6rem;border-radius:8px;border:1px solid var(--line)}
+.hist button:hover{background:var(--soft)}
+.meter{height:8px;border-radius:4px;background:var(--soft);overflow:hidden;width:180px}
+.meter i{display:block;height:100%;width:0;background:var(--live)}
+.hidden{display:none!important}
+.deva{font-family:"Noto Sans Devanagari","Kohinoor Devanagari",system-ui,sans-serif}
+@media (max-width:560px){ .lane{grid-template-columns:1fr} h1{font-size:1.35rem} }
+</style>
+</head>
+<body>
+<main>
+  <h1>asli test bench</h1>
+  <p class="sub">Your voice, a real speech API, and a verdict on where it decided you had finished.
+  Keys stay on the machine running this page; nothing is sent anywhere except the providers you tick.</p>
+
+  <div class="panel">
+    <h2>How to read every result on this page</h2>
+    <div class="legend">
+      <div><span class="badge b-live">LIVE</span><br>Streamed to the vendor just now, from this machine, in real time. Every timestamp came off that vendor's socket.</div>
+      <div><span class="badge b-stored">STORED</span><br>The receipt of an earlier live run, re-opened from <span class="mono">results/bench/</span>. Same data, not re-run.</div>
+      <div><span class="badge b-mock">MOCK</span><br>The offline energy VAD. No vendor, no transcript. Checks the bench works; says nothing about any product.</div>
+      <div><span class="badge b-pred">PREDICTION</span><br>Arithmetic from a sample's known pause, shown before a run. A guess to check against, not a measurement.</div>
+    </div>
+  </div>
+
+  <div class="panel hidden" id="passPanel">
+    <h2>Passcode</h2>
+    <p class="note">This bench is shared over the network, so it asks for the passcode its owner set.</p>
+    <div class="row"><input type="password" id="pass" placeholder="passcode" autocomplete="off">
+      <button class="btn" id="passGo" type="button">Unlock</button></div>
+  </div>
+
+  <div id="app" class="hidden">
+  <!-- 1. audio -->
+  <section class="panel">
+    <div class="step"><b class="n">1</b><h2>Audio</h2></div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="rec" aria-selected="true">Record with the mic</button>
+      <button type="button" role="tab" data-tab="up" aria-selected="false">Upload a recording</button>
+      <button type="button" role="tab" data-tab="kit" aria-selected="false">Use a sample</button>
+    </div>
+
+    <div data-pane="rec">
+      <p class="note">Say <b>one sentence with a number in it, and pause before the number</b> — the way people do on a call:
+      <span class="deva">“मेरा नंबर है… मतलब…</span> <i>(pause)</i> <span class="deva">…नाइन एट डबल सेवन ट्रिपल वन”</span>.
+      Then press stop and fill in step 2 with what you said.</p>
+      <div class="row">
+        <button class="btn" id="recBtn" type="button">● Record</button>
+        <span class="mono" id="recTime">0.0 s</span>
+        <span class="meter" aria-hidden="true"><i id="recLvl"></i></span>
+        <label class="note"><input type="checkbox" id="ns"> browser noise suppression</label>
+      </div>
+      <p class="note">Off by default: a raw mic is closer to a quiet phone line, and this repo measured that cleaning
+      the audio before the endpointer moves callers <i>towards</i> being cut off.</p>
+    </div>
+
+    <div data-pane="up" class="hidden">
+      <div class="drop" id="drop">Drop an audio file here, or <label style="color:var(--accent);cursor:pointer"><u>choose one</u>
+        <input type="file" id="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.opus,.webm,.aac,.flac" hidden></label><br>
+        <span class="note">WAV, MP3, M4A, OGG/Opus (WhatsApp voice notes), WebM — anything this browser can play.</span></div>
+    </div>
+
+    <div data-pane="kit" class="hidden">
+      <p class="note">Recordings with a known truth: the words, the number, and exactly where the hesitation is, because the
+      pause was spliced in. The voice is synthetic (ElevenLabs) — use it to check the bench, then test with a real voice.</p>
+      <div class="samples" id="samples"></div>
+    </div>
+
+    <div id="audioBox" class="hidden" style="margin-top:14px">
+      <div class="row" style="justify-content:space-between">
+        <div><b id="audioName"></b> <span class="note" id="audioMeta"></span></div>
+        <div class="row"><audio id="player" controls preload="auto" style="height:34px"></audio></div>
+      </div>
+      <canvas class="wave" id="wave" style="margin-top:8px"></canvas>
+      <div class="note" id="waveNote"></div>
+      <div class="lanes" id="lanes"></div>
+    </div>
+  </section>
+
+  <!-- 2. truth -->
+  <section class="panel">
+    <div class="step"><b class="n">2</b><h2>What did you say? <span class="note" style="font-weight:400">(optional)</span></h2></div>
+    <div class="row">
+      <div><label class="f" for="etype">kind</label>
+        <select id="etype"><option value="digits">a number (phone, account, OTP)</option>
+          <option value="amount">an amount (₹, lakh, crore)</option><option value="date">a date</option></select></div>
+      <div style="flex:1;min-width:220px"><label class="f" for="expect">the value</label>
+        <input type="text" id="expect" style="width:100%" placeholder="e.g. 9877111 · 250000 · 15/09/2026"></div>
+    </div>
+    <p class="note">With this, the bench checks whether the agent <b>had the number when it replied</b> — not just whether it
+    heard it eventually. Leave it empty and it only judges where the turn ended. It never guesses a truth for you.</p>
+  </section>
+
+  <!-- 3. providers -->
+  <section class="panel">
+    <div class="step"><b class="n">3</b><h2>Who to test, and how</h2></div>
+    <div class="grid2">
+      <div id="provs"></div>
+      <div>
+        <label class="f" for="gate">silence timer — how long a pause ends your turn: <b id="gateV">500 ms</b></label>
+        <input type="range" id="gate" min="100" max="1500" step="50" value="500">
+        <p class="note">500 ms is Sarvam's documented default. Real Hindi callers pause longer than that in about 1 pause in 6.</p>
+        <div class="row" style="margin-top:.6rem">
+          <div><label class="f" for="mode">Sarvam output mode</label>
+            <select id="mode"><option>verbatim</option><option>transcribe</option><option>translit</option><option>codemix</option></select></div>
+          <div><label class="f" for="hold">marker-rule hold</label>
+            <select id="hold"><option value="400">400 ms</option><option value="600" selected>600 ms</option><option value="900">900 ms</option></select></div>
+        </div>
+        <label class="note" style="display:block;margin-top:.6rem"><input type="checkbox" id="phone">
+          simulate a phone line (8 kHz μ-law) — marked SIMULATED in the receipt</label>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="runBtn" type="button" disabled>Run live test</button>
+      <span class="note" id="runNote">Choose some audio first.</span>
+    </div>
+    <div id="runErr"></div>
+  </section>
+
+  <!-- 4. results -->
+  <section class="panel hidden" id="resPanel">
+    <div class="step"><b class="n">4</b><h2 id="resTitle">Results</h2></div>
+    <div id="resBanner"></div>
+    <div id="cards"></div>
+    <div class="log" id="log"></div>
+    <div id="receipt" class="note" style="margin-top:8px"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Earlier runs <span class="badge b-stored">STORED</span></h2>
+    <p class="note">Every live run leaves a receipt — the exact audio streamed and every event that came back — in
+    <span class="mono">results/bench/</span>, which git ignores because these are people's voices.</p>
+    <div class="hist" id="hist"><span class="note">none yet</span></div>
+  </section>
+
+  <section class="panel">
+    <h2>What one run can and cannot show</h2>
+    <ul id="caveats" class="note" style="margin:0;padding-left:1.1rem"></ul>
+  </section>
+  </div>
+</main>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const COLORS = {sarvam:"#E0603A", deepgram:"#2F86D6", openai:"#1F9E6E", "openai-semantic":"#8E5BD0", gemini:"#C9952B", mock:"#7C8593"};
+const S = {cfg:null, pass:"", audio:null, running:false, an:null, axisMs:0, markers:[], lanes:{}};
+
+try { S.pass = sessionStorage.getItem("asli-pass") || ""; } catch (e) {}
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {...opts, headers: {...(opts.headers || {}), "X-Asli-Passcode": S.pass}});
+  if (r.status === 401) { showPass(); throw new Error("passcode required"); }
+  return r;
+}
+function showPass() { $("#passPanel").classList.remove("hidden"); $("#app").classList.add("hidden"); }
+$("#passGo").onclick = () => {
+  S.pass = $("#pass").value;
+  try { sessionStorage.setItem("asli-pass", S.pass); } catch (e) {}
+  boot();
+};
+
+/* ---------- config ---------- */
+async function boot() {
+  let cfg;
+  try {
+    const r = await api("/api/config");
+    cfg = await r.json();
+    if (!r.ok) throw new Error(cfg.error || ("HTTP " + r.status));
+  } catch (e) {
+    if (e.message !== "passcode required")
+      document.querySelector("main").insertAdjacentHTML("beforeend", `<div class="err">${esc(e.message)}</div>`);
+    return;
+  }
+  S.cfg = cfg;
+  $("#passPanel").classList.add("hidden"); $("#app").classList.remove("hidden");
+  $("#provs").innerHTML = cfg.providers.map(p => {
+    const dis = !p.configured;
+    const tag = p.live ? "" : ` <span class="badge b-mock">MOCK</span>`;
+    const state = p.configured ? (p.live ? "key found in .env" : "offline — no key needed")
+                               : `no key — add ${esc(p.env)} to .env and restart`;
+    return `<label class="prov"><input type="checkbox" value="${esc(p.id)}" ${dis ? "disabled" : ""}
+      ${p.id === "sarvam" && p.configured ? "checked" : ""}>
+      <span class="dot" style="background:${COLORS[p.id] || "#888"}"></span>
+      <span><b>${esc(p.label)}</b>${tag}<small>${esc(state)}</small><small>${esc(p.note)}</small></span></label>`;
+  }).join("");
+  if (!$("#provs input:checked")) {   // no live key at all: pre-tick the mock so the bench is usable
+    const m = $('#provs input[value="mock"]'); if (m) m.checked = true;
+  }
+  $("#provs").addEventListener("change", updateRun);
+  $("#caveats").innerHTML = cfg.caveats.map(c => `<li>${esc(c)}</li>`).join("");
+  renderSamples();
+  loadHistory();
+  updateRun();
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-tab]").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll("[data-pane]").forEach(p => p.classList.toggle("hidden", p.dataset.pane !== b.dataset.tab));
+});
+
+/* ---------- audio: decode anything to 16 kHz mono ---------- */
+async function decodeTo16k(arrayBuffer) {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ac = new AC();
+  let buf;
+  try { buf = await ac.decodeAudioData(arrayBuffer.slice(0)); } finally { ac.close(); }
+  const len = Math.max(1, Math.ceil(buf.duration * 16000));
+  const off = new OfflineAudioContext(1, len, 16000);   // mixes down to mono, resamples properly
+  const src = off.createBufferSource(); src.buffer = buf; src.connect(off.destination); src.start();
+  return (await off.startRendering()).getChannelData(0);
+}
+function encodeWav(f32, rate = 16000) {
+  const n = f32.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) { const s = Math.max(-1, Math.min(1, f32[i])); v.setInt16(44 + i * 2, s < 0 ? s * 32768 : s * 32767, true); }
+  return new Blob([buf], {type: "audio/wav"});
+}
+function setAudio(f32, info) {
+  const sec = f32.length / 16000, max = S.cfg ? S.cfg.defaults.max_seconds : 90;
+  if (sec > max) { showErr(`That is ${sec.toFixed(0)} s; the bench streams at most ${max} s per run (every second is billed, per provider). Trim it and try again.`); return; }
+  if (sec < 0.3) { showErr("That recording is too short to test."); return; }
+  showErr("");
+  S.audio = {f32, wav: encodeWav(f32), ...info};
+  S.an = null; S.axisMs = sec * 1000; S.markers = []; S.lanes = {};
+  $("#lanes").innerHTML = ""; $("#waveNote").textContent = "";
+  $("#audioBox").classList.remove("hidden");
+  $("#audioName").textContent = info.name;
+  $("#audioMeta").textContent = `· ${sec.toFixed(1)} s · ${info.source} · decoded to 16 kHz mono`;
+  const url = URL.createObjectURL(S.audio.wav);
+  const p = $("#player"); if (p.dataset.url) URL.revokeObjectURL(p.dataset.url); p.src = url; p.dataset.url = url;
+  drawWave();
+  updateRun();
+}
+
+/* ---------- record ---------- */
+let rec = null;
+$("#recBtn").onclick = async () => {
+  if (rec) { rec.mr.stop(); return; }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({audio: {channelCount: 1, echoCancellation: false,
+      autoGainControl: false, noiseSuppression: $("#ns").checked}});
+  } catch (e) { showErr("The microphone was refused or is unavailable (" + e.name + "). Browsers only allow it on localhost or https."); return; }
+  const mr = new MediaRecorder(stream), chunks = [];
+  const AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
+  const an = ac.createAnalyser(); an.fftSize = 512; ac.createMediaStreamSource(stream).connect(an);
+  const lvl = new Float32Array(an.fftSize), t0 = performance.now();
+  rec = {mr, stream, ac};
+  mr.ondataavailable = e => e.data.size && chunks.push(e.data);
+  mr.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop()); ac.close();
+    $("#recBtn").textContent = "● Record again"; $("#recBtn").classList.remove("rec"); $("#recLvl").style.width = "0";
+    rec = null;
+    try {
+      const f32 = await decodeTo16k(await new Blob(chunks).arrayBuffer());
+      setAudio(f32, {source: "microphone", name: "mic recording " + new Date().toLocaleTimeString()});
+    } catch (e) { showErr("Could not decode the recording: " + e.name); }
+  };
+  mr.start();
+  $("#recBtn").textContent = "■ Stop"; $("#recBtn").classList.add("rec");
+  (function tick() {
+    if (!rec) return;
+    an.getFloatTimeDomainData(lvl);
+    let s = 0; for (const x of lvl) s += x * x;
+    $("#recLvl").style.width = Math.min(100, Math.sqrt(s / lvl.length) * 400) + "%";
+    $("#recTime").textContent = ((performance.now() - t0) / 1000).toFixed(1) + " s";
+    requestAnimationFrame(tick);
+  })();
+};
+
+/* ---------- upload ---------- */
+async function takeFile(f) {
+  if (!f) return;
+  try { setAudio(await decodeTo16k(await f.arrayBuffer()), {source: "upload", name: f.name}); }
+  catch (e) { showErr(`This browser could not decode ${f.name} (${e.name}). Try WAV or MP3.`); }
+}
+$("#file").onchange = e => { takeFile(e.target.files[0]); e.target.value = ""; };
+const drop = $("#drop");
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); takeFile(e.dataTransfer.files[0]); };
+
+/* ---------- sample kit ---------- */
+function prediction(s) {
+  const gate = +$("#gate").value;
+  if (!s.hesitation_ms) return "";
+  const cut = gate < s.hesitation_ms;
+  return `<span class="badge b-pred">PREDICTION</span> a ${gate} ms timer should ${cut ? "<b>end the turn inside</b>" : "<b>outlast</b>"} this ${s.hesitation_ms} ms pause`;
+}
+function renderSamples() {
+  const list = S.cfg.samples;
+  $("#samples").innerHTML = list.length ? list.map(s => `<button type="button" class="sample" data-id="${esc(s.id)}" aria-pressed="false">
+      <div class="t">${esc(s.title)}</div><div class="s deva">${esc(s.said)}</div>
+      <div class="s">truth: <b class="mono">${esc(s.expected)}</b> · ${esc(s.line || "clean")}</div>
+      <div class="p">${prediction(s)}</div></button>`).join("")
+    : `<span class="note">No sample kit found — run <span class="mono">asli samples</span>.</span>`;
+}
+$("#samples").addEventListener("click", async e => {
+  const b = e.target.closest(".sample"); if (!b) return;
+  document.querySelectorAll(".sample").forEach(x => x.setAttribute("aria-pressed", x === b));
+  const s = S.cfg.samples.find(x => x.id === b.dataset.id);
+  const r = await api(`/samples/${encodeURIComponent(s.id)}`);
+  const f32 = await decodeTo16k(await r.arrayBuffer());
+  setAudio(f32, {source: "sample", name: s.title, sample: s});
+  $("#etype").value = s.entity_type; $("#expect").value = s.expected;
+});
+
+/* ---------- settings ---------- */
+$("#gate").oninput = () => {
+  $("#gateV").textContent = $("#gate").value + " ms";
+  document.querySelectorAll(".sample").forEach(b => {
+    const s = S.cfg.samples.find(x => x.id === b.dataset.id); b.querySelector(".p").innerHTML = prediction(s);
+  });
+};
+function chosen() { return [...document.querySelectorAll("#provs input:checked")].map(i => i.value); }
+function updateRun() {
+  const ps = chosen(), ok = S.audio && ps.length && !S.running;
+  $("#runBtn").disabled = !ok;
+  if (S.running) return;
+  if (!S.audio) { $("#runNote").textContent = "Choose some audio first."; return; }
+  if (!ps.length) { $("#runNote").textContent = "Tick at least one provider."; return; }
+  const sec = (S.audio.f32.length / 16000 + Math.max(1.5, +$("#gate").value / 1000 + 1)).toFixed(1);
+  const live = ps.filter(p => p !== "mock").length;
+  $("#runNote").textContent = live
+    ? `Streams ${sec} s (your audio + the line staying open) to ${live} provider${live > 1 ? "s" : ""} at once, in real time.`
+    : "Mock only — nothing leaves this machine, and there will be no transcript.";
+}
+function showErr(m) { $("#runErr").innerHTML = m ? `<div class="err">${esc(m)}</div>` : ""; }
+
+/* ---------- waveform ---------- */
+function drawWave(playMs) {
+  const cv = $("#wave"), a = S.audio; if (!a) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const audioMs = a.f32.length / 16;  const axis = Math.max(S.axisMs, audioMs), x = ms => ms / axis * W;
+  const mid = H * 0.42, amp = H * 0.36;
+  if (axis > audioMs) { g.fillStyle = css("--tail"); g.fillRect(x(audioMs), 0, W - x(audioMs), H * 0.84); }
+  if (S.an && S.an.usable) {
+    g.fillStyle = css("--pause");
+    for (const [p0, p1] of S.an.pauses) g.fillRect(x(p0), 0, Math.max(1, x(p1) - x(p0)), H * 0.84);
+  }
+  g.strokeStyle = css("--wave"); g.lineWidth = 1; g.beginPath();
+  const per = Math.max(1, Math.floor(a.f32.length / Math.max(1, x(audioMs))));
+  for (let px = 0; px < x(audioMs); px++) {
+    let lo = 0, hi = 0; const i0 = Math.floor(px / x(audioMs) * a.f32.length);
+    for (let i = i0; i < Math.min(a.f32.length, i0 + per); i++) { const s = a.f32[i]; if (s < lo) lo = s; if (s > hi) hi = s; }
+    g.moveTo(px + .5, mid - hi * amp); g.lineTo(px + .5, mid - lo * amp + .5);
+  }
+  g.stroke();
+  if (S.an && S.an.usable) {
+    g.strokeStyle = css("--ink"); g.setLineDash([3, 3]); g.beginPath();
+    g.moveTo(x(S.an.speech_end_ms) + .5, 0); g.lineTo(x(S.an.speech_end_ms) + .5, H * 0.84); g.stroke(); g.setLineDash([]);
+  }
+  // turn-end markers, one row per provider
+  const pids = Object.keys(S.lanes);
+  S.markers.forEach(m => {
+    const row = Math.max(0, pids.indexOf(m.pid)), y = H * 0.86 + row * 6;
+    g.fillStyle = COLORS[m.pid] || "#888"; g.fillRect(x(m.t) - 1, 0, 2.5, H * 0.84);
+    g.beginPath(); g.arc(x(m.t), Math.min(H - 3, y), 3, 0, 6.3); g.fill();
+  });
+  // time axis
+  g.fillStyle = css("--muted"); g.font = "10px " + css("--mono");
+  for (let s = 0; s * 1000 <= axis; s += axis > 12000 ? 2 : 1) g.fillText(s + "s", x(s * 1000) + 2, H - 2);
+  if (playMs != null) { g.fillStyle = css("--accent"); g.fillRect(x(playMs), 0, 2, H * 0.84); }
+}
+(function playhead() {
+  const p = $("#player");
+  if (S.audio && !p.paused) drawWave(p.currentTime * 1000);
+  requestAnimationFrame(playhead);
+})();
+addEventListener("resize", () => drawWave());
+
+function lane(pid, label) {
+  if (S.lanes[pid]) return S.lanes[pid];
+  const el = document.createElement("div"); el.className = "lane";
+  el.innerHTML = `<div class="who"><span class="dot" style="background:${COLORS[pid] || "#888"}"></span>${esc(label)}</div><div class="txt"><i>connecting…</i></div>`;
+  $("#lanes").appendChild(el);
+  return (S.lanes[pid] = {el, finals: [], partial: ""});
+}
+function paintLane(pid) {
+  const L = S.lanes[pid]; if (!L) return;
+  const parts = L.finals.map((t, i) => `<b>${i + 1}</b> ${esc(t) || "<i>(empty)</i>"}`);
+  if (L.partial) parts.push(`<i>${esc(L.partial)}…</i>`);
+  L.el.querySelector(".txt").innerHTML = parts.join(" &nbsp;│&nbsp; ") || "<i>listening…</i>";
+}
+const logEl = $("#log");
+function log(msg) { logEl.textContent += msg + "\n"; logEl.scrollTop = logEl.scrollHeight; }
+
+/* ---------- run ---------- */
+$("#runBtn").onclick = async () => {
+  if (S.running || !S.audio) return;
+  const ps = chosen(), a = S.audio;
+  const q = new URLSearchParams({providers: ps.join(","), gate: $("#gate").value, mode: $("#mode").value,
+    hold: $("#hold").value, type: $("#etype").value, expected: $("#expect").value.trim(),
+    name: a.name, source: a.source, phone: $("#phone").checked ? "1" : "0"});
+  if (a.sample) q.set("sample", a.sample.id);
+  S.running = true; S.finished = false; updateRun(); showErr("");
+  $("#runNote").textContent = "Connecting…";
+  S.markers = []; S.lanes = {}; $("#lanes").innerHTML = ""; $("#cards").innerHTML = "";
+  $("#receipt").textContent = ""; logEl.textContent = "";
+  $("#resPanel").classList.remove("hidden"); $("#resTitle").textContent = "Results";
+  $("#resBanner").innerHTML = `<p><span class="badge ${ps.every(p => p === "mock") ? "b-mock" : "b-live"}">${ps.every(p => p === "mock") ? "MOCK" : "LIVE"}</span> running now — this is a real call, not a replay.</p>`;
+  ps.forEach(pid => lane(pid, (S.cfg.providers.find(p => p.id === pid) || {}).short || pid));
+  try {
+    const r = await api("/api/run?" + q, {method: "POST", headers: {"Content-Type": "audio/wav"}, body: a.sample ? null : a.wav});
+    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || ("HTTP " + r.status)); }
+    const rd = r.body.getReader(), dec = new TextDecoder(); let buf = "";
+    for (;;) {
+      const {value, done} = await rd.read(); if (done) break;
+      buf += dec.decode(value, {stream: true});
+      let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i); buf = buf.slice(i + 1); if (line.trim()) onMsg(JSON.parse(line)); }
+    }
+  } catch (e) { showErr(e.message); S.finished = false; }
+  S.running = false; updateRun();
+  if (S.finished) $("#runNote").textContent = "Done — receipt saved below. " + $("#runNote").textContent;
+};
+
+function onMsg(m) {
+  if (m.type === "analysis") {
+    S.an = m.analysis; S.axisMs = m.streamed_ms; drawWave();
+    $("#waveNote").innerHTML = analysisNote(m.analysis);
+    $("#runNote").textContent = "Streaming in real time — markers appear as each provider ends a turn.";
+    const p = $("#player"); try { p.currentTime = 0; p.play(); } catch (e) {}
+    log(`audio ${(m.audio_ms / 1000).toFixed(2)} s · streaming ${(m.streamed_ms / 1000).toFixed(2)} s incl. trailing silence`);
+  } else if (m.type === "provider_start") {
+    const L = lane(m.provider, m.label); L.el.querySelector(".txt").innerHTML = "<i>listening…</i>";
+    log(`${m.provider}: connected`);
+  } else if (m.type === "partial") {
+    const L = S.lanes[m.provider]; if (!L) return;
+    L.partial = m.text; paintLane(m.provider);
+  } else if (m.type === "event") {
+    if (m.kind === "speech_end") {
+      S.markers.push({pid: m.provider, t: m.t_ms}); drawWave();
+      log(`${m.provider}: TURN END @ ${(m.t_ms / 1000).toFixed(2)} s`);
+    } else if (m.kind === "transcript") {
+      const L = S.lanes[m.provider];
+      if (L) { if (m.provider === "gemini") { L.partial = (L.partial || "") + m.text; } else { L.finals.push(m.text); L.partial = ""; } paintLane(m.provider); }
+      log(`${m.provider}: text @ ${(m.t_ms / 1000).toFixed(2)} s: ${m.text || "(empty)"}`);
+    }
+  } else if (m.type === "provider_done") {
+    $("#cards").insertAdjacentHTML("beforeend", card(m.result, null));
+    const L = S.lanes[m.provider];
+    if (L && m.result.error) L.el.querySelector(".txt").innerHTML = `<i>failed — see below</i>`;
+    else if (L && m.result.provenance.kind === "mock")
+      L.el.querySelector(".txt").innerHTML = `<i>turn ends only — the mock has no recogniser, so no words</i>`;
+  } else if (m.type === "done") {
+    const id = m.report.id;
+    $("#receipt").innerHTML = id ? `Receipt saved: <span class="mono">results/bench/${esc(id)}/</span> (audio.wav + report.json) ·
+      <a href="#" data-dl="${esc(id)}">download report</a>` : "";
+    S.finished = true;
+    const kinds = new Set(Object.values(m.report.results).map(r => r.provenance.kind));
+    $("#resBanner").innerHTML = kinds.has("live")
+      ? `<p><span class="badge b-live">LIVE</span> finished ${esc(new Date().toLocaleTimeString())} — every
+         ${kinds.has("mock") ? "<b>LIVE</b> " : ""}result below came off the vendor's socket just now, not from a replay.</p>`
+      : `<p><span class="badge b-mock">MOCK</span> finished — offline only. No vendor was called.</p>`;
+    loadHistory();
+  } else if (m.type === "error") { showErr(m.message); }
+}
+
+function analysisNote(an) {
+  if (!an.usable) return "The VAD could not separate speech from the background, so no end of speech was measured.";
+  const ps = an.pauses.map(([a, z]) => `${(a / 1000).toFixed(2)}–${(z / 1000).toFixed(2)} s (${z - a} ms)`).join(", ") || "none";
+  return `<b>Measured from the audio</b> (energy VAD): speech ends at ${(an.speech_end_ms / 1000).toFixed(2)} s
+    (dashed line; ±${an.end_spread_ms} ms under a halved/doubled threshold) · pauses ≥ ${an.min_pause_ms} ms, shaded: ${ps}
+    ${an.pause_floor_db != null ? ` · pause floor ${an.pause_floor_db} dB below speech` : ""}`;
+}
+
+const YN = v => v === null || v === undefined ? `<span class="na">can't tell</span>` : v ? `<span class="yes">✓ yes</span>` : `<span class="no">✗ no</span>`;
+function card(r, storedAt) {
+  const v = r.verdict, pv = r.provenance;
+  const kind = storedAt ? `<span class="badge b-stored">STORED</span>` : pv.kind === "live" ? `<span class="badge b-live">LIVE</span>` : `<span class="badge b-mock">MOCK</span>`;
+  const st = {cut: ["s-cut", "CUT OFF"], ok: ["s-ok", "LET YOU FINISH"], early: ["s-early", "ENDED EARLY"]}[v.status] || ["s-other", (v.status || "").toUpperCase()];
+  const settings = Object.entries(pv.settings || {}).map(([k, x]) => `${esc(k)}=${esc(x)}`).join(" · ");
+  let h = `<div class="card"><div class="top">${kind}<span class="dot" style="background:${COLORS[v.provider] || "#888"}"></span>
+    <h3>${esc(pv.provider)}</h3><span class="status ${st[0]}">${esc(st[1])}</span><span class="note mono">${settings}</span></div>
+    <div class="headline">${esc(v.headline)}</div>`;
+  if (v.context) h += `<p class="note">${esc(v.context)}</p>`;
+  if (v.turns && v.turns.length) {
+    h += `<div class="tblwrap"><table><thead><tr><th>turn</th><th class="num">ended at</th><th>what the agent had at that moment</th></tr></thead><tbody>` +
+      v.turns.map((t, i) => `<tr><td>${i + 1}</td><td class="num">${t.end_ms == null ? "—" : (t.end_ms / 1000).toFixed(2) + " s"}</td>
+        <td class="deva">${esc(t.text) || `<span class="na">(no text${pv.kind === "mock" ? " — the mock has no recogniser" : ""})</span>`}</td></tr>`).join("") +
+      `</tbody></table></div>`;
+  }
+  if (v.entity) {
+    const e = v.entity;
+    h += e.not_applicable ? `<p class="note"><b class="mono">${esc(e.expected)}</b>: not checked — ${esc(e.not_applicable)}</p>`
+      : `<div class="tblwrap"><table><thead><tr><th>${esc(e.expected)} (${esc(e.type)})</th><th></th></tr></thead><tbody>
+        <tr><td>in what the agent had at its <b>first</b> reply</td><td>${YN(e.in_first_turn)}</td></tr>
+        <tr><td>anywhere in the session's final turns</td><td>${YN(e.in_session)}</td></tr>
+        ${e.in_partials == null ? "" : `<tr><td>anywhere in the live partial stream</td><td>${YN(e.in_partials)}</td></tr>`}
+        </tbody></table></div>`;
+  }
+  if (v.at_cut) h += `<p class="note">Last word before the cut: <b class="deva">${esc(v.at_cut.last_word) || "—"}</b> — ${esc(v.at_cut.note)}.</p>`;
+  if (v.policy) h += `<p class="note">Marker rule: ${esc(v.policy.note)}${v.policy.fires && v.policy.rescued ? ` The agent would then have held: <span class="deva">“${esc(v.policy.merged_text)}”</span>` : ""}</p>`;
+  h += `<details><summary>where this result came from</summary><div class="kv">
+    <span>kind</span><span>${pv.kind === "live" ? "LIVE — streamed to the vendor" : "MOCK — offline, no vendor"}${storedAt ? `, re-opened from a stored receipt` : ""}</span>
+    <span>provider</span><span>${esc(pv.provider)}</span>
+    <span>settings</span><span class="mono">${settings || "—"}</span>
+    <span>started</span><span class="mono">${esc(pv.started_at)}</span><span>finished</span><span class="mono">${esc(pv.finished_at)}</span>
+    <span>audio sha256</span><code>${esc(pv.audio_sha256)}</code>
+    <span>streaming</span><span>${esc(pv.pacing)}, then ${pv.trailing_silence_ms} ms of silence (the line stays open)</span>
+    <span>key</span><span>${esc(pv.key)}</span><span>note</span><span>${esc(pv.note)}</span></div></details>`;
+  if (r.events && r.events.length) h += `<details><summary>raw events (${r.events.length})</summary><div class="log">${
+    r.events.map(e => `${String(e.t_ms).padStart(6)} ms  ${e.kind.padEnd(13)} ${esc(e.text)}`).join("\n")}</div></details>`;
+  return h + `</div>`;
+}
+
+/* ---------- history ---------- */
+async function loadHistory() {
+  let rows; try { rows = await (await api("/api/history")).json(); } catch (e) { return; }
+  $("#hist").innerHTML = rows.length ? rows.map(r => `<button type="button" data-id="${esc(r.id)}">
+    <span class="badge b-stored">STORED</span>${r.kinds.includes("mock") && r.kinds.length === 1 ? `<span class="badge b-mock">MOCK</span>` : ""}
+    <span class="mono note">${esc((r.created_at || "").replace("T", " ").slice(0, 16))}</span>
+    <b>${esc(r.name)}</b><span class="note">${Object.entries(r.statuses).map(([p, s]) => `${esc(p)}: ${esc(s)}`).join(" · ")}</span></button>`).join("")
+    : `<span class="note">none yet</span>`;
+}
+$("#hist").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-id]"); if (!b) return;
+  const id = b.dataset.id;
+  const rep = await (await api(`/api/run/${encodeURIComponent(id)}`)).json();
+  try {
+    const f32 = await decodeTo16k(await (await api(`/api/run/${encodeURIComponent(id)}/audio.wav`)).arrayBuffer());
+    setAudio(f32, {source: "stored run", name: rep.name});
+  } catch (err) {}
+  S.an = rep.analysis; S.axisMs = rep.audio.ms + Math.max(...Object.values(rep.results).map(r => r.provenance.trailing_silence_ms || 0), 0);
+  S.lanes = {}; S.markers = []; $("#lanes").innerHTML = "";
+  for (const [pid, r] of Object.entries(rep.results)) {
+    const L = lane(pid, r.provenance.provider);
+    L.finals = (r.verdict.turns || []).map(t => t.text); paintLane(pid);
+    (r.events || []).filter(ev => ev.kind === "speech_end").forEach(ev => S.markers.push({pid, t: ev.t_ms}));
+  }
+  drawWave(); $("#waveNote").innerHTML = analysisNote(rep.analysis);
+  $("#resPanel").classList.remove("hidden");
+  $("#resTitle").textContent = "Results — stored run";
+  const was = Object.values(rep.results).some(r => r.provenance.kind === "live") ? "a live run" : "a MOCK run (offline, no vendor)";
+  $("#resBanner").innerHTML = `<p><span class="badge b-stored">STORED</span> ${was} from ${esc((rep.created_at || "").replace("T", " "))}, re-opened from its receipt. Nothing was re-sent.</p>`;
+  $("#cards").innerHTML = Object.values(rep.results).map(r => card(r, rep.created_at)).join("");
+  logEl.textContent = ""; $("#receipt").innerHTML = `Receipt: <span class="mono">results/bench/${esc(id)}/</span> · <a href="#" data-dl="${esc(id)}">download report</a>`;
+  if (rep.ground_truth) { $("#etype").value = rep.ground_truth.entity_type; $("#expect").value = rep.ground_truth.as_typed; }
+  $("#resPanel").scrollIntoView({behavior: "smooth"});
+});
+document.addEventListener("click", async e => {
+  const a = e.target.closest("a[data-dl]"); if (!a) return;
+  e.preventDefault();
+  const blob = await (await api(`/api/run/${encodeURIComponent(a.dataset.dl)}`)).blob();
+  const u = URL.createObjectURL(blob), l = document.createElement("a");
+  l.href = u; l.download = `asli-${a.dataset.dl}.json`; l.click(); setTimeout(() => URL.revokeObjectURL(u), 1000);
+});
+
+boot();
+</script>
+</body>
+</html>
