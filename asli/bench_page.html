@@ -423,6 +423,7 @@ function chosen() { return [...document.querySelectorAll("#provs input:checked")
 function updateRun() {
   const ps = chosen(), ok = S.audio && ps.length && !S.running;
   $("#runBtn").disabled = !ok;
+  $("#runBtn").textContent = ps.length && ps.every(p => p === "mock") ? "Run offline (mock)" : "Run live test";
   if (S.running) return;
   if (!S.audio) { $("#runNote").textContent = "Choose some audio first."; return; }
   if (!ps.length) { $("#runNote").textContent = "Tick at least one provider."; return; }
