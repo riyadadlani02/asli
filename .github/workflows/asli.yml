@@ -28,6 +28,10 @@ jobs:
         run: |
           uv run python tests/test_asli.py
           uv run python tests/test_sfr_text.py
+      - name: test bench (fake vendor socket, sample kit integrity, server)
+        run: |
+          uv pip install pytest
+          uv run pytest -q tests/test_bench.py
       - name: the site is rebuildable and matches what is committed
         run: |
           uv pip install -e ".[agent]" || true

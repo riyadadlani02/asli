@@ -3,6 +3,8 @@
 **Measure what an Indic voice agent *does* when things go wrong mid-conversation — not how accurately it transcribes.**
 
 **Live demo:** https://riyadadlani02.github.io/asli/ · [mirror](https://asli-riya02.vercel.app)
+· **Test it with your own voice:** [`asli bench`](#test-it-live-with-your-own-voice) ·
+[what on the site is measured, simulated or live](docs/live-testing.md#what-is-real-part-by-part)
 
 ![Four output modes on the same audio — only verbatim returns all seven digits](docs/img/modes.png)
 
@@ -206,10 +208,42 @@ one with published numbers. TurnBench is the reusable instrument, and it ships w
 | **[the intervention](#the-rule-and-what-it-costs)** | `policy.py` — hold a turn open on an unfinished ending, bounded, with its own cost ledger | measured, including where it fails |
 | **[TurnBench](#turnbench--the-second-harness)** | offline turn-taking benchmark: four gates, a calibrated three-state policy, a DiarBench agreement lane | code and tests complete, blocked on data |
 | **[the method](#how-these-findings-were-made)** | pre-registration, derived word lists, a published failed experiment | the part worth copying |
+| **[the test bench](#test-it-live-with-your-own-voice)** | `asli bench` — any recording or microphone, live against every provider at once, with a receipt per run | ready; one call is an example, not a rate |
 
 8,676 lines of Python and 4,706 of tests, 232 test functions. `results/` holds every
 row behind every number, and CI [refuses a commit](#what-guarantees-these-numbers)
 whose site does not rebuild byte-identically from them.
+
+---
+
+## Test it live, with your own voice
+
+Every number above came from audio this repo authored or selected. The bench is for
+audio someone *brings* — so a sceptic can test the claim on their own examples.
+
+```bash
+cp .env.example .env          # add the keys you have: Sarvam, Deepgram, OpenAI, Gemini
+uv run asli bench --open      # http://localhost:8765
+```
+
+Record a sentence with a pause before a number, upload a voice note, or pick one of the
+[18 kit samples](samples/README.md) whose pause is known to the millisecond. Type what
+was said, tick providers, run. The audio streams to all of them at once in real time;
+each turn end lands on the waveform as it happens, and each provider gets a verdict —
+cut off inside your pause or not, whether the number was in what the agent held at its
+**first** reply, and what the marker rule would have done — with the settings, timestamps
+and a hash of the exact audio streamed. Keys stay in `.env`; the page never sees them.
+
+Every result is badged **LIVE**, **STORED** (a receipt re-opened), **MOCK** (the offline
+VAD, no vendor, no words) or **PREDICTION** (arithmetic from a sample's known pause).
+The [runbook](docs/live-testing.md) covers running it in a meeting, sharing it over a
+tunnel with a passcode, and what one call can and cannot show. The site carries the same
+labels now: every section says whether it is *measured*, *simulated* or *live*.
+
+```bash
+uv run asli test my-voice-note.ogg --agent sarvam,deepgram --expect 9877111
+uv run asli test --samples --agent sarvam      # the kit, against its known truth
+```
 
 ---
 

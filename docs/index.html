@@ -172,6 +172,24 @@ code{font-family:var(--mono);font-size:.9em;color:var(--orange)}
   color:var(--bone3);border:1px solid var(--edge);border-radius:99px;padding:.3rem .7rem}
 .tags span.hot{color:var(--orange);border-color:var(--orange-dim)}
 
+/* provenance &#x2014; what on the page is a stored measurement, a model, or a live call */
+.prov{font-family:var(--mono);font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;
+  border:1px solid;border-radius:99px;padding:.22rem .6rem;white-space:nowrap;flex:none}
+.prov.m{color:#8FD9AE;border-color:rgba(143,217,174,.45)}
+.prov.s{color:var(--orange);border-style:dashed;border-color:var(--orange-dim)}
+.prov.l{color:#9CC8FF;border-color:rgba(156,200,255,.45)}
+.prov.n{color:var(--bone3);border-color:var(--edge2)}
+#sky .prov.m{color:#0F6B45;border-color:rgba(15,107,69,.45)}
+#sky .prov.s{color:#B32B06;border-color:rgba(179,43,6,.5)}
+#sky .prov.l{color:#1D4F91;border-color:rgba(29,79,145,.45)}
+.provkey{margin-top:1.6rem;border:1px solid var(--edge);border-radius:8px;padding:1rem 1.1rem;
+  display:grid;grid-template-columns:max-content 1fr;gap:.55rem 1rem;align-items:baseline;max-width:62rem}
+.provkey>b{grid-column:1/-1;font-family:var(--mono);font-size:.62rem;letter-spacing:.26em;
+  text-transform:uppercase;color:var(--bone3);font-weight:400}
+.provkey>span:not(.prov){font-size:.86rem;color:var(--bone2)}
+.provkey .prov{justify-self:start}
+@media (max-width:560px){ .provkey{grid-template-columns:1fr} .idx{flex-wrap:wrap} }
+
 /* panels */
 .panel{margin-top:clamp(1.6rem,4vw,2.6rem);background:var(--panel);border:1px solid var(--edge);
   border-radius:8px;overflow:hidden}
@@ -424,7 +442,13 @@ footer b{color:var(--orange)}
 <section class="scene" id="hero">
   <div class="stamp">real callers &nbsp;<b>/</b>&nbsp; same 20 calls, two turn detectors &nbsp;<b>/</b>&nbsp; august 2026</div>
   <h1>A pause is not<br><span class="q">the end of a thought.</span></h1>
-  <p class="lede">A caller says <em>matlab</em> (&ldquo;umm&rdquo;), pauses, then gives the number. A silence timer can treat the pause as the end and make the agent answer too soon. The <a href="#instrument">one-call replay</a> shows the exact moment it happens.</p>
+  <p class="lede">A caller says <em>matlab</em> (&ldquo;umm&rdquo;), pauses, then gives the number. A silence timer can treat the pause as the end and make the agent answer too soon. The <a href="#instrument">one-call animation</a> shows the exact moment it happens.</p>
+  <div class="provkey">
+    <b>What on this page is real &mdash; every section carries one of these</b>
+    <span class="prov m">measured</span><span>Stored results of real API calls, made earlier. Every row is in <code>results/</code> in the repository; nothing here re-runs them.</span>
+    <span class="prov s">simulated</span><span>An animation or model computed in your browser from known numbers. No call is made.</span>
+    <span class="prov l">live</span><span>Your browser calls the vendor now, with your own key. To test without a key in the browser, run <code>asli bench</code> from the repository.</span>
+  </div>
   <div class="box" style="margin-top:1.6rem">
     <b>What worked on real callers.</b> On the same 20 pause-selected calls,
     the 500&nbsp;ms timer cut inside a hesitation <b>4/20 (20%)</b>.
@@ -437,15 +461,18 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="instrument">
-  <div class="idx"><b>00</b><span>the instrument</span></div>
+  <div class="idx"><b>00</b><span>the instrument</span><span class="prov s">simulated &middot; no call</span></div>
   <h2>The caller pauses.<br><span class="q">The timer answers.</span></h2>
-  <p class="lede">Press play. The caller has not finished, but the turn closes at the pause.</p>
+  <p class="lede">Press play. The voice is the study&rsquo;s test recording (a synthetic speaker).
+  The cut line is <b>arithmetic, not a call</b>: the start of the pause plus the gate in the top bar,
+  over the script she was given. The measured version of this call is the <a href="#trace">socket trace</a>
+  below and the <a href="#cliff">curve</a>.</p>
   <div class="panel" style="margin-top:0">
     <div class="panel-head"><span>dig-01 &middot; hindi &middot; 16 khz</span><span>mode <b>translit</b> &middot; truth <b>9877111</b></span></div>
     <div class="panel-body">
       <div class="lane-lbl">what she said</div>
       <div class="said" id="said"></div>
-      <div class="lane-lbl">what came back <span id="dropwrap"></span></div>
+      <div class="lane-lbl">what the agent would hold &middot; modelled from the script <span id="dropwrap"></span></div>
       <div class="heard" id="heard"></div>
       <div id="restwrap"></div>
       <canvas class="led" id="led" role="img" aria-label="LED meter of the utterance showing where the turn was ended."></canvas>
@@ -455,10 +482,10 @@ footer b{color:var(--orange)}
       </div>
     </div>
   </div>
-  <div class="tags"><span>one reproducible call</span><span class="hot">true end known</span><span>full trace below</span></div>
+  <div class="tags"><span>simulated from a real recording</span><span class="hot">true end known</span><span>measured trace below</span></div>
 </section>
 <section class="scene rev" id="modes">
-  <div class="idx"><b>01</b><span>where it happens</span></div>
+  <div class="idx"><b>01</b><span>where it happens</span><span class="prov m">measured &middot; 192 stored calls</span></div>
   <h2>Output mode is <span class="q">not the fix.</span></h2>
   <p class="lede">We tested all four modes with the same filler and six repeats. Results differ, but no mode reliably prevents an early turn. The simple comparison stays here; the full matrix is in the docs.</p>
   <div class="chips" role="tablist" id="chips"></div>
@@ -467,7 +494,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="trace">
-  <div class="idx"><b>02</b><span>the socket trace</span></div>
+  <div class="idx"><b>02</b><span>the socket trace</span><span class="prov m">measured &middot; one recorded live call</span></div>
   <h2>The live stream has it.<br>The final <span class="q">does not.</span></h2>
   <p class="lede">The partial contains the number. The final closes at the hesitation. This is why replying immediately is unsafe.</p>
   <figure><div class="trace" id="tr"></div></figure>
@@ -477,7 +504,7 @@ footer b{color:var(--orange)}
 <section id="sky">
   <canvas id="skycv" aria-hidden="true"></canvas>
   <div class="inner">
-    <div class="idx"><b>03</b><span>the sandbox</span></div>
+    <div class="idx"><b>03</b><span>the sandbox</span><span class="prov s">left: model</span><span class="prov l">right: live, your key</span></div>
     <h2>Try it <span class="q">live.</span></h2>
     <p class="lede">Change the pause and detector. The left side is a quick model; the right side sends audio to your own endpoint and shows the real result.</p>
 
@@ -510,7 +537,7 @@ footer b{color:var(--orange)}
           <div class="fillers modes" id="sbModes"></div></div>
         <div class="talkrow">
           <button class="btn-sky alt" id="sbTalk" type="button">speak into the mic</button>
-          <button class="btn-sky alt" id="sbSample" type="button">see a sample &mdash; no key</button>
+          <button class="btn-sky alt" id="sbSample" type="button">see a recorded call &mdash; no key</button>
           <label class="btn-sky alt" id="sbUpLabel" for="sbUp">upload a recording</label>
           <input id="sbUp" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.webm" hidden>
           <span class="talkhint" id="sbTalkHint">a real call, your voice &mdash; hesitate mid-sentence and watch where the turn ends</span>
@@ -528,7 +555,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="cliff">
-  <div class="idx"><b>04</b><span>the measurement</span></div>
+  <div class="idx"><b>04</b><span>the measurement</span><span class="prov m">measured &middot; stored sweep</span></div>
   <h2>Waiting longer <span class="q">helps.</span></h2>
   <p class="lede">A longer silence timer makes fewer early cuts. It also makes every completed call wait longer. This curve shows that tradeoff.</p>
   <figure>
@@ -557,7 +584,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="solution">
-  <div class="idx"><b>05</b><span>our proposal</span></div>
+  <div class="idx"><b>05</b><span>our proposal</span><span class="prov m">measured &middot; rule replayed on stored calls</span></div>
   <h2>Use meaning when you can.<br><span class="q">Use a guardrail when you cannot.</span></h2>
   <p class="lede">Semantic turn detection is the cleanest fix. Providers without it can hold a turn when its last words clearly sound unfinished.</p>
 
@@ -585,7 +612,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="semantic">
-  <div class="idx"><b>06</b><span>what vendors ship</span></div>
+  <div class="idx"><b>06</b><span>what vendors ship</span><span class="prov m">measured &middot; stored calls</span></div>
   <h2>Timer: <span class="q">4/20 (20%).</span><br>Meaning: <span class="q">0/20 (0%).</span></h2>
   <p class="lede">On the same 20 real callers, the 500&nbsp;ms timer cut inside a hesitation <b>4/20 (20%)</b>. Semantic detection cut <b>0/20 (0%)</b>.</p>
   <p class="sub" style="margin-top:.8rem">The smaller synthetic experiment below checks the same idea across sentence shapes. It supports the real-caller result; it does not replace it.</p>
@@ -606,7 +633,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="conv">
-  <div class="idx"><b>07</b><span>after the interruption</span></div>
+  <div class="idx"><b>07</b><span>after the interruption</span><span class="prov m">measured &middot; 12 stored calls</span></div>
   <h2>One cut can break<br><span class="q">the whole conversation.</span></h2>
   <p class="lede">The caller keeps talking. The agent may already be replying without the number. These rows compare the first turn with the full transcript.</p>
   <div class="scroll" style="margin-top:1.6rem">
@@ -626,7 +653,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="real">
-  <div class="idx"><b>08</b><span>real callers</span></div>
+  <div class="idx"><b>08</b><span>real callers</span><span class="prov m">measured &middot; real recordings</span></div>
   <h2>The real-caller <span class="q">proof.</span></h2>
   <p class="lede">These are the same 20 public Hindi voice messages, selected because each has a long mid-sentence pause. No TTS. No changed caller set.</p>
   <div class="scroll" style="margin-top:1.6rem">
@@ -641,7 +668,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="line">
-  <div class="idx"><b>09</b><span>the line</span></div>
+  <div class="idx"><b>09</b><span>the line</span><span class="prov s">simulated line &middot; real codec</span></div>
   <h2>The phone line changes<br><span class="q">what the model hears.</span></h2>
   <p class="lede">Telephony, noise, and packet loss can blur digit words before the model sees them.</p>
   <div class="grid" id="agrid"></div>
@@ -650,7 +677,7 @@ footer b{color:var(--orange)}
 
 
 <section class="scene rev" id="general">
-  <div class="idx"><b>10</b><span>the generalisation</span></div>
+  <div class="idx"><b>10</b><span>the generalisation</span><span class="prov m">measured &middot; text pipeline</span></div>
   <h2>The same safety question<br><span class="q">works beyond voice.</span></h2>
   <p class="lede">When an input is corrupted, does the agent notice before it acts? We test that on text records too.</p>
 
@@ -668,7 +695,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="ledger">
-  <div class="idx"><b>11</b><span>the rest of the ledger</span></div>
+  <div class="idx"><b>11</b><span>the rest of the ledger</span><span class="prov m">measured &middot; stored</span></div>
   <h2>Other results,<br><span class="q">kept honest.</span></h2>
   <p class="lede">Extra experiments, including negative results, are listed here instead of hidden.</p>
   <div class="scroll" style="margin-top:1.6rem">
@@ -680,7 +707,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="diarbench">
-  <div class="idx"><b>12</b><span>the benchmark run</span></div>
+  <div class="idx"><b>12</b><span>the benchmark run</span><span class="prov m">measured &middot; human-labelled benchmark</span></div>
   <h2>Pause length is a <span class="q">coin flip</span>.</h2>
   <p class="lede">Run against <b>Sarvam's own human-annotated diarisation benchmark</b>
   &mdash; 63 independent source calls, 2,183 pause decisions, every label from a human.
@@ -750,7 +777,7 @@ footer b{color:var(--orange)}
 </section>
 
 <section class="scene rev" id="run">
-  <div class="idx"><b>14</b><span>the tool</span></div>
+  <div class="idx"><b>14</b><span>the tool</span><span class="prov l">run it yourself</span></div>
   <h2>Test <span class="q">your own</span> agent.</h2>
   <p class="lede">The harness is the product. These numbers are one reproducible run.</p>
   <pre><b>uv</b> venv --python 3.12 &amp;&amp; <b>uv</b> pip install -e ".[agent]"
@@ -761,12 +788,15 @@ echo "SARVAM_API_KEY=..." &gt;&gt; .env
 <b>uv</b> run asli sweep --suite pir --agent sarvam --pause-ms 700
 <b>uv</b> run asli conv  --agent sarvam --gate 500      <span style="color:var(--bone3)"># what the agent holds when it replies</span>
 <b>uv</b> run asli real  --corpus corpus/GV_Dev_5h/Audio --agent sarvam
-<b>uv</b> run asli fit   --corpus corpus/GV_Dev_5h/Audio <span style="color:var(--bone3)"># pause distribution + what to set the gate to</span></pre>
+<b>uv</b> run asli fit   --corpus corpus/GV_Dev_5h/Audio <span style="color:var(--bone3)"># pause distribution + what to set the gate to</span>
+
+<b>uv</b> run asli bench                         <span style="color:var(--bone3)"># your voice, live providers, keys stay in .env</span>
+<b>uv</b> run asli test --samples --agent sarvam  <span style="color:var(--bone3)"># the voice sample kit, against its known truth</span></pre>
   <div class="tags"><span>persona</span><span>synthesise</span><span>degrade</span><span>drive</span><span>score</span><span class="hot">report</span></div>
 </section>
 
 <section class="scene rev" id="turnbench">
-  <div class="idx"><b>15</b><span>turnbench</span></div>
+  <div class="idx"><b>15</b><span>turnbench</span><span class="prov n">no result claimed</span></div>
   <h2>A pause needs a<br><span class="q">benchmark, not a guess.</span></h2>
   <p class="lede">TurnBench is a separate, offline harness for measuring whether an agent speaks before a caller resumes, or waits after a true yield.</p>
   <div class="box" style="margin-top:1.6rem"><b>Kept separate from this study.</b> It uses local fixtures and recorded event streams&mdash;no provider calls, no cross-language leaderboard, and no claimed results until matched data arrives.</div>
@@ -956,8 +986,8 @@ function updateGate(){
   $("#statepill").dataset.ok=fires?"0":"1";
   $("#stateTxt").textContent=fires?"cut off":"she finishes";
   $("#verdict").textContent=fires
-    ? "Turn ended at "+cutAt+"ms, "+(END-cutAt)+"ms before she stopped speaking. Measured PIR at "+m.silence_ms+"ms: "+m.pir.toFixed(2)+"."
-    : "The gate outlasts the hesitation. The number survives. Measured PIR at "+m.silence_ms+"ms: "+m.pir.toFixed(2)+".";
+    ? "Modelled: the turn ends at "+cutAt+"ms, "+(END-cutAt)+"ms before she stopped speaking. Measured on the live endpoint at "+m.silence_ms+"ms: PIR "+m.pir.toFixed(2)+" (n = "+m.pir_n+")."
+    : "Modelled: the gate outlasts the hesitation and the number survives. Measured on the live endpoint at "+m.silence_ms+"ms: PIR "+m.pir.toFixed(2)+" (n = "+m.pir_n+").";
   if(main.paused) renderHeard(END, fires?cutAt:null);
   drawLed();
 }
@@ -992,10 +1022,12 @@ document.querySelectorAll("[data-play]").forEach(b=>b.addEventListener("click",(
 
 /* modes */
 const MORDER=["verbatim","transcribe","codemix","translit"];
-const MNOTE={verbatim:"Native script, spoken form preserved. All seven digits present.",
-  transcribe:"Native script with numerals converted. One digit lost in the conversion.",
-  codemix:"Mixed script. Same loss as transcribe.",
-  translit:"Romanised. Same loss, and on shorter utterances the number vanishes entirely."};
+/* What each mode does is fixed; what happened on this call is read from the stored row,
+   so the sentence under the panel cannot disagree with the panel. */
+const MNOTE={verbatim:"Native script, spoken form preserved.",
+  transcribe:"Native script, numerals converted to figures.",
+  codemix:"Mixed script, numerals converted to figures.",
+  translit:"Romanised, numerals converted to figures."};
 $("#chips").innerHTML=MORDER.map((m,i)=>`<button class="chip" role="tab" aria-selected="${i===0}" data-m="${m}">${m}</button>`).join("");
 function showMode(m){
   const d=D.modes[m], truth="9877111", got=d.got||"";
@@ -1006,7 +1038,9 @@ function showMode(m){
       <div><span class="k">extracted</span><span class="dig">${got||"&mdash;"}</span></div>
       <div><span class="k">digits kept</span><span class="dig">${digits}</span></div>
       <div><span class="k">verdict</span><b class="${d.ok?"":"hot"}">${d.ok?"number survives":"digit lost"}</b></div>
-    </div><p class="sub">${MNOTE[m]}</p>`;
+    </div><p class="sub">${MNOTE[m]} ${d.ok?"All seven digits on this call."
+      :"This call returned "+(got||"no digits")+" against 9877111."} One stored call (run 0 of 6);
+      the 6-run counts are in the README.</p>`;
   document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-selected",c.dataset.m===m));
 }
 $("#chips").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(b) showMode(b.dataset.m); });
